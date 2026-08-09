@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
-import { listExpenses } from '../data/expenseRepo';
+import { addExpense, listExpenses } from '../data/expenseRepo';
+import { getPhoto, savePhoto } from '../data/photoRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
 import { resolveRate } from '../rates/resolveRate';
@@ -11,6 +12,23 @@ import { ExpenseSheet } from './ExpenseSheet';
 vi.mock('../rates/resolveRate', () => ({
   resolveRate: vi.fn(),
   prefetchTodayRate: vi.fn(),
+}));
+
+// addExpense/updateExpense は既定では実装をそのまま呼ぶ。個別テストで
+// mockRejectedValueOnce を差し込んで「1 回だけ保存失敗」を再現するための部分モック。
+vi.mock('../data/expenseRepo', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../data/expenseRepo')>();
+  return {
+    ...actual,
+    addExpense: vi.fn(actual.addExpense),
+    updateExpense: vi.fn(actual.updateExpense),
+  };
+});
+
+// compressImage は createImageBitmap/canvas に依存しており jsdom では動かないため、
+// 写真アップロードを経由するテストではそのまま Blob を通すだけのモックに差し替える。
+vi.mock('../media/compressImage', () => ({
+  compressImage: vi.fn((blob: Blob) => Promise.resolve(blob)),
 }));
 
 let trip: Trip;
@@ -112,5 +130,65 @@ describe('ExpenseSheet', () => {
     render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     expect(await screen.findByText(/9\/10.*時点のレートを使用中/)).toBeInTheDocument();
+  });
+
+  it('写真を撮り直して保存すると、古い写真は db から消える', async () => {
+    const oldPhotoId = await savePhoto(new Blob(['old'], { type: 'image/jpeg' }));
+    const expense = await addExpense({
+      tripId: trip.id,
+      date: '2026-09-11',
+      amountMinor: 500,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '',
+      rate: 20,
+      rateSource: 'api',
+      photoId: oldPhotoId,
+    });
+
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+
+    const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/レシート写真/), newFile);
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const saved = (await listExpenses(trip.id))[0];
+    expect(saved.photoId).not.toBe(oldPhotoId);
+    expect(saved.photoId).not.toBeNull();
+    expect(await getPhoto(oldPhotoId)).toBeUndefined();
+    expect(await getPhoto(saved.photoId as string)).toBeDefined();
+  });
+
+  it('保存に1回失敗して再試行しても、写真は二重保存されない', async () => {
+    vi.mocked(resolveRate).mockResolvedValue({
+      rate: 23.465,
+      effectiveDate: '2026-09-11',
+      source: 'api',
+      stale: false,
+    });
+    vi.mocked(addExpense).mockRejectedValueOnce(new Error('一時的な保存失敗'));
+
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+
+    await screen.findByText(/23\.465/);
+    await user.click(screen.getByRole('button', { name: '1' }));
+
+    const file = new File(['photo'], 'receipt.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/レシート写真/), file);
+
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    expect(await screen.findByText('保存できませんでした')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    expect(await db.photos.count()).toBe(1);
   });
 });
