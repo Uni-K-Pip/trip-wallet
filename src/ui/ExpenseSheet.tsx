@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { addExpense, updateExpense } from '../data/expenseRepo';
-import { savePhoto } from '../data/photoRepo';
+import { deletePhoto, savePhoto } from '../data/photoRepo';
 import { CATEGORIES, PAYMENTS, SCOPES } from '../domain/categories';
 import { currencySymbol } from '../domain/currency';
 import { formatDateLabel, todayLocal } from '../domain/date';
@@ -135,11 +135,23 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
 
     setSaving(true);
     // 写真の失敗で支出そのものを失わないよう、写真は独立して扱う
+    const oldPhotoId = photoId;
     let nextPhotoId = photoId;
     let warning = '';
     if (photoFile) {
       try {
         nextPhotoId = await savePhoto(await compressImage(photoFile));
+        // 差し替えに成功した写真だけ確定として扱う。ここで state を更新しておかないと
+        // 保存失敗後の再試行で同じ写真をもう一度圧縮・保存してしまう(二重保存・孤児化の原因)
+        setPhotoId(nextPhotoId);
+        setPhotoFile(null);
+        if (oldPhotoId !== null && oldPhotoId !== nextPhotoId) {
+          try {
+            await deletePhoto(oldPhotoId);
+          } catch {
+            // 後始末が失敗しても支出の保存は続ける。写真の孤児化より支出の記録を優先する
+          }
+        }
       } catch (e) {
         // 容量超過は原因が分かるように文言を分ける。どちらの場合も写真だけ諦めて支出は保存する
         const quota = e instanceof DOMException && e.name === 'QuotaExceededError';
@@ -147,7 +159,6 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           ? '端末の空き容量が足りず、写真なしで保存しました'
           : '写真は保存できませんでした';
       }
-      setPhotoId(nextPhotoId);
     }
 
     try {
