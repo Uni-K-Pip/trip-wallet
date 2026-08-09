@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { addExpense, updateExpense } from '../data/expenseRepo';
 import { deletePhoto, savePhoto } from '../data/photoRepo';
 import { CATEGORIES, PAYMENTS, SCOPES } from '../domain/categories';
@@ -34,6 +34,17 @@ function storeManualRate(tripId: string, rate: number): void {
   }
 }
 
+/** 1 件ずつ deletePhoto する。途中で失敗しても残りは試み、呼び出し元の処理は妨げない。 */
+async function deletePhotosBestEffort(ids: string[]): Promise<void> {
+  for (const id of ids) {
+    try {
+      await deletePhoto(id);
+    } catch {
+      // 写真の後始末が失敗しても、支出の保存や画面遷移は止めない
+    }
+  }
+}
+
 type AutoRate = { rate: number; source: RateSource; note: string };
 
 type Props = {
@@ -58,6 +69,13 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   const [photoFile, setPhotoFile] = useState<Blob | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  // 差し替えで役目を終えた写真の id を、支出レコードの保存が確定するまで貯めておく。
+  // handleSave の呼び出しのたびに photoId から作り直すと、1 回目の savePhoto 成功で
+  // state が新 id に進んでしまい、失敗→再試行のときに本当の旧 id を見失う。
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  // 開いた時点で支出レコードが実際に参照していた photoId。キャンセル時に
+  // 「まだディスク上の支出が参照している写真」を誤って消さないための判定に使う。値は変えない。
+  const initialPhotoIdRef = useRef(expense?.photoId ?? null);
 
   const [autoRate, setAutoRate] = useState<AutoRate | null>(
     expense && expense.rateSource !== 'manual'
@@ -135,14 +153,20 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
 
     setSaving(true);
     // 写真の失敗で支出そのものを失わないよう、写真は独立して扱う
-    const oldPhotoId = photoId;
     let nextPhotoId = photoId;
+    // このターンで役目を終える写真 id(差し替えで置き換わる旧 id)を積む先。
+    // 支出レコードの保存が確定してから消すので、まずはローカル変数に集める。
+    let queuedDeleteIds = pendingDeleteIds;
     let warning = '';
     if (photoFile) {
       try {
         nextPhotoId = await savePhoto(await compressImage(photoFile));
         // 差し替えに成功した写真だけ確定として扱う。ここで state を更新しておかないと
         // 保存失敗後の再試行で同じ写真をもう一度圧縮・保存してしまう(二重保存の原因)
+        if (photoId !== null && photoId !== nextPhotoId) {
+          queuedDeleteIds = [...queuedDeleteIds, photoId];
+          setPendingDeleteIds(queuedDeleteIds);
+        }
         setPhotoId(nextPhotoId);
         setPhotoFile(null);
       } catch (e) {
@@ -169,15 +193,13 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       };
       if (expense) await updateExpense(expense.id, input);
       else await addExpense(input);
-      // 支出レコードが新しい写真を指すようになったと確定してから旧写真を消す。
-      // 順序を逆にすると、この addExpense/updateExpense が失敗したときに旧写真だけ
-      // 消えてしまい、DB 上の支出が参照する photoId の Photo が存在しない状態になる。
-      if (oldPhotoId !== null && oldPhotoId !== nextPhotoId) {
-        try {
-          await deletePhoto(oldPhotoId);
-        } catch {
-          // 後始末が失敗しても支出の保存は続ける。写真の孤児化より支出の記録を優先する
-        }
+      // 支出レコードが新しい写真を指すようになったと確定してから、
+      // それまでに積んだ旧写真をまとめて消す。順序を逆にすると、この
+      // addExpense/updateExpense が失敗したときに旧写真だけ消えてしまい、
+      // DB 上の支出が参照する photoId の Photo が存在しない状態になる。
+      if (queuedDeleteIds.length > 0) {
+        await deletePhotosBestEffort(queuedDeleteIds);
+        setPendingDeleteIds([]);
       }
       if (manualRate !== null) storeManualRate(trip.id, manualRate);
       onClose(warning === '' ? '保存しました' : warning);
@@ -187,8 +209,26 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
     }
   }
 
+  // 再試行せずにシートを離れるとき、その回に savePhoto 済みだが支出レコードには
+  // まだ反映されていない写真(=キャンセル時点の photoId が、開いた時点で支出が
+  // 参照していた写真と違う場合のその photoId)と、それより前の差し替えで既に
+  // 積まれている pendingDeleteIds を後始末する。ただし、開いた時点で支出が
+  // 実際に参照していた写真(initialPhotoIdRef.current)だけは、保存が確定して
+  // いない以上まだ現役の写真なので、絶対に消してはいけない。
+  async function handleClose() {
+    const initial = initialPhotoIdRef.current;
+    const orphaned = pendingDeleteIds.filter((id) => id !== initial);
+    if (photoId !== null && photoId !== initial && !orphaned.includes(photoId)) {
+      orphaned.push(photoId);
+    }
+    if (orphaned.length > 0) {
+      await deletePhotosBestEffort(orphaned);
+    }
+    onClose();
+  }
+
   return (
-    <Sheet title={expense ? '支出を編集' : '支出を追加'} onClose={() => onClose()}>
+    <Sheet title={expense ? '支出を編集' : '支出を追加'} onClose={() => void handleClose()}>
       <div className="amount-display">
         <span className="amount-major">
           {amount === '' ? '0' : amount}
@@ -309,7 +349,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       {error !== '' && <p className="error">{error}</p>}
 
       <div className="form-actions">
-        <button type="button" className="btn-ghost" onClick={() => onClose()}>
+        <button type="button" className="btn-ghost" onClick={() => void handleClose()}>
           キャンセル
         </button>
         <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
