@@ -33,6 +33,21 @@ describe('TripForm', () => {
     expect(trips[0].budgetJpy).toBe(100000);
   });
 
+  it('予算に数値として解釈できない文字列を入れたら budgetJpy は null になる', async () => {
+    const user = userEvent.setup();
+    const onDone = vi.fn();
+    render(<TripForm onDone={onDone} onCancel={() => {}} />);
+
+    await user.type(screen.getByLabelText('旅行名'), '上海 2026-09');
+    await user.type(screen.getByLabelText('予算(円)'), 'abc');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    const trips = await listTrips();
+    expect(trips).toHaveLength(1);
+    expect(trips[0].budgetJpy).toBeNull();
+  });
+
   it('旅行名が空なら保存しない', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
