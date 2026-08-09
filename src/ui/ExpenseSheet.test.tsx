@@ -223,4 +223,84 @@ describe('ExpenseSheet', () => {
     // 消えていたら、支出から辿れる写真が無くなる(参照切れ)。
     expect(await getPhoto(oldPhotoId)).toBeDefined();
   });
+
+  it('写真差し替え後に updateExpense が1回失敗しても、再試行して成功すれば旧写真は消える', async () => {
+    const oldPhotoId = await savePhoto(new Blob(['old'], { type: 'image/jpeg' }));
+    const expense = await addExpense({
+      tripId: trip.id,
+      date: '2026-09-11',
+      amountMinor: 500,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '',
+      rate: 20,
+      rateSource: 'api',
+      photoId: oldPhotoId,
+    });
+    vi.mocked(updateExpense).mockRejectedValueOnce(new Error('一時的な保存失敗'));
+
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+
+    const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/レシート写真/), newFile);
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    expect(await screen.findByText('保存できませんでした')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+
+    // 2 回目は updateExpense のモックが元の実装に戻っているので成功する。
+    // ここで photoId state は 1 回目の savePhoto 成功時点で新 id に進んでいるため、
+    // 「消すべき旧 id」を取り違えずに覚えていられるかがこのテストの本題。
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    const saved = (await listExpenses(trip.id))[0];
+    expect(saved.photoId).not.toBe(oldPhotoId);
+    expect(saved.photoId).not.toBeNull();
+    expect(await getPhoto(oldPhotoId)).toBeUndefined();
+    expect(await getPhoto(saved.photoId as string)).toBeDefined();
+  });
+
+  it('保存が失敗したあと再試行せず閉じると、その回の新写真は消え、旧写真は残る', async () => {
+    const oldPhotoId = await savePhoto(new Blob(['old'], { type: 'image/jpeg' }));
+    const expense = await addExpense({
+      tripId: trip.id,
+      date: '2026-09-11',
+      amountMinor: 500,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '',
+      rate: 20,
+      rateSource: 'api',
+      photoId: oldPhotoId,
+    });
+    vi.mocked(updateExpense).mockRejectedValueOnce(new Error('一時的な保存失敗'));
+
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+
+    const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/レシート写真/), newFile);
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    expect(await screen.findByText('保存できませんでした')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+
+    const photosAfterFailure = await db.photos.toArray();
+    expect(photosAfterFailure).toHaveLength(2);
+    const newPhotoId = photosAfterFailure.find((p) => p.id !== oldPhotoId)?.id as string;
+    expect(newPhotoId).toBeDefined();
+
+    // 再試行せずにキャンセルで離脱する。支出レコードは旧 photoId を参照したまま。
+    await user.click(screen.getByRole('button', { name: 'キャンセル' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    expect(await getPhoto(oldPhotoId)).toBeDefined();
+    expect(await getPhoto(newPhotoId)).toBeUndefined();
+  });
 });
