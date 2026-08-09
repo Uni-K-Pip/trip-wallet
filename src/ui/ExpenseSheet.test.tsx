@@ -303,4 +303,94 @@ describe('ExpenseSheet', () => {
     expect(await getPhoto(oldPhotoId)).toBeDefined();
     expect(await getPhoto(newPhotoId)).toBeUndefined();
   });
+
+  /**
+   * 既存写真つきの支出を開いて写真を差し替え、「保存」を押した直後の
+   * 「savePhoto は完了して photoId state は新写真を指しているが、
+   * updateExpense はまだ飛行中で支出レコードは旧 photoId のまま」という窓を作る。
+   * この窓で閉じる操作を踏むのが、写真を失う一番危ないタイミング。
+   * release() を呼ぶと updateExpense が本来の実装で完了する。
+   */
+  async function startSaveWithPendingUpdate() {
+    const oldPhotoId = await savePhoto(new Blob(['old'], { type: 'image/jpeg' }));
+    const expense = await addExpense({
+      tripId: trip.id,
+      date: '2026-09-11',
+      amountMinor: 500,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '',
+      rate: 20,
+      rateSource: 'api',
+      photoId: oldPhotoId,
+    });
+
+    // updateExpense の解決をテスト側で握る。release() を呼ぶまで pending のまま。
+    const actual =
+      await vi.importActual<typeof import('../data/expenseRepo')>('../data/expenseRepo');
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(updateExpense).mockImplementationOnce(async (id, patch) => {
+      await gate;
+      await actual.updateExpense(id, patch);
+    });
+
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+
+    const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/レシート写真/), newFile);
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    // 新写真が db に入る(= savePhoto 完了)まで待って、飛行中の窓に入ったことを確かめる
+    await waitFor(async () => {
+      expect(await db.photos.count()).toBe(2);
+    });
+    const newPhotoId = (await db.photos.toArray()).find((p) => p.id !== oldPhotoId)?.id as string;
+    expect(newPhotoId).toBeDefined();
+
+    return { user, onClose, oldPhotoId, newPhotoId, release };
+  }
+
+  it('保存の実行中は背景・✕・キャンセルのどれでも閉じず、commit 待ちの写真も消えない', async () => {
+    const { user, onClose, oldPhotoId, newPhotoId, release } = await startSaveWithPendingUpdate();
+
+    // Sheet の背景(role="presentation" の div)は dialog の親要素
+    const backdrop = screen.getByRole('dialog').parentElement as HTMLElement;
+    await user.click(backdrop);
+    await user.click(screen.getByRole('button', { name: '閉じる' }));
+    await user.click(screen.getByRole('button', { name: 'キャンセル' }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    // 支出レコードにまだ反映されていない新写真も、まだ現役の旧写真も、この時点で消してはいけない
+    expect(await getPhoto(newPhotoId)).toBeDefined();
+    expect(await getPhoto(oldPhotoId)).toBeDefined();
+
+    release();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    // 保存が確定したので、支出が参照する新写真は残り、旧写真だけが消える
+    const saved = (await listExpenses(trip.id))[0];
+    expect(saved.photoId).toBe(newPhotoId);
+    expect(await getPhoto(newPhotoId)).toBeDefined();
+    expect(await getPhoto(oldPhotoId)).toBeUndefined();
+  });
+
+  it('保存の実行中に閉じる操作をしても onClose は保存完了時の 1 回だけ呼ばれる', async () => {
+    const { user, onClose, release } = await startSaveWithPendingUpdate();
+
+    await user.click(screen.getByRole('button', { name: 'キャンセル' }));
+    await user.click(screen.getByRole('button', { name: '閉じる' }));
+    expect(onClose).not.toHaveBeenCalled();
+
+    release();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledWith('保存しました');
+  });
 });

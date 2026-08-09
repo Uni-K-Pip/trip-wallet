@@ -216,6 +216,14 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   // 実際に参照していた写真(initialPhotoIdRef.current)だけは、保存が確定して
   // いない以上まだ現役の写真なので、絶対に消してはいけない。
   async function handleClose() {
+    // 保存の実行中は閉じない。savePhoto は済んだが addExpense/updateExpense が
+    // まだ飛行中、という窓でここを通すと、直後に保存が成功する支出が参照する
+    // 写真(commit 待ちの新写真)を先に消してしまい、参照切れかつ復元不能になる。
+    // onClose の二重呼び出し(handleClose と handleSave 成功時)もここで防ぐ。
+    // 保存が失敗すれば saving は false に戻り、成功すれば handleSave が閉じるので、
+    // ユーザーがシートを閉じられなくなることはない。
+    if (saving) return;
+
     const initial = initialPhotoIdRef.current;
     const orphaned = pendingDeleteIds.filter((id) => id !== initial);
     if (photoId !== null && photoId !== initial && !orphaned.includes(photoId)) {
@@ -349,7 +357,13 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       {error !== '' && <p className="error">{error}</p>}
 
       <div className="form-actions">
-        <button type="button" className="btn-ghost" onClick={() => void handleClose()}>
+        {/* 保存中は閉じられない(handleClose 側でも弾く)ことを見た目でも伝える */}
+        <button
+          type="button"
+          className="btn-ghost"
+          onClick={() => void handleClose()}
+          disabled={saving}
+        >
           キャンセル
         </button>
         <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
