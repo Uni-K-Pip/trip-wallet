@@ -1,0 +1,307 @@
+import { useEffect, useState, type ChangeEvent } from 'react';
+import { addExpense, updateExpense } from '../data/expenseRepo';
+import { savePhoto } from '../data/photoRepo';
+import { CATEGORIES, PAYMENTS, SCOPES } from '../domain/categories';
+import { currencySymbol } from '../domain/currency';
+import { formatDateLabel, todayLocal } from '../domain/date';
+import { formatJpy, minorToMajor, parseMajorToMinor, toJpy } from '../domain/money';
+import type { Category, Expense, Payment, RateSource, Scope, Trip } from '../domain/types';
+import { compressImage } from '../media/compressImage';
+import { resolveRate } from '../rates/resolveRate';
+import { Numpad } from './Numpad';
+import { Sheet } from './Sheet';
+
+// 手動で入れたレートは同じ旅行の次回入力の初期値として引き継ぐ
+function manualRateKey(tripId: string): string {
+  return `trip-wallet:manual-rate:${tripId}`;
+}
+
+function readManualRate(tripId: string): number | null {
+  try {
+    const raw = localStorage.getItem(manualRateKey(tripId));
+    const n = raw === null ? NaN : Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeManualRate(tripId: string, rate: number): void {
+  try {
+    localStorage.setItem(manualRateKey(tripId), String(rate));
+  } catch {
+    // 保存できなくても入力は続けられる
+  }
+}
+
+type AutoRate = { rate: number; source: RateSource; note: string };
+
+type Props = {
+  trip: Trip;
+  expense?: Expense;
+  onClose: (message?: string) => void;
+};
+
+export function ExpenseSheet({ trip, expense, onClose }: Props) {
+  const decimals = trip.currencyDecimals;
+  const symbol = currencySymbol(trip.currency);
+
+  const [amount, setAmount] = useState(
+    expense ? minorToMajor(expense.amountMinor, decimals).toFixed(decimals) : '',
+  );
+  const [date, setDate] = useState(expense?.date ?? todayLocal());
+  const [scope, setScope] = useState<Scope>(expense?.scope ?? 'personal');
+  const [category, setCategory] = useState<Category>(expense?.category ?? 'food');
+  const [payment, setPayment] = useState<Payment>(expense?.payment ?? 'cash');
+  const [memo, setMemo] = useState(expense?.memo ?? '');
+  const [photoId, setPhotoId] = useState<string | null>(expense?.photoId ?? null);
+  const [photoFile, setPhotoFile] = useState<Blob | null>(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const [autoRate, setAutoRate] = useState<AutoRate | null>(
+    expense && expense.rateSource !== 'manual'
+      ? { rate: expense.rate, source: expense.rateSource, note: '記録時のレート' }
+      : null,
+  );
+  const [autoLoaded, setAutoLoaded] = useState(expense !== undefined);
+  const [manualRate, setManualRate] = useState<number | null>(
+    expense
+      ? expense.rateSource === 'manual'
+        ? expense.rate
+        : null
+      : readManualRate(trip.id),
+  );
+  const [editingRate, setEditingRate] = useState(false);
+  const [rateInput, setRateInput] = useState('');
+
+  // 保存済みのレートは焼き付いた値を保つ。日付を変えたときだけ取り直す。
+  const keepSavedRate = expense !== undefined && date === expense.date;
+
+  useEffect(() => {
+    if (manualRate !== null || keepSavedRate) return;
+    let cancelled = false;
+    void resolveRate(trip.currency, date).then((r) => {
+      if (cancelled) return;
+      setAutoLoaded(true);
+      setAutoRate(
+        r === null
+          ? null
+          : {
+              rate: r.rate,
+              source: r.source,
+              note: r.stale
+                ? `${formatDateLabel(r.effectiveDate)}時点のレートを使用中`
+                : `${formatDateLabel(r.effectiveDate)}のレート`,
+            },
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [trip.currency, date, manualRate, keepSavedRate]);
+
+  const rate = manualRate ?? autoRate?.rate ?? null;
+  const rateSource: RateSource = manualRate !== null ? 'manual' : (autoRate?.source ?? 'api');
+  const amountMinor = parseMajorToMinor(amount, decimals);
+  const jpy = rate === null ? null : toJpy(amountMinor, decimals, rate);
+
+  function confirmRate() {
+    const n = Number(rateInput);
+    if (!Number.isFinite(n) || n <= 0) {
+      setError('レートは 0 より大きい数で入力してください');
+      return;
+    }
+    setManualRate(n);
+    setEditingRate(false);
+    setError('');
+  }
+
+  function handlePhoto(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = '';
+    setPhotoFile(file);
+  }
+
+  async function handleSave() {
+    if (amountMinor <= 0) {
+      setError('金額を入力してください');
+      return;
+    }
+    if (rate === null || rate <= 0) {
+      setError('レートを入力してください');
+      return;
+    }
+
+    setSaving(true);
+    // 写真の失敗で支出そのものを失わないよう、写真は独立して扱う
+    let nextPhotoId = photoId;
+    let warning = '';
+    if (photoFile) {
+      try {
+        nextPhotoId = await savePhoto(await compressImage(photoFile));
+      } catch (e) {
+        // 容量超過は原因が分かるように文言を分ける。どちらの場合も写真だけ諦めて支出は保存する
+        const quota = e instanceof DOMException && e.name === 'QuotaExceededError';
+        warning = quota
+          ? '端末の空き容量が足りず、写真なしで保存しました'
+          : '写真は保存できませんでした';
+      }
+      setPhotoId(nextPhotoId);
+    }
+
+    try {
+      const input = {
+        tripId: trip.id,
+        date,
+        amountMinor,
+        scope,
+        category,
+        payment,
+        memo: memo.trim(),
+        rate,
+        rateSource,
+        photoId: nextPhotoId,
+      };
+      if (expense) await updateExpense(expense.id, input);
+      else await addExpense(input);
+      if (manualRate !== null) storeManualRate(trip.id, manualRate);
+      onClose(warning === '' ? '保存しました' : warning);
+    } catch {
+      setError('保存できませんでした');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Sheet title={expense ? '支出を編集' : '支出を追加'} onClose={() => onClose()}>
+      <div className="amount-display">
+        <span className="amount-major">
+          {amount === '' ? '0' : amount}
+          {symbol}
+        </span>
+        <span className="amount-jpy" data-testid="jpy-preview">
+          {jpy === null ? 'レート未設定' : formatJpy(jpy)}
+        </span>
+      </div>
+
+      <div className="rate-row">
+        {editingRate ? (
+          <>
+            <label htmlFor="rate-input">{`1${symbol} = ? 円`}</label>
+            <input
+              id="rate-input"
+              inputMode="decimal"
+              value={rateInput}
+              onChange={(e) => setRateInput(e.target.value)}
+            />
+            <button type="button" className="btn-primary" onClick={confirmRate}>
+              レートを確定
+            </button>
+          </>
+        ) : (
+          <>
+            <span className={autoRate?.note.includes('使用中') ? 'rate-note stale' : 'rate-note'}>
+              {rate === null
+                ? autoLoaded
+                  ? 'レートを取得できません。手動で入力してください'
+                  : 'レートを取得中…'
+                : `1${symbol} = ${rate}円(${manualRate !== null ? '手動' : (autoRate?.note ?? '')})`}
+            </span>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                setRateInput(rate === null ? '' : String(rate));
+                setEditingRate(true);
+              }}
+            >
+              レートを編集
+            </button>
+            {manualRate !== null && (
+              <button type="button" className="btn-ghost" onClick={() => setManualRate(null)}>
+                自動に戻す
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <Numpad value={amount} decimals={decimals} onChange={setAmount} />
+
+      <div className="segment">
+        {SCOPES.map((s) => (
+          <button
+            key={s.value}
+            type="button"
+            className={s.value === scope ? 'seg active' : 'seg'}
+            onClick={() => setScope(s.value)}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="category-grid">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.value}
+            type="button"
+            className={c.value === category ? 'cat active' : 'cat'}
+            onClick={() => setCategory(c.value)}
+          >
+            <span className="cat-icon">{c.icon}</span>
+            <span>{c.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="chips">
+        {PAYMENTS.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            className={p.value === payment ? 'chip active' : 'chip'}
+            onClick={() => setPayment(p.value)}
+          >
+            {p.icon} {p.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="form">
+        <label htmlFor="expense-memo">メモ</label>
+        <input
+          id="expense-memo"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          placeholder="店名・内容"
+        />
+
+        <label htmlFor="expense-date">日付</label>
+        <input
+          id="expense-date"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+
+        <label className="btn-ghost file-label">
+          {photoFile || photoId ? 'レシート写真: あり(撮り直す)' : 'レシート写真を撮る'}
+          <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} />
+        </label>
+      </div>
+
+      {error !== '' && <p className="error">{error}</p>}
+
+      <div className="form-actions">
+        <button type="button" className="btn-ghost" onClick={() => onClose()}>
+          キャンセル
+        </button>
+        <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
+          保存
+        </button>
+      </div>
+    </Sheet>
+  );
+}
