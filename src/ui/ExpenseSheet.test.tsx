@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
-import { addExpense, listExpenses } from '../data/expenseRepo';
+import { addExpense, listExpenses, updateExpense } from '../data/expenseRepo';
 import { getPhoto, savePhoto } from '../data/photoRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
@@ -190,5 +190,37 @@ describe('ExpenseSheet', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
 
     expect(await db.photos.count()).toBe(1);
+  });
+
+  it('写真差し替え後に updateExpense が失敗すると、旧写真は残る(参照切れを防ぐ)', async () => {
+    const oldPhotoId = await savePhoto(new Blob(['old'], { type: 'image/jpeg' }));
+    const expense = await addExpense({
+      tripId: trip.id,
+      date: '2026-09-11',
+      amountMinor: 500,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '',
+      rate: 20,
+      rateSource: 'api',
+      photoId: oldPhotoId,
+    });
+    vi.mocked(updateExpense).mockRejectedValueOnce(new Error('一時的な保存失敗'));
+
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+
+    const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/レシート写真/), newFile);
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    expect(await screen.findByText('保存できませんでした')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+
+    // 支出レコードはまだ旧 photoId を参照したまま。ここで旧写真の Blob が
+    // 消えていたら、支出から辿れる写真が無くなる(参照切れ)。
+    expect(await getPhoto(oldPhotoId)).toBeDefined();
   });
 });

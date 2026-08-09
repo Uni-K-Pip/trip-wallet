@@ -142,16 +142,9 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       try {
         nextPhotoId = await savePhoto(await compressImage(photoFile));
         // 差し替えに成功した写真だけ確定として扱う。ここで state を更新しておかないと
-        // 保存失敗後の再試行で同じ写真をもう一度圧縮・保存してしまう(二重保存・孤児化の原因)
+        // 保存失敗後の再試行で同じ写真をもう一度圧縮・保存してしまう(二重保存の原因)
         setPhotoId(nextPhotoId);
         setPhotoFile(null);
-        if (oldPhotoId !== null && oldPhotoId !== nextPhotoId) {
-          try {
-            await deletePhoto(oldPhotoId);
-          } catch {
-            // 後始末が失敗しても支出の保存は続ける。写真の孤児化より支出の記録を優先する
-          }
-        }
       } catch (e) {
         // 容量超過は原因が分かるように文言を分ける。どちらの場合も写真だけ諦めて支出は保存する
         const quota = e instanceof DOMException && e.name === 'QuotaExceededError';
@@ -176,6 +169,16 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       };
       if (expense) await updateExpense(expense.id, input);
       else await addExpense(input);
+      // 支出レコードが新しい写真を指すようになったと確定してから旧写真を消す。
+      // 順序を逆にすると、この addExpense/updateExpense が失敗したときに旧写真だけ
+      // 消えてしまい、DB 上の支出が参照する photoId の Photo が存在しない状態になる。
+      if (oldPhotoId !== null && oldPhotoId !== nextPhotoId) {
+        try {
+          await deletePhoto(oldPhotoId);
+        } catch {
+          // 後始末が失敗しても支出の保存は続ける。写真の孤児化より支出の記録を優先する
+        }
+      }
       if (manualRate !== null) storeManualRate(trip.id, manualRate);
       onClose(warning === '' ? '保存しました' : warning);
     } catch {
