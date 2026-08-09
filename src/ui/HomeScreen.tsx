@@ -152,6 +152,14 @@ export function HomeScreen({ trip }: { trip: Trip }) {
 
       {sheet !== null && (
         <ExpenseSheet
+          // key を支出ごとに変えることで、開いたまま別の支出に切り替わったときに
+          // ExpenseSheet を強制的に再マウントする。Sheet.tsx のバックドロップは
+          // 実ブラウザのポインタ操作こそ遮るが、aria-hidden/inert/フォーカストラップ
+          // が無いためキーボードの Tab フォーカスやスクリーンリーダーの読み上げ操作は
+          // 背後の行に到達し得る。key が無いと ExpenseSheet 内部の useState 初期値
+          // (amount/date/scope/category 等)はマウント時のみ評価されるため、
+          // 古い支出の入力内容のまま新しい支出の id に保存されてしまう。
+          key={sheet === 'new' ? 'new' : sheet.id}
           trip={trip}
           expense={sheet === 'new' ? undefined : sheet}
           onClose={(m) => {

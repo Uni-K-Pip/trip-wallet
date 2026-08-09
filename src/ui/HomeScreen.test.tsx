@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { db } from '../data/db';
 import { addExpense } from '../data/expenseRepo';
 import { createTrip } from '../data/tripRepo';
@@ -72,5 +72,30 @@ describe('HomeScreen', () => {
     render(<HomeScreen trip={empty} />);
 
     expect(await screen.findByText('まだ支出がありません。右下の + から追加してください。')).toBeInTheDocument();
+  });
+
+  it('シートを開いたまま別の支出の行が操作されると、新しい支出のデータで再表示される', async () => {
+    render(<HomeScreen trip={trip} />);
+
+    // 小籠包(支出A)の編集シートを開く
+    const rowA = (await screen.findByText('小籠包')).closest('button');
+    expect(rowA).not.toBeNull();
+    fireEvent.click(rowA!);
+    expect(await screen.findByLabelText('メモ')).toHaveValue('小籠包');
+
+    // シートを閉じないまま、背後にあるタクシー(支出B)の行を直接操作する。
+    // 実ブラウザでは .sheet-backdrop (z-index: 20) がポインタ操作を遮るが、
+    // キーボードの Tab フォーカス移動やスクリーンリーダーの読み上げ操作による
+    // 決定操作はその遮蔽を経由しない。jsdom は実際の CSS レイアウト・重なり判定
+    // (hit-testing)を行わないため、背後要素への fireEvent.click は、そうした
+    // ポインタ以外の到達経路を模擬する手段として使える。
+    const rowB = screen.getByText('タクシー').closest('button');
+    expect(rowB).not.toBeNull();
+    fireEvent.click(rowB!);
+
+    // key の付け替えにより ExpenseSheet が再マウントされ、支出Bの内容が
+    // 表示されるべき(key が無いと、支出Aのマウント時 useState 初期値が
+    // 残ったままになる)
+    expect(await screen.findByLabelText('メモ')).toHaveValue('タクシー');
   });
 });
