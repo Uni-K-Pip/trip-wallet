@@ -33,3 +33,191 @@ button {
   background: none;
   cursor: pointer;
 }
+
+.screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 12px 88px;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  margin: 8px 0 16px;
+}
+
+.empty,
+.hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+section {
+  margin-bottom: 28px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.btn-primary,
+.btn-ghost,
+.btn-danger {
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  min-height: 40px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #062033;
+  font-weight: 600;
+}
+
+.btn-ghost {
+  background: var(--surface-2);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+}
+
+.file-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.file-label input {
+  display: none;
+}
+
+.trip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.trip.active {
+  outline: 2px solid var(--accent);
+}
+
+.trip-main {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trip-name {
+  font-weight: 600;
+}
+
+.trip-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.form input,
+.form select {
+  background: var(--surface-2);
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--text);
+  font-size: 16px; /* iOS で入力時に拡大されないよう 16px 以上にする */
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.form-actions .btn-primary {
+  flex: 1;
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+}
+
+.sheet {
+  background: var(--bg);
+  width: 100%;
+  max-width: 640px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-header h2 {
+  font-size: 16px;
+  margin: 4px 0 8px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  background: var(--surface-2);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 30;
+}
