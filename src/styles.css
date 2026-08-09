@@ -354,3 +354,182 @@ h3 {
 .chip.active {
   outline: 2px solid var(--accent);
 }
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.card-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: block;
+}
+
+.card-jpy {
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-foreign,
+.card-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: block;
+}
+
+.card-split {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.card-split > div {
+  flex: 1;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget {
+  margin-top: 12px;
+}
+
+.budget-bar {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.budget-fill {
+  height: 100%;
+  background: var(--ok);
+}
+
+.budget-fill.over {
+  background: var(--danger);
+}
+
+.day {
+  margin-bottom: 16px;
+}
+
+.day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ex-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ex-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.ex-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.ex-icon {
+  font-size: 20px;
+}
+
+.ex-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ex-memo {
+  font-size: 14px;
+}
+
+.ex-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+.badge.shared {
+  background: var(--accent);
+  color: #062033;
+}
+
+.thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #062033;
+  font-size: 28px;
+  z-index: 10;
+}
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 15;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.tab.active {
+  color: var(--accent);
+  font-weight: 600;
+}
