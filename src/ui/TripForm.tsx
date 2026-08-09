@@ -28,12 +28,18 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
     }
 
     setSaving(true);
+    // "1.2.3" や "abc" など数値として解釈できない入力は NaN のまま保存せず null にする
+    const parsedBudget = Number(budget);
+    const budgetJpy =
+      budget.trim() === '' || !Number.isFinite(parsedBudget)
+        ? null
+        : Math.max(0, Math.round(parsedBudget));
     const input = {
       name: name.trim(),
       currency,
       startDate,
       endDate: endDate === '' ? null : endDate,
-      budgetJpy: budget.trim() === '' ? null : Math.max(0, Math.round(Number(budget))),
+      budgetJpy,
       memberCount: Math.max(1, Math.round(Number(memberCount) || 1)),
     };
 
