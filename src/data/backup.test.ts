@@ -143,4 +143,60 @@ describe('parseBackup', () => {
     );
     expect(parsed.photos).toEqual([]);
   });
+
+  it('startDate を欠いた trip を含む JSON は例外', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({
+          format: 'trip-wallet-backup',
+          version: 1,
+          exportedAt: 0,
+          trips: [
+            {
+              id: 't1',
+              name: '上海',
+              currency: 'CNY',
+              currencyDecimals: 2,
+              // startDate が欠けている
+              endDate: null,
+              budgetJpy: null,
+              memberCount: 1,
+              createdAt: 0,
+            },
+          ],
+          expenses: [],
+        }),
+      ),
+    ).toThrow('バックアップの中身が壊れています');
+  });
+
+  it('amountMinor が文字列の expense を含む JSON は例外', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({
+          format: 'trip-wallet-backup',
+          version: 1,
+          exportedAt: 0,
+          trips: [],
+          expenses: [
+            {
+              id: 'e1',
+              tripId: 't1',
+              date: '2026-09-12',
+              amountMinor: '12000',
+              scope: 'personal',
+              category: 'food',
+              payment: 'cash',
+              memo: '',
+              rate: 23.4,
+              rateSource: 'api',
+              photoId: null,
+              createdAt: 0,
+              updatedAt: 0,
+            },
+          ],
+        }),
+      ),
+    ).toThrow('バックアップの中身が壊れています');
+  });
 });

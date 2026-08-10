@@ -27,14 +27,22 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
   const rateCount = useLiveQuery(() => countCachedRates(), [], 0);
 
   async function handleExport() {
-    const json = serializeBackup(await exportBackup());
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = backupFileName();
-    a.click();
-    URL.revokeObjectURL(url);
-    setMessage('バックアップを書き出しました');
+    try {
+      const json = serializeBackup(await exportBackup());
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = backupFileName();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // revokeObjectURL を click() の直後に呼ぶと、ブラウザによってはダウンロード
+      // 開始前に URL が無効化されてしまうことがあるため、次のタスクまで遅らせる
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      setMessage('バックアップを書き出しました');
+    } catch {
+      setMessage('書き出せませんでした');
+    }
   }
 
   async function handleImport(e: ChangeEvent<HTMLInputElement>) {

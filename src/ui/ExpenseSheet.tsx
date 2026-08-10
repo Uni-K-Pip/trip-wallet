@@ -45,7 +45,7 @@ async function deletePhotosBestEffort(ids: string[]): Promise<void> {
   }
 }
 
-type AutoRate = { rate: number; source: RateSource; note: string };
+type AutoRate = { rate: number; source: RateSource; note: string; stale: boolean };
 
 type Props = {
   trip: Trip;
@@ -79,7 +79,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
 
   const [autoRate, setAutoRate] = useState<AutoRate | null>(
     expense && expense.rateSource !== 'manual'
-      ? { rate: expense.rate, source: expense.rateSource, note: '記録時のレート' }
+      ? { rate: expense.rate, source: expense.rateSource, note: '記録時のレート', stale: false }
       : null,
   );
   const [autoLoaded, setAutoLoaded] = useState(expense !== undefined);
@@ -111,6 +111,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
               note: r.stale
                 ? `${formatDateLabel(r.effectiveDate)}時点のレートを使用中`
                 : `${formatDateLabel(r.effectiveDate)}のレート`,
+              stale: r.stale,
             },
       );
     });
@@ -202,6 +203,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
         setPendingDeleteIds([]);
       }
       if (manualRate !== null) storeManualRate(trip.id, manualRate);
+      setSaving(false);
       onClose(warning === '' ? '保存しました' : warning);
     } catch {
       setError('保存できませんでした');
@@ -220,8 +222,10 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
     // まだ飛行中、という窓でここを通すと、直後に保存が成功する支出が参照する
     // 写真(commit 待ちの新写真)を先に消してしまい、参照切れかつ復元不能になる。
     // onClose の二重呼び出し(handleClose と handleSave 成功時)もここで防ぐ。
-    // 保存が失敗すれば saving は false に戻り、成功すれば handleSave が閉じるので、
-    // ユーザーがシートを閉じられなくなることはない。
+    // 保存が失敗しても成功しても handleSave 側で saving を false に戻してから
+    // onClose を呼ぶので、ユーザーがシートを閉じられなくなることはない。
+    // setSaving(false) と onClose() は同じ同期ブロック内で呼ばれるため、
+    // その間にこの handleClose が割り込んで二重に onClose が呼ばれることもない。
     if (saving) return;
 
     const initial = initialPhotoIdRef.current;
@@ -263,7 +267,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           </>
         ) : (
           <>
-            <span className={autoRate?.note.includes('使用中') ? 'rate-note stale' : 'rate-note'}>
+            <span className={autoRate?.stale ? 'rate-note stale' : 'rate-note'}>
               {rate === null
                 ? autoLoaded
                   ? 'レートを取得できません。手動で入力してください'

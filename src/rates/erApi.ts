@@ -3,7 +3,7 @@ import type { FetchedRate } from './frankfurter';
 
 /**
  * Frankfurter が落ちているときの当日レート用フォールバック。
- * 過去日は取得できないので、呼び出し側は当日のみで使うこと。
+ * 当日以外(過去日・未来日とも)では使わないこと。呼び出し側は当日のみで使うこと。
  */
 export async function fetchErApiRate(
   base: string,

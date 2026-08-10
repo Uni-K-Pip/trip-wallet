@@ -55,8 +55,12 @@ export function HomeScreen({ trip }: { trip: Trip }) {
 
   async function handleDelete(e: Expense) {
     if (!confirm('この支出を削除しますか?')) return;
-    await deleteExpense(e.id);
-    setMessage('削除しました');
+    try {
+      await deleteExpense(e.id);
+      setMessage('削除しました');
+    } catch {
+      setMessage('削除できませんでした');
+    }
   }
 
   return (

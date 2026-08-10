@@ -1,16 +1,28 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
-import { addExpense } from '../data/expenseRepo';
+import { addExpense, deleteExpense, listExpenses } from '../data/expenseRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
 import { HomeScreen } from './HomeScreen';
+
+// deleteExpense は既定では実装をそのまま呼ぶ。失敗時のふるまいを検証するテストで
+// mockRejectedValueOnce を差し込むための部分モック。
+vi.mock('../data/expenseRepo', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../data/expenseRepo')>();
+  return {
+    ...actual,
+    deleteExpense: vi.fn(actual.deleteExpense),
+  };
+});
 
 let trip: Trip;
 
 beforeEach(async () => {
   await db.delete();
   await db.open();
+  vi.mocked(deleteExpense).mockClear();
   trip = await createTrip({
     name: '上海',
     currency: 'CNY',
@@ -97,5 +109,30 @@ describe('HomeScreen', () => {
     // 表示されるべき(key が無いと、支出Aのマウント時 useState 初期値が
     // 残ったままになる)
     expect(await screen.findByLabelText('メモ')).toHaveValue('タクシー');
+  });
+
+  it('削除に失敗すると行は残ったまま失敗メッセージを出す', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(deleteExpense).mockRejectedValueOnce(new Error('一時的な削除失敗'));
+    const user = userEvent.setup();
+    render(<HomeScreen trip={trip} />);
+
+    const deleteButtons = await screen.findAllByRole('button', { name: '削除' });
+    await user.click(deleteButtons[0]);
+
+    expect(await screen.findByText('削除できませんでした')).toBeInTheDocument();
+    expect(await listExpenses(trip.id)).toHaveLength(2);
+  });
+
+  it('削除に成功すると完了メッセージを出す', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<HomeScreen trip={trip} />);
+
+    const deleteButtons = await screen.findAllByRole('button', { name: '削除' });
+    await user.click(deleteButtons[0]);
+
+    expect(await screen.findByText('削除しました')).toBeInTheDocument();
+    await waitFor(async () => expect(await listExpenses(trip.id)).toHaveLength(1));
   });
 });

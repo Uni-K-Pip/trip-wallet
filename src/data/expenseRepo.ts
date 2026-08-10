@@ -35,3 +35,7 @@ export async function listExpenses(tripId: string): Promise<Expense[]> {
     a.date === b.date ? b.createdAt - a.createdAt : b.date.localeCompare(a.date),
   );
 }
+
+export function countExpenses(tripId: string): Promise<number> {
+  return db.expenses.where('tripId').equals(tripId).count();
+}
