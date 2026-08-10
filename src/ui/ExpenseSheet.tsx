@@ -90,6 +90,12 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
         : null
       : readManualRate(trip.id),
   );
+  // 引き継いだ手動レートは、この画面で入れた値と違って「いつ入れた値か」が画面から
+  // 分からない。機内モードのように自動取得できない場面では何日も前の値をそのまま
+  // 使っていることに気づけないので、引き継ぎであることを表示で区別する。
+  const [manualCarriedOver, setManualCarriedOver] = useState(
+    expense === undefined && readManualRate(trip.id) !== null,
+  );
   const [editingRate, setEditingRate] = useState(false);
   const [rateInput, setRateInput] = useState('');
 
@@ -122,6 +128,11 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
 
   const rate = manualRate ?? autoRate?.rate ?? null;
   const rateSource: RateSource = manualRate !== null ? 'manual' : (autoRate?.source ?? 'api');
+  // 注記と警告色は、いま実際に使っているレートに合わせる。手動レートを使っている
+  // ときに自動レートの stale を見せると、どちらの話なのか分からなくなる。
+  const manualNote = manualCarriedOver ? '前回入力した手動レート' : '手動';
+  const rateNote = manualRate !== null ? manualNote : (autoRate?.note ?? '');
+  const rateStale = manualRate !== null ? manualCarriedOver : (autoRate?.stale ?? false);
   const amountMinor = parseMajorToMinor(amount, decimals);
   const jpy = rate === null ? null : toJpy(amountMinor, decimals, rate);
 
@@ -132,6 +143,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       return;
     }
     setManualRate(n);
+    setManualCarriedOver(false);
     setEditingRate(false);
     setError('');
   }
@@ -267,12 +279,12 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           </>
         ) : (
           <>
-            <span className={autoRate?.stale ? 'rate-note stale' : 'rate-note'}>
+            <span className={rateStale ? 'rate-note stale' : 'rate-note'}>
               {rate === null
                 ? autoLoaded
                   ? 'レートを取得できません。手動で入力してください'
                   : 'レートを取得中…'
-                : `1${symbol} = ${rate}円(${manualRate !== null ? '手動' : (autoRate?.note ?? '')})`}
+                : `1${symbol} = ${rate}円(${rateNote})`}
             </span>
             <button
               type="button"
