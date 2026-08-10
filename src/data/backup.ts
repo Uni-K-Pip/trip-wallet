@@ -60,6 +60,43 @@ export function serializeBackup(backup: BackupFile): string {
   return JSON.stringify(backup);
 }
 
+function isTrip(v: unknown): v is Trip {
+  if (typeof v !== 'object' || v === null) return false;
+  const t = v as Record<string, unknown>;
+  return (
+    typeof t.id === 'string' &&
+    typeof t.name === 'string' &&
+    typeof t.currency === 'string' &&
+    typeof t.startDate === 'string' &&
+    (t.endDate === null || typeof t.endDate === 'string') &&
+    typeof t.currencyDecimals === 'number' &&
+    typeof t.memberCount === 'number' &&
+    (t.budgetJpy === null || typeof t.budgetJpy === 'number')
+  );
+}
+
+function isExpense(v: unknown): v is Expense {
+  if (typeof v !== 'object' || v === null) return false;
+  const e = v as Record<string, unknown>;
+  return (
+    typeof e.id === 'string' &&
+    typeof e.tripId === 'string' &&
+    typeof e.date === 'string' &&
+    typeof e.scope === 'string' &&
+    typeof e.category === 'string' &&
+    typeof e.payment === 'string' &&
+    typeof e.amountMinor === 'number' &&
+    typeof e.rate === 'number' &&
+    (e.photoId === null || typeof e.photoId === 'string')
+  );
+}
+
+function isBackupPhoto(v: unknown): v is BackupPhoto {
+  if (typeof v !== 'object' || v === null) return false;
+  const p = v as Record<string, unknown>;
+  return typeof p.id === 'string' && typeof p.type === 'string' && typeof p.dataBase64 === 'string';
+}
+
 export function parseBackup(text: string): BackupFile {
   let json: unknown;
   try {
@@ -78,6 +115,11 @@ export function parseBackup(text: string): BackupFile {
   if (!Array.isArray(b.trips) || !Array.isArray(b.expenses)) {
     throw new Error('バックアップの中身が壊れています');
   }
+  const photos = Array.isArray(b.photos) ? b.photos : [];
+
+  if (!b.trips.every(isTrip) || !b.expenses.every(isExpense) || !photos.every(isBackupPhoto)) {
+    throw new Error('バックアップの中身が壊れています');
+  }
 
   return {
     format: 'trip-wallet-backup',
@@ -85,7 +127,7 @@ export function parseBackup(text: string): BackupFile {
     exportedAt: typeof b.exportedAt === 'number' ? b.exportedAt : 0,
     trips: b.trips,
     expenses: b.expenses,
-    photos: Array.isArray(b.photos) ? b.photos : [],
+    photos,
   };
 }
 

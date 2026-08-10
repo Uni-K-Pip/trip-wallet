@@ -30,5 +30,6 @@ export function needsExportReminder(
 ): boolean {
   if (trip === null || trip.endDate === null) return false;
   if (dismissedFor === trip.id) return false;
+  // 仕様の「終了日を過ぎたら」より 1 日早い、終了日当日から出す。帰宅前に書き出しを促すため。
   return trip.endDate <= today;
 }

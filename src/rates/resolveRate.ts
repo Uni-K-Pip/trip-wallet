@@ -78,7 +78,7 @@ export async function resolveRate(
     // 次のフォールバックへ進む
   }
 
-  // er-api は当日レートしか返さない。過去日に使うと嘘の値になる。
+  // er-api は当日レートしか返さない。当日以外(過去日・未来日とも)に使うと嘘の値になる。
   if (date === deps.today) {
     try {
       return await save(await deps.fetchErApi(base, date), 'er-api');

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
+import { addExpense } from '../data/expenseRepo';
 import { createTrip, listTrips, getTrip } from '../data/tripRepo';
 import { TripForm } from './TripForm';
 
@@ -74,5 +75,35 @@ describe('TripForm', () => {
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect((await getTrip(trip.id))?.name).toBe('上海 2026 秋');
     expect(await listTrips()).toHaveLength(1);
+  });
+
+  it('支出が 1 件以上ある旅行を編集すると通貨 select が disabled になり説明文が出る', async () => {
+    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    await addExpense({
+      tripId: trip.id,
+      date: '2026-09-12',
+      amountMinor: 12000,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '小籠包',
+      rate: 23.465,
+      rateSource: 'api',
+      photoId: null,
+    });
+    render(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
+
+    // useLiveQuery は初回レンダーで既定値 0 を返すため、disabled になるまで待つ
+    await waitFor(() => expect(screen.getByLabelText('通貨')).toBeDisabled());
+    expect(screen.getByText('支出があるため通貨は変更できません。')).toBeInTheDocument();
+  });
+
+  it('支出が 0 件の旅行を編集しても通貨 select は disabled にならない', async () => {
+    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    render(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
+
+    // useLiveQuery の解決を待ってから確認する
+    await waitFor(() => expect(screen.getByLabelText('通貨')).not.toBeDisabled());
+    expect(screen.queryByText('支出があるため通貨は変更できません。')).not.toBeInTheDocument();
   });
 });

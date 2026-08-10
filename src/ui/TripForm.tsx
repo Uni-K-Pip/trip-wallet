@@ -1,4 +1,6 @@
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
+import { countExpenses } from '../data/expenseRepo';
 import { createTrip, updateTrip } from '../data/tripRepo';
 import { CURRENCIES } from '../domain/currency';
 import { todayLocal } from '../domain/date';
@@ -19,6 +21,8 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
   const [memberCount, setMemberCount] = useState(String(trip?.memberCount ?? 1));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const expenseCount = useLiveQuery(() => (trip ? countExpenses(trip.id) : 0), [trip?.id], 0);
+  const lockCurrency = expenseCount > 0;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -64,13 +68,19 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
       />
 
       <label htmlFor="trip-currency">通貨</label>
-      <select id="trip-currency" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+      <select
+        id="trip-currency"
+        value={currency}
+        onChange={(e) => setCurrency(e.target.value)}
+        disabled={lockCurrency}
+      >
         {CURRENCIES.map((c) => (
           <option key={c.code} value={c.code}>
             {c.label}({c.code})
           </option>
         ))}
       </select>
+      {lockCurrency && <p className="hint">支出があるため通貨は変更できません。</p>}
 
       <label htmlFor="trip-start">開始日</label>
       <input
