@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense, listExpenses, updateExpense } from '../data/expenseRepo';
@@ -130,6 +130,46 @@ describe('ExpenseSheet', () => {
     render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     expect(await screen.findByText(/9\/10.*時点のレートを使用中/)).toBeInTheDocument();
+  });
+
+  it('通信が戻ったら直近レートのままにせず取り直す', async () => {
+    vi.mocked(resolveRate)
+      .mockResolvedValueOnce({
+        rate: 23.4,
+        effectiveDate: '2026-09-10',
+        source: 'cache',
+        stale: true,
+      })
+      .mockResolvedValue({
+        rate: 23.465,
+        effectiveDate: '2026-09-11',
+        source: 'api',
+        stale: false,
+      });
+    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+
+    await screen.findByText(/9\/10.*時点のレートを使用中/);
+    fireEvent(window, new Event('online'));
+
+    expect(await screen.findByText(/23\.465/)).toBeInTheDocument();
+    expect(screen.queryByText(/時点のレートを使用中/)).toBeNull();
+  });
+
+  it('通信が戻っても、引き継いだ手動レートは勝手に上書きしない', async () => {
+    vi.mocked(resolveRate).mockResolvedValue({
+      rate: 23.465,
+      effectiveDate: '2026-09-11',
+      source: 'api',
+      stale: false,
+    });
+    localStorage.setItem(`trip-wallet:manual-rate:${trip.id}`, '24');
+    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+
+    await screen.findByText(/前回入力した手動レート/);
+    fireEvent(window, new Event('online'));
+
+    await waitFor(() => expect(screen.getByText(/1元 = 24円/)).toBeInTheDocument());
+    expect(resolveRate).not.toHaveBeenCalled();
   });
 
   it('前回の手動レートを引き継いだときは、引き継ぎだと分かる形で知らせる', async () => {
