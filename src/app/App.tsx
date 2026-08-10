@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { todayLocal } from '../domain/date';
 import { HomeScreen } from '../ui/HomeScreen';
 import { SettingsScreen } from '../ui/SettingsScreen';
 import { SummaryScreen } from '../ui/SummaryScreen';
+import { usePwaUpdate, requestPersistentStorage } from './pwa';
+import { dismissReminder, needsExportReminder, readDismissedReminder } from './reminders';
 import { useActiveTrip } from './useActiveTrip';
 
 type Tab = 'home' | 'summary' | 'settings';
@@ -9,6 +12,14 @@ type Tab = 'home' | 'summary' | 'settings';
 export function App() {
   const { trips, activeTrip, loading, selectTrip } = useActiveTrip();
   const [tab, setTab] = useState<Tab>('home');
+  const { needRefresh, updateApp } = usePwaUpdate();
+  const [dismissed, setDismissed] = useState<string | null>(() => readDismissedReminder());
+
+  useEffect(() => {
+    void requestPersistentStorage();
+  }, []);
+
+  const showExportReminder = needsExportReminder(activeTrip, todayLocal(), dismissed);
 
   if (loading) {
     return (
@@ -24,6 +35,25 @@ export function App() {
         <header className="app-header">
           <h1>{activeTrip?.name ?? 'Trip Wallet'}</h1>
         </header>
+
+        {showExportReminder && activeTrip !== null && (
+          <div className="banner">
+            <span>旅行が終わりました。設定からデータを書き出しておきましょう。</span>
+            <button type="button" className="btn-primary" onClick={() => setTab('settings')}>
+              設定へ
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                dismissReminder(activeTrip.id);
+                setDismissed(activeTrip.id);
+              }}
+            >
+              閉じる
+            </button>
+          </div>
+        )}
 
         {tab === 'home' &&
           (activeTrip !== null ? (
@@ -43,6 +73,12 @@ export function App() {
           <SettingsScreen trips={trips} activeTrip={activeTrip} onSelectTrip={selectTrip} />
         )}
       </main>
+
+      {needRefresh && (
+        <button type="button" className="toast update" onClick={updateApp}>
+          新しいバージョンがあります。タップで更新
+        </button>
+      )}
 
       <nav className="tabbar">
         <button
