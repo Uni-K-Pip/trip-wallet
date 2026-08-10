@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { HomeScreen } from '../ui/HomeScreen';
 import { SettingsScreen } from '../ui/SettingsScreen';
+import { SummaryScreen } from '../ui/SummaryScreen';
 import { useActiveTrip } from './useActiveTrip';
 
-type Tab = 'home' | 'settings';
+type Tab = 'home' | 'summary' | 'settings';
 
 export function App() {
   const { trips, activeTrip, loading, selectTrip } = useActiveTrip();
@@ -31,6 +32,13 @@ export function App() {
             <p className="empty">まず「設定」タブで旅行を作成してください。</p>
           ))}
 
+        {tab === 'summary' &&
+          (activeTrip !== null ? (
+            <SummaryScreen trip={activeTrip} />
+          ) : (
+            <p className="empty">まず「設定」タブで旅行を作成してください。</p>
+          ))}
+
         {tab === 'settings' && (
           <SettingsScreen trips={trips} activeTrip={activeTrip} onSelectTrip={selectTrip} />
         )}
@@ -43,6 +51,13 @@ export function App() {
           onClick={() => setTab('home')}
         >
           🏠 ホーム
+        </button>
+        <button
+          type="button"
+          className={tab === 'summary' ? 'tab active' : 'tab'}
+          onClick={() => setTab('summary')}
+        >
+          📊 集計
         </button>
         <button
           type="button"

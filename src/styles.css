@@ -533,3 +533,41 @@ h3 {
   color: var(--accent);
   font-weight: 600;
 }
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.cat-row-name {
+  width: 88px;
+  flex-shrink: 0;
+}
+
+.cat-row-value {
+  width: 116px;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cat-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.summary .card-jpy {
+  display: block;
+}
