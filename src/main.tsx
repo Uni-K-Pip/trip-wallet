@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
+import { listTrips } from './data/tripRepo';
+import { prefetchTodayRate } from './rates/resolveRate';
 import './styles.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -10,10 +12,11 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // 現地で電波が悪くても入力が止まらないよう、起動時に当日レートを取っておく
-void import('./rates/resolveRate').then(async ({ prefetchTodayRate }) => {
-  const { listTrips } = await import('./data/tripRepo');
-  const trips = await listTrips();
-  for (const currency of new Set(trips.map((t) => t.currency))) {
-    void prefetchTodayRate(currency);
-  }
-});
+// 先読みはベストエフォートなので、失敗しても画面表示を妨げないよう握りつぶす
+void listTrips()
+  .then((trips) => {
+    for (const currency of new Set(trips.map((t) => t.currency))) {
+      void prefetchTodayRate(currency).catch(() => {});
+    }
+  })
+  .catch(() => {});
