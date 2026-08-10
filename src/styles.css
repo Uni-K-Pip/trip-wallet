@@ -571,3 +571,26 @@ h3 {
 .summary .card-jpy {
   display: block;
 }
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--surface-2);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.banner span {
+  flex: 1 1 100%;
+}
+
+.toast.update {
+  background: var(--accent);
+  color: #062033;
+  font-weight: 600;
+}
