@@ -102,6 +102,17 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   // 保存済みのレートは焼き付いた値を保つ。日付を変えたときだけ取り直す。
   const keepSavedRate = expense !== undefined && date === expense.date;
 
+  // レート解決は依存が変わったときしか走らないので、圏外や機内モードのまま直近
+  // キャッシュに落ちると、通信が戻っても古いレートを表示し続けてしまう。復帰を
+  // 拾って取り直す。手動レートを使っている間は下の effect が先に return するため、
+  // 復帰しても勝手に上書きされることはない。
+  const [onlineRetry, setOnlineRetry] = useState(0);
+  useEffect(() => {
+    const retry = () => setOnlineRetry((n) => n + 1);
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, []);
+
   useEffect(() => {
     if (manualRate !== null || keepSavedRate) return;
     let cancelled = false;
@@ -124,7 +135,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [trip.currency, date, manualRate, keepSavedRate]);
+  }, [trip.currency, date, manualRate, keepSavedRate, onlineRetry]);
 
   const rate = manualRate ?? autoRate?.rate ?? null;
   const rateSource: RateSource = manualRate !== null ? 'manual' : (autoRate?.source ?? 'api');
