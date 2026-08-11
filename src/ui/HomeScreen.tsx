@@ -29,6 +29,37 @@ function PhotoThumb({ photoId }: { photoId: string }) {
   return url === null ? null : <img className="thumb" src={url} alt="レシート" />;
 }
 
+function BudgetBar({
+  label,
+  budgetJpy,
+  usedJpy,
+  remainingJpy,
+  testId,
+}: {
+  label: string;
+  budgetJpy: number;
+  usedJpy: number;
+  remainingJpy: number;
+  testId: string;
+}) {
+  // 予算 0 のときは 0 除算を避けて使用率 0 として扱う
+  const usedRatio = budgetJpy === 0 ? 0 : Math.min(1, usedJpy / budgetJpy);
+
+  return (
+    <div className="budget">
+      <div className="budget-bar">
+        <div
+          className={usedRatio >= 1 ? 'budget-fill over' : 'budget-fill'}
+          style={{ width: `${usedRatio * 100}%` }}
+        />
+      </div>
+      <span className="card-sub" data-testid={testId}>
+        {label} {formatJpy(budgetJpy)} / 残り {formatJpy(remainingJpy)}
+      </span>
+    </div>
+  );
+}
+
 export function HomeScreen({ trip }: { trip: Trip }) {
   const expenses = useLiveQuery(() => listExpenses(trip.id), [trip.id]);
   const [sheet, setSheet] = useState<Expense | 'new' | null>(null);
@@ -48,10 +79,6 @@ export function HomeScreen({ trip }: { trip: Trip }) {
   const list = expenses;
   const summary = summarize(list, trip);
   const groups = groupByDate(list, trip);
-  const usedRatio =
-    summary.personalBudgetJpy === null || summary.personalBudgetJpy === 0
-      ? 0
-      : Math.min(1, summary.personalJpy / summary.personalBudgetJpy);
 
   async function handleDelete(e: Expense) {
     if (!confirm('この支出を削除しますか?')) return;
@@ -91,18 +118,23 @@ export function HomeScreen({ trip }: { trip: Trip }) {
         </div>
 
         {summary.personalBudgetJpy !== null && summary.personalRemainingJpy !== null && (
-          <div className="budget">
-            <div className="budget-bar">
-              <div
-                className={usedRatio >= 1 ? 'budget-fill over' : 'budget-fill'}
-                style={{ width: `${usedRatio * 100}%` }}
-              />
-            </div>
-            <span className="card-sub" data-testid="remaining-jpy">
-              予算 {formatJpy(summary.personalBudgetJpy)} / 残り{' '}
-              {formatJpy(summary.personalRemainingJpy)}
-            </span>
-          </div>
+          <BudgetBar
+            label="個別予算"
+            budgetJpy={summary.personalBudgetJpy}
+            usedJpy={summary.personalJpy}
+            remainingJpy={summary.personalRemainingJpy}
+            testId="personal-remaining-jpy"
+          />
+        )}
+
+        {summary.sharedBudgetJpy !== null && summary.sharedRemainingJpy !== null && (
+          <BudgetBar
+            label="共有予算"
+            budgetJpy={summary.sharedBudgetJpy}
+            usedJpy={summary.sharedPerPersonJpy}
+            remainingJpy={summary.sharedRemainingJpy}
+            testId="shared-remaining-jpy"
+          />
         )}
       </div>
 

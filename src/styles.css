@@ -405,6 +405,10 @@ h3 {
   margin-top: 12px;
 }
 
+.budget + .budget {
+  margin-top: 8px;
+}
+
 .budget-bar {
   height: 8px;
   background: var(--surface-2);

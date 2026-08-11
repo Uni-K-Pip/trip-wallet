@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
+import { createTrip } from '../data/tripRepo';
 import { exportBackup } from '../data/backup';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -64,5 +65,27 @@ describe('SettingsScreen のインポート', () => {
     await user.upload(input, file);
 
     expect(await screen.findByText('JSON として読み込めませんでした')).toBeInTheDocument();
+  });
+});
+
+describe('SettingsScreen の旅行一覧', () => {
+  it('旅行メタに個別予算と共有予算を出す', async () => {
+    const trip = await createTrip({
+      name: '上海',
+      currency: 'CNY',
+      personalBudgetJpy: 50000,
+      sharedBudgetJpy: 30000,
+    });
+    render(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
+
+    expect(screen.getByText(/個別 ¥50,000 \/ 共有 ¥30,000/)).toBeInTheDocument();
+  });
+
+  it('片方だけ設定されていればその側だけ出す', async () => {
+    const trip = await createTrip({ name: 'NY', currency: 'USD', sharedBudgetJpy: 30000 });
+    render(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
+
+    expect(screen.getByText(/\/ 共有 ¥30,000/)).toBeInTheDocument();
+    expect(screen.queryByText(/個別 ¥/)).not.toBeInTheDocument();
   });
 });
