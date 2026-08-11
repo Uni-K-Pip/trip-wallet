@@ -29,7 +29,7 @@ export function CategoryChart({ rows }: { rows: CategoryBreakdown[] }) {
             <span className="legend-name">
               {categoryIcon(r.category)} {categoryLabel(r.category)}
             </span>
-            <span className="legend-jpy">{formatJpy(r.jpy)}</span>
+            <span className="legend-jpy">{formatJpy(r.home)}</span>
             <span className="legend-pct">{Math.round(r.ratio * 100)}%</span>
           </li>
         ))}

@@ -29,11 +29,6 @@ export function parseMajorToMinor(input: string, decimals: number): number {
   return Math.round(Number((value * 10 ** decimals).toFixed(4)));
 }
 
-/** 外貨の最小単位を円に換算する。円換算はこの関数だけを通す。 */
-export function toJpy(amountMinor: number, decimals: number, rate: number): number {
-  return Math.round(minorToMajor(amountMinor, decimals) * rate);
-}
-
 /**
  * 外貨の最小単位を換算先通貨の最小単位にする。換算はこの関数だけを通す。
  * 桁数は旅行に保存した値を使う(通貨マスタを後から変えても過去の数字が動かないため)。

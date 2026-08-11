@@ -3,7 +3,6 @@ import {
   minorToMajor,
   formatMajor,
   parseMajorToMinor,
-  toJpy,
   toHomeMinor,
   formatJpy,
   formatWithCurrency,
@@ -60,26 +59,6 @@ describe('parseMajorToMinor', () => {
   });
 });
 
-describe('toJpy', () => {
-  it('レートを掛けて円に丸める', () => {
-    // 120.00 元 × 23.465 = 2815.8 → 2816
-    expect(toJpy(12000, 2, 23.465)).toBe(2816);
-  });
-
-  it('1 円未満は 0 になる', () => {
-    expect(toJpy(1, 2, 23.465)).toBe(0);
-  });
-
-  it('小数 0 桁の通貨も扱える', () => {
-    // 10000 ウォン × 0.1085 = 1085
-    expect(toJpy(10000, 0, 0.1085)).toBe(1085);
-  });
-
-  it('金額 0 は 0', () => {
-    expect(toJpy(0, 2, 23.465)).toBe(0);
-  });
-});
-
 describe('formatJpy', () => {
   it('通貨記号と 3 桁区切りを付ける', () => {
     expect(formatJpy(2816)).toBe('¥2,816');
@@ -110,6 +89,10 @@ describe('toHomeMinor', () => {
 
   it('金額 0 は 0', () => {
     expect(toHomeMinor(0, 2, 23.465, 2)).toBe(0);
+  });
+
+  it('換算先の最小単位に満たなければ 0 になる', () => {
+    expect(toHomeMinor(1, 2, 23.465, 0)).toBe(0);
   });
 });
 

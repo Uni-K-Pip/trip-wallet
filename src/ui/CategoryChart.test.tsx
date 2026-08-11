@@ -4,8 +4,8 @@ import type { CategoryBreakdown } from '../domain/summary';
 import { CategoryChart } from './CategoryChart';
 
 const rows: CategoryBreakdown[] = [
-  { category: 'food', jpy: 2816, ratio: 0.71 },
-  { category: 'transport', jpy: 1150, ratio: 0.29 },
+  { category: 'food', home: 2816, ratio: 0.71 },
+  { category: 'transport', home: 1150, ratio: 0.29 },
 ];
 
 describe('CategoryChart', () => {

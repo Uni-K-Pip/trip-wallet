@@ -61,12 +61,12 @@ describe('HomeScreen', () => {
   it('サマリーを表示する', async () => {
     render(<HomeScreen trip={trip} />);
 
-    expect(await screen.findByTestId('total-jpy')).toHaveTextContent('¥5,116');
-    expect(screen.getByTestId('personal-jpy')).toHaveTextContent('¥2,816');
-    expect(screen.getByTestId('shared-jpy')).toHaveTextContent('¥2,300');
+    expect(await screen.findByTestId('total-home')).toHaveTextContent('¥5,116');
+    expect(screen.getByTestId('personal-home')).toHaveTextContent('¥2,816');
+    expect(screen.getByTestId('shared-home')).toHaveTextContent('¥2,300');
     expect(screen.getByTestId('shared-per-person')).toHaveTextContent('¥1,150');
-    expect(screen.getByTestId('personal-remaining-jpy')).toHaveTextContent('¥7,184');
-    expect(screen.getByTestId('shared-remaining-jpy')).toHaveTextContent('¥1,850');
+    expect(screen.getByTestId('personal-remaining-home')).toHaveTextContent('¥7,184');
+    expect(screen.getByTestId('shared-remaining-home')).toHaveTextContent('¥1,850');
   });
 
   it('設定されている側の予算バーだけを出す', async () => {
@@ -78,8 +78,8 @@ describe('HomeScreen', () => {
     });
     render(<HomeScreen trip={personalOnly} />);
 
-    expect(await screen.findByTestId('personal-remaining-jpy')).toBeInTheDocument();
-    expect(screen.queryByTestId('shared-remaining-jpy')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('personal-remaining-home')).toBeInTheDocument();
+    expect(screen.queryByTestId('shared-remaining-home')).not.toBeInTheDocument();
   });
 
   it('予算が両方とも未設定ならバーを出さない', async () => {
@@ -87,8 +87,8 @@ describe('HomeScreen', () => {
     render(<HomeScreen trip={noBudget} />);
 
     await screen.findByText('まだ支出がありません。右下の + から追加してください。');
-    expect(screen.queryByTestId('personal-remaining-jpy')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('shared-remaining-jpy')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('personal-remaining-home')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('shared-remaining-home')).not.toBeInTheDocument();
   });
 
   it('日付ごとに支出を並べる', async () => {
