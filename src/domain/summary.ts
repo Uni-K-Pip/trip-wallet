@@ -1,5 +1,6 @@
 import type { Category, Expense, Trip } from './types';
 import { toJpy } from './money';
+import { eachDate } from './date';
 
 export type TripSummary = {
   count: number;
@@ -25,6 +26,18 @@ export type ViewScope = 'personal' | 'shared' | 'mine';
 
 export type CategoryBreakdown = { category: Category; jpy: number; ratio: number };
 export type DateTotal = { date: string; jpy: number };
+export type DailyPoint = { date: string; jpy: number };
+export type DailySeries = {
+  /** 最初の支出日〜最後の支出日を 1 日ずつ。0 円の日も含む。日付の昇順 */
+  points: DailyPoint[];
+  totalJpy: number;
+  /** 棒の高さの基準 */
+  maxJpy: number;
+  /** 最高額の日。同額なら先の日。points が空なら null */
+  peakDate: string | null;
+  /** 1 日あたりの平均。0 円の日も分母に含む */
+  averageJpy: number;
+};
 export type DateGroup = { date: string; expenses: Expense[]; jpy: number };
 
 /** 支出 1 件の円換算。焼き付けたレートを使い、再取得しない。 */
@@ -105,6 +118,45 @@ export function breakdownByCategory(
   return [...totals.entries()]
     .map(([category, jpy]) => ({ category, jpy, ratio: total === 0 ? 0 : jpy / total }))
     .sort((a, b) => b.jpy - a.jpy);
+}
+
+export function dailySeries(expenses: Expense[], trip: Trip, view: ViewScope): DailySeries {
+  const totals = new Map<string, number>();
+  for (const e of expenses) {
+    const jpy = viewJpy(e, trip, view);
+    if (jpy === null) continue;
+    totals.set(e.date, (totals.get(e.date) ?? 0) + jpy);
+  }
+
+  const dates = [...totals.keys()].sort();
+  if (dates.length === 0) {
+    return { points: [], totalJpy: 0, maxJpy: 0, peakDate: null, averageJpy: 0 };
+  }
+
+  // 支出のない日も 0 円で埋める。日付が飛ぶと旅程の中でのペースが読めなくなるため。
+  const points = eachDate(dates[0], dates[dates.length - 1]).map((date) => ({
+    date,
+    jpy: totals.get(date) ?? 0,
+  }));
+
+  let totalJpy = 0;
+  let maxJpy = 0;
+  let peakDate = points[0].date;
+  for (const p of points) {
+    totalJpy += p.jpy;
+    if (p.jpy > maxJpy) {
+      maxJpy = p.jpy;
+      peakDate = p.date;
+    }
+  }
+
+  return {
+    points,
+    totalJpy,
+    maxJpy,
+    peakDate,
+    averageJpy: Math.round(totalJpy / points.length),
+  };
 }
 
 export function totalsByDate(expenses: Expense[], trip: Trip): DateTotal[] {
