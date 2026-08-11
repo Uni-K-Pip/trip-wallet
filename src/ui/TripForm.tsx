@@ -82,7 +82,7 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
       >
         {CURRENCIES.map((c) => (
           <option key={c.code} value={c.code}>
-            {c.label}({c.code})
+            {c.flag} {c.code}
           </option>
         ))}
       </select>
