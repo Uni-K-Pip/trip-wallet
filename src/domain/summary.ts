@@ -25,7 +25,6 @@ export type TripSummary = {
 export type ViewScope = 'personal' | 'shared' | 'mine';
 
 export type CategoryBreakdown = { category: Category; jpy: number; ratio: number };
-export type DateTotal = { date: string; jpy: number };
 export type DailyPoint = { date: string; jpy: number };
 export type DailySeries = {
   /** 最初の支出日〜最後の支出日を 1 日ずつ。0 円の日も含む。日付の昇順 */
@@ -157,16 +156,6 @@ export function dailySeries(expenses: Expense[], trip: Trip, view: ViewScope): D
     peakDate,
     averageJpy: Math.round(totalJpy / points.length),
   };
-}
-
-export function totalsByDate(expenses: Expense[], trip: Trip): DateTotal[] {
-  const totals = new Map<string, number>();
-  for (const e of expenses) {
-    totals.set(e.date, (totals.get(e.date) ?? 0) + expenseJpy(e, trip));
-  }
-  return [...totals.entries()]
-    .map(([date, jpy]) => ({ date, jpy }))
-    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function groupByDate(expenses: Expense[], trip: Trip): DateGroup[] {
