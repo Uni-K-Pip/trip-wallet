@@ -45,6 +45,14 @@ button {
   margin: 8px 0 16px;
 }
 
+.trip-switch {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+
 .empty,
 .hint {
   color: var(--text-dim);
