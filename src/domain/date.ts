@@ -1,4 +1,4 @@
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
+export const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 
 /** Date を端末ローカルの "YYYY-MM-DD" にする。toISOString は UTC になるので使わない。 */
 export function toIsoDate(d: Date): string {
@@ -29,4 +29,24 @@ export function addDays(isoDate: string, days: number): string {
   const d = parseIsoDate(isoDate);
   d.setDate(d.getDate() + days);
   return toIsoDate(d);
+}
+
+/** from〜to を 1 日ずつ並べた ISO 日付。to が from より前なら空。ISO 文字列は辞書順で日付順になる。 */
+export function eachDate(from: string, to: string): string[] {
+  const dates: string[] = [];
+  let cur = from;
+  while (cur <= to) {
+    dates.push(cur);
+    cur = addDays(cur, 1);
+  }
+  return dates;
+}
+
+export function dayOfMonth(isoDate: string): number {
+  return parseIsoDate(isoDate).getDate();
+}
+
+/** 0=日 〜 6=土 */
+export function weekdayIndex(isoDate: string): number {
+  return parseIsoDate(isoDate).getDay();
 }

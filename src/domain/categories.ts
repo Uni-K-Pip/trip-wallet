@@ -1,12 +1,12 @@
 import type { Category, Payment, Scope } from './types';
 
-export const CATEGORIES: { value: Category; label: string; icon: string }[] = [
-  { value: 'food', label: '食事', icon: '🍜' },
-  { value: 'transport', label: '交通', icon: '🚇' },
-  { value: 'sightseeing', label: '観光', icon: '🎫' },
-  { value: 'shopping', label: '買物', icon: '🛍️' },
-  { value: 'lodging', label: '宿泊', icon: '🏨' },
-  { value: 'other', label: 'その他', icon: '📝' },
+export const CATEGORIES: { value: Category; label: string; icon: string; color: string }[] = [
+  { value: 'food', label: '食事', icon: '🍜', color: '#38bdf8' },
+  { value: 'transport', label: '交通', icon: '🚇', color: '#a78bfa' },
+  { value: 'sightseeing', label: '観光', icon: '🎫', color: '#4ade80' },
+  { value: 'shopping', label: '買物', icon: '🛍️', color: '#fbbf24' },
+  { value: 'lodging', label: '宿泊', icon: '🏨', color: '#f472b6' },
+  { value: 'other', label: 'その他', icon: '📝', color: '#64748b' },
 ];
 
 export const PAYMENTS: { value: Payment; label: string; icon: string }[] = [
@@ -26,6 +26,10 @@ export function categoryLabel(v: Category): string {
 
 export function categoryIcon(v: Category): string {
   return CATEGORIES.find((c) => c.value === v)?.icon ?? '📝';
+}
+
+export function categoryColor(v: Category): string {
+  return CATEGORIES.find((c) => c.value === v)?.color ?? '#64748b';
 }
 
 export function paymentLabel(v: Payment): string {

@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { todayLocal, toIsoDate, parseIsoDate, formatDateLabel, addDays } from './date';
+import {
+  todayLocal,
+  toIsoDate,
+  parseIsoDate,
+  formatDateLabel,
+  addDays,
+  eachDate,
+  dayOfMonth,
+  weekdayIndex,
+} from './date';
 
 describe('todayLocal', () => {
   it('UTC ではなく端末ローカルの日付を返す', () => {
@@ -43,5 +52,32 @@ describe('addDays', () => {
 
   it('負の日数で戻る', () => {
     expect(addDays('2026-09-01', -1)).toBe('2026-08-31');
+  });
+});
+
+describe('eachDate', () => {
+  it('月をまたいで 1 日ずつ並べる', () => {
+    expect(eachDate('2026-08-30', '2026-09-02')).toEqual([
+      '2026-08-30',
+      '2026-08-31',
+      '2026-09-01',
+      '2026-09-02',
+    ]);
+  });
+
+  it('同じ日を渡すと 1 件', () => {
+    expect(eachDate('2026-09-12', '2026-09-12')).toEqual(['2026-09-12']);
+  });
+
+  it('終わりが始まりより前なら空', () => {
+    expect(eachDate('2026-09-12', '2026-09-11')).toEqual([]);
+  });
+});
+
+describe('dayOfMonth / weekdayIndex', () => {
+  it('日と曜日を取り出す', () => {
+    expect(dayOfMonth('2026-09-12')).toBe(12);
+    expect(weekdayIndex('2026-09-12')).toBe(6); // 土
+    expect(weekdayIndex('2026-09-13')).toBe(0); // 日
   });
 });
