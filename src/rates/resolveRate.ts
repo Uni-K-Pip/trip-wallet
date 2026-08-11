@@ -27,8 +27,9 @@ function defaultDeps(): ResolveRateDeps {
     getCachedRate,
     putCachedRate,
     latestCachedRate,
-    fetchFrankfurter: (base, date) => fetchFrankfurterRate(base, date),
-    fetchErApi: (base, fallbackDate) => fetchErApiRate(base, fallbackDate),
+    // quote を通すのは Task 9。ここでは従来どおり円建てで呼ぶ。
+    fetchFrankfurter: (base, date) => fetchFrankfurterRate(base, 'JPY', date),
+    fetchErApi: (base, fallbackDate) => fetchErApiRate(base, 'JPY', fallbackDate),
     today: todayLocal(),
   };
 }
