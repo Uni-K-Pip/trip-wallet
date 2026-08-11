@@ -38,7 +38,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
   const summary = summarize(list, trip);
   const categories = breakdownByCategory(list, trip, view);
   const days = dailySeries(list, trip, view);
-  const viewTotalJpy = categories.reduce((sum, c) => sum + c.jpy, 0);
+  const viewTotalHome = categories.reduce((sum, c) => sum + c.home, 0);
 
   if (list.length === 0) {
     return <p className="empty">集計する支出がまだありません。</p>;
@@ -50,7 +50,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
         <h3>合計</h3>
         <div className="card">
           <span className="card-jpy" data-testid="summary-total">
-            {formatJpy(summary.totalJpy)}
+            {formatJpy(summary.totalHome)}
           </span>
           <span className="card-foreign">
             {formatWithCurrency(summary.totalMinor, trip.currency)} / {summary.count}件
@@ -58,19 +58,19 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
           <div className="card-split">
             <div>
               <span className="card-label">個別</span>
-              <span data-testid="summary-personal">{formatJpy(summary.personalJpy)}</span>
+              <span data-testid="summary-personal">{formatJpy(summary.personalHome)}</span>
             </div>
             <div>
               <span className="card-label">共有</span>
-              <span data-testid="summary-shared">{formatJpy(summary.sharedJpy)}</span>
+              <span data-testid="summary-shared">{formatJpy(summary.sharedHome)}</span>
               <span className="card-sub" data-testid="summary-share-note">
-                自分の負担 {formatJpy(summary.sharedPerPersonJpy)}({trip.memberCount}人)
+                自分の負担 {formatJpy(summary.sharedPerPersonHome)}({trip.memberCount}人)
               </span>
             </div>
           </div>
           <p className="card-sub">
             自分の負担合計:{' '}
-            <strong data-testid="summary-mine">{formatJpy(summary.myTotalJpy)}</strong>
+            <strong data-testid="summary-mine">{formatJpy(summary.myTotalHome)}</strong>
             (個別 + 共有の人数割り)
           </p>
         </div>
@@ -97,7 +97,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
             <h3 className="chart-head">
               <span>カテゴリ別</span>
               <em data-testid="category-head-note">
-                {viewLabel(view)} {formatJpy(viewTotalJpy)}
+                {viewLabel(view)} {formatJpy(viewTotalHome)}
               </em>
             </h3>
             <CategoryChart rows={categories} />

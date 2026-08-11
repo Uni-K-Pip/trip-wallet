@@ -5,7 +5,7 @@ import { getPhoto } from '../data/photoRepo';
 import { categoryIcon, categoryLabel, scopeLabel } from '../domain/categories';
 import { formatDateLabel } from '../domain/date';
 import { formatJpy, formatWithCurrency } from '../domain/money';
-import { expenseJpy, groupByDate, summarize } from '../domain/summary';
+import { expenseHome, groupByDate, summarize } from '../domain/summary';
 import type { Expense, Trip } from '../domain/types';
 import { ExpenseSheet } from './ExpenseSheet';
 
@@ -31,19 +31,19 @@ function PhotoThumb({ photoId }: { photoId: string }) {
 
 function BudgetBar({
   label,
-  budgetJpy,
-  usedJpy,
-  remainingJpy,
+  budgetHome,
+  usedHome,
+  remainingHome,
   testId,
 }: {
   label: string;
-  budgetJpy: number;
-  usedJpy: number;
-  remainingJpy: number;
+  budgetHome: number;
+  usedHome: number;
+  remainingHome: number;
   testId: string;
 }) {
   // 予算 0 のときは 0 除算を避けて使用率 0 として扱う
-  const usedRatio = budgetJpy === 0 ? 0 : Math.min(1, usedJpy / budgetJpy);
+  const usedRatio = budgetHome === 0 ? 0 : Math.min(1, usedHome / budgetHome);
 
   return (
     <div className="budget">
@@ -54,7 +54,7 @@ function BudgetBar({
         />
       </div>
       <span className="card-sub" data-testid={testId}>
-        {label} {formatJpy(budgetJpy)} / 残り {formatJpy(remainingJpy)}
+        {label} {formatJpy(budgetHome)} / 残り {formatJpy(remainingHome)}
       </span>
     </div>
   );
@@ -95,8 +95,8 @@ export function HomeScreen({ trip }: { trip: Trip }) {
       <div className="card">
         <div className="card-total">
           <span className="card-label">合計</span>
-          <span className="card-jpy" data-testid="total-jpy">
-            {formatJpy(summary.totalJpy)}
+          <span className="card-jpy" data-testid="total-home">
+            {formatJpy(summary.totalHome)}
           </span>
           <span className="card-foreign">
             {formatWithCurrency(summary.totalMinor, trip.currency)} / {summary.count}件
@@ -106,34 +106,34 @@ export function HomeScreen({ trip }: { trip: Trip }) {
         <div className="card-split">
           <div>
             <span className="card-label">個別</span>
-            <span data-testid="personal-jpy">{formatJpy(summary.personalJpy)}</span>
+            <span data-testid="personal-home">{formatJpy(summary.personalHome)}</span>
           </div>
           <div>
             <span className="card-label">共有</span>
-            <span data-testid="shared-jpy">{formatJpy(summary.sharedJpy)}</span>
+            <span data-testid="shared-home">{formatJpy(summary.sharedHome)}</span>
             <span className="card-sub" data-testid="shared-per-person">
-              自分の負担 {formatJpy(summary.sharedPerPersonJpy)}({trip.memberCount}人)
+              自分の負担 {formatJpy(summary.sharedPerPersonHome)}({trip.memberCount}人)
             </span>
           </div>
         </div>
 
-        {summary.personalBudgetJpy !== null && summary.personalRemainingJpy !== null && (
+        {summary.personalBudgetHome !== null && summary.personalRemainingHome !== null && (
           <BudgetBar
             label="個別予算"
-            budgetJpy={summary.personalBudgetJpy}
-            usedJpy={summary.personalJpy}
-            remainingJpy={summary.personalRemainingJpy}
-            testId="personal-remaining-jpy"
+            budgetHome={summary.personalBudgetHome}
+            usedHome={summary.personalHome}
+            remainingHome={summary.personalRemainingHome}
+            testId="personal-remaining-home"
           />
         )}
 
-        {summary.sharedBudgetJpy !== null && summary.sharedRemainingJpy !== null && (
+        {summary.sharedBudgetHome !== null && summary.sharedRemainingHome !== null && (
           <BudgetBar
             label="共有予算"
-            budgetJpy={summary.sharedBudgetJpy}
-            usedJpy={summary.sharedPerPersonJpy}
-            remainingJpy={summary.sharedRemainingJpy}
-            testId="shared-remaining-jpy"
+            budgetHome={summary.sharedBudgetHome}
+            usedHome={summary.sharedPerPersonHome}
+            remainingHome={summary.sharedRemainingHome}
+            testId="shared-remaining-home"
           />
         )}
       </div>
@@ -146,7 +146,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
         <section key={group.date} className="day">
           <div className="day-head">
             <h3>{formatDateLabel(group.date)}</h3>
-            <span className="card-sub">{formatJpy(group.jpy)}</span>
+            <span className="card-sub">{formatJpy(group.home)}</span>
           </div>
           <ul className="ex-list">
             {group.expenses.map((e) => (
@@ -159,7 +159,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
                     </span>
                     <span className="ex-sub">
                       {formatWithCurrency(e.amountMinor, trip.currency)} →{' '}
-                      {formatJpy(expenseJpy(e, trip))}
+                      {formatJpy(expenseHome(e, trip))}
                     </span>
                   </span>
                   <span className={e.scope === 'shared' ? 'badge shared' : 'badge'}>

@@ -4,7 +4,7 @@ import { deletePhoto, savePhoto } from '../data/photoRepo';
 import { CATEGORIES, PAYMENTS, SCOPES } from '../domain/categories';
 import { currencySymbol } from '../domain/currency';
 import { formatDateLabel, todayLocal } from '../domain/date';
-import { formatJpy, minorToMajor, parseMajorToMinor, toJpy } from '../domain/money';
+import { formatJpy, minorToMajor, parseMajorToMinor, toHomeMinor } from '../domain/money';
 import type { Category, Expense, Payment, RateSource, Scope, Trip } from '../domain/types';
 import { compressImage } from '../media/compressImage';
 import { resolveRate } from '../rates/resolveRate';
@@ -145,7 +145,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   const rateNote = manualRate !== null ? manualNote : (autoRate?.note ?? '');
   const rateStale = manualRate !== null ? manualCarriedOver : (autoRate?.stale ?? false);
   const amountMinor = parseMajorToMinor(amount, decimals);
-  const jpy = rate === null ? null : toJpy(amountMinor, decimals, rate);
+  const home = rate === null ? null : toHomeMinor(amountMinor, decimals, rate, trip.homeCurrencyDecimals);
 
   function confirmRate() {
     const n = Number(rateInput);
@@ -270,7 +270,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           {symbol}
         </span>
         <span className="amount-jpy" data-testid="jpy-preview">
-          {jpy === null ? 'レート未設定' : formatJpy(jpy)}
+          {home === null ? 'レート未設定' : formatJpy(home)}
         </span>
       </div>
 

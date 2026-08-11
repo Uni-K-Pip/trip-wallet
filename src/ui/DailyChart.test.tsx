@@ -6,14 +6,14 @@ import { DailyChart } from './DailyChart';
 
 const threeDays: DailySeries = {
   points: [
-    { date: '2026-09-12', jpy: 2816 },
-    { date: '2026-09-13', jpy: 0 },
-    { date: '2026-09-14', jpy: 1150 },
+    { date: '2026-09-12', home: 2816 },
+    { date: '2026-09-13', home: 0 },
+    { date: '2026-09-14', home: 1150 },
   ],
-  totalJpy: 3966,
-  maxJpy: 2816,
+  totalHome: 3966,
+  maxHome: 2816,
   peakDate: '2026-09-12',
-  averageJpy: 1322,
+  averageHome: 1322,
 };
 
 describe('DailyChart', () => {
@@ -43,15 +43,15 @@ describe('DailyChart', () => {
   });
 
   it('31 日分では日付ラベルを間引く', () => {
-    const points = eachDate('2026-09-01', '2026-10-01').map((date) => ({ date, jpy: 1000 }));
+    const points = eachDate('2026-09-01', '2026-10-01').map((date) => ({ date, home: 1000 }));
     render(
       <DailyChart
         series={{
           points,
-          totalJpy: 31000,
-          maxJpy: 1000,
+          totalHome: 31000,
+          maxHome: 1000,
           peakDate: '2026-09-01',
-          averageJpy: 1000,
+          averageHome: 1000,
         }}
       />,
     );
@@ -64,29 +64,29 @@ describe('DailyChart', () => {
   it('points が空なら何も描かない', () => {
     const { container } = render(
       <DailyChart
-        series={{ points: [], totalJpy: 0, maxJpy: 0, peakDate: null, averageJpy: 0 }}
+        series={{ points: [], totalHome: 0, maxHome: 0, peakDate: null, averageHome: 0 }}
       />,
     );
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('棒の高さが(jpy/scale)*BAR_HEIGHT に一致する', () => {
+  it('棒の高さが(home/scale)*BAR_HEIGHT に一致する', () => {
     const cleanData: DailySeries = {
       points: [
-        { date: '2026-09-12', jpy: 100 },
-        { date: '2026-09-13', jpy: 50 },
-        { date: '2026-09-14', jpy: 0 },
+        { date: '2026-09-12', home: 100 },
+        { date: '2026-09-13', home: 50 },
+        { date: '2026-09-14', home: 0 },
       ],
-      totalJpy: 150,
-      maxJpy: 100,
+      totalHome: 150,
+      maxHome: 100,
       peakDate: '2026-09-12',
-      averageJpy: 50,
+      averageHome: 50,
     };
 
     render(<DailyChart series={cleanData} />);
 
     const cols = screen.getAllByTestId('day-col');
-    // maxJpy = 100, BAR_HEIGHT = 110 なので scale = 100
+    // maxHome = 100, BAR_HEIGHT = 110 なので scale = 100
     // 最高額: (100/100)*110 = 110px
     expect(cols[0].querySelector('.daily-bar')).toHaveStyle({ height: '110px' });
     // 中間: (50/100)*110 = 55px
