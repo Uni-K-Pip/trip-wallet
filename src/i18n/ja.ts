@@ -18,6 +18,19 @@ export const ja = {
     people: (n: number) => `${n}人`,
     items: (n: number) => `${n}件`,
   },
+  app: {
+    noTrip: 'まず「設定」タブで旅行を作成してください。',
+    exportReminder: '旅行が終わりました。設定からデータを書き出しておきましょう。',
+    toSettings: '設定へ',
+    update: '新しいバージョンがあります。タップで更新',
+    tabHome: 'ホーム',
+    tabSummary: '集計',
+    tabSettings: '設定',
+  },
+  tripPicker: {
+    title: '旅行を選ぶ',
+    label: '旅行',
+  },
   category: {
     food: '食事',
     transport: '交通',

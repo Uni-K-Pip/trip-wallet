@@ -17,6 +17,19 @@ export const zh: Dictionary = {
     people: (n) => `${n}人`,
     items: (n) => `${n}笔`,
   },
+  app: {
+    noTrip: '请先在「设置」标签中创建行程。',
+    exportReminder: '行程已结束。请在设置中导出数据。',
+    toSettings: '前往设置',
+    update: '有新版本，点击更新',
+    tabHome: '首页',
+    tabSummary: '统计',
+    tabSettings: '设置',
+  },
+  tripPicker: {
+    title: '选择行程',
+    label: '行程',
+  },
   category: {
     food: '餐饮',
     transport: '交通',
