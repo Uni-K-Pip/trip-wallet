@@ -658,3 +658,59 @@ h3 {
   color: var(--text);
   font-weight: 600;
 }
+
+.stack-bar {
+  display: flex;
+  height: 22px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin-bottom: 12px;
+}
+
+.stack-seg {
+  display: block;
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--surface);
+  font-size: 13px;
+}
+
+.legend-row:last-child {
+  border-bottom: none;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  flex: 1;
+}
+
+.legend-jpy {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.legend-pct {
+  width: 34px;
+  text-align: right;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
