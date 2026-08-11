@@ -69,4 +69,29 @@ describe('DailyChart', () => {
     );
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('棒の高さが(jpy/scale)*BAR_HEIGHT に一致する', () => {
+    const cleanData: DailySeries = {
+      points: [
+        { date: '2026-09-12', jpy: 100 },
+        { date: '2026-09-13', jpy: 50 },
+        { date: '2026-09-14', jpy: 0 },
+      ],
+      totalJpy: 150,
+      maxJpy: 100,
+      peakDate: '2026-09-12',
+      averageJpy: 50,
+    };
+
+    render(<DailyChart series={cleanData} />);
+
+    const cols = screen.getAllByTestId('day-col');
+    // maxJpy = 100, BAR_HEIGHT = 110 なので scale = 100
+    // 最高額: (100/100)*110 = 110px
+    expect(cols[0].querySelector('.daily-bar')).toHaveStyle({ height: '110px' });
+    // 中間: (50/100)*110 = 55px
+    expect(cols[1].querySelector('.daily-bar')).toHaveStyle({ height: '55px' });
+    // 0円: style 属性なし（inline style が設定されない）
+    expect(cols[2].querySelector('.daily-bar')).not.toHaveAttribute('style');
+  });
 });
