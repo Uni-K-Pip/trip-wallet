@@ -20,6 +20,9 @@ export type TripSummary = {
   sharedRemainingJpy: number | null;
 };
 
+/** 図に出す対象。データの Scope とは別で、mine は個別 + 共有の人数割り。 */
+export type ViewScope = 'personal' | 'shared' | 'mine';
+
 export type CategoryBreakdown = { category: Category; jpy: number; ratio: number };
 export type DateTotal = { date: string; jpy: number };
 export type DateGroup = { date: string; expenses: Expense[]; jpy: number };
@@ -38,6 +41,13 @@ export function myShareJpy(e: Expense, trip: Trip): number {
   const jpy = expenseJpy(e, trip);
   if (e.scope === 'personal') return jpy;
   return Math.round(jpy / Math.max(1, trip.memberCount));
+}
+
+/** 表示スコープでの 1 件の円。対象外の支出なら null。 */
+function viewJpy(e: Expense, trip: Trip, view: ViewScope): number | null {
+  if (view === 'mine') return myShareJpy(e, trip);
+  if (view === 'personal') return e.scope === 'personal' ? expenseJpy(e, trip) : null;
+  return e.scope === 'shared' ? expenseJpy(e, trip) : null;
 }
 
 export function summarize(expenses: Expense[], trip: Trip): TripSummary {
@@ -77,12 +87,17 @@ export function summarize(expenses: Expense[], trip: Trip): TripSummary {
   };
 }
 
-export function breakdownByCategory(expenses: Expense[], trip: Trip): CategoryBreakdown[] {
+export function breakdownByCategory(
+  expenses: Expense[],
+  trip: Trip,
+  view: ViewScope,
+): CategoryBreakdown[] {
   const totals = new Map<Category, number>();
   let total = 0;
 
   for (const e of expenses) {
-    const jpy = expenseJpy(e, trip);
+    const jpy = viewJpy(e, trip, view);
+    if (jpy === null) continue;
     totals.set(e.category, (totals.get(e.category) ?? 0) + jpy);
     total += jpy;
   }

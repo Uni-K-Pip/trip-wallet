@@ -162,6 +162,7 @@ describe('breakdownByCategory', () => {
         expense({ amountMinor: 20000, category: 'transport' }),
       ],
       trip,
+      'mine',
     );
     expect(rows.map((r) => r.category)).toEqual(['transport', 'food']);
     expect(rows[0].jpy).toBe(4000);
@@ -172,13 +173,52 @@ describe('breakdownByCategory', () => {
     const rows = breakdownByCategory(
       [expense({ category: 'food' }), expense({ category: 'food' })],
       trip,
+      'mine',
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].jpy).toBe(4000);
   });
 
   it('支出が無ければ空配列', () => {
-    expect(breakdownByCategory([], trip)).toEqual([]);
+    expect(breakdownByCategory([], trip, 'mine')).toEqual([]);
+  });
+
+  it('個別は共有を除く', () => {
+    const rows = breakdownByCategory(
+      [expense({ category: 'food' }), expense({ category: 'transport', scope: 'shared' })],
+      trip,
+      'personal',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category).toBe('food');
+    expect(rows[0].jpy).toBe(2000);
+  });
+
+  it('共有は人数で割らない支払総額', () => {
+    const rows = breakdownByCategory(
+      [expense({ category: 'food' }), expense({ category: 'transport', scope: 'shared' })],
+      trip,
+      'shared',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category).toBe('transport');
+    expect(rows[0].jpy).toBe(2000);
+  });
+
+  it('自己負担は共有を人数で割って個別と混ぜる', () => {
+    const rows = breakdownByCategory(
+      [expense({ category: 'food' }), expense({ category: 'transport', scope: 'shared' })],
+      trip,
+      'mine',
+    );
+    expect(rows.map((r) => r.category)).toEqual(['food', 'transport']);
+    expect(rows[0].jpy).toBe(2000);
+    expect(rows[1].jpy).toBe(1000);
+    expect(rows[0].ratio).toBeCloseTo(2 / 3, 5);
+  });
+
+  it('選んだスコープに該当が無ければ空配列', () => {
+    expect(breakdownByCategory([expense()], trip, 'shared')).toEqual([]);
   });
 });
 

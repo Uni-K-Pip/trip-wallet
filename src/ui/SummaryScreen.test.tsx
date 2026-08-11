@@ -49,17 +49,17 @@ describe('SummaryScreen', () => {
     expect(screen.getByTestId('summary-mine')).toHaveTextContent('¥3,966');
   });
 
-  it('カテゴリ別を金額の多い順に並べる', async () => {
+  it('カテゴリ別を自己負担の多い順に並べる', async () => {
     render(<SummaryScreen trip={trip} />);
 
     const rows = await screen.findAllByTestId('cat-row');
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent('食事');
     expect(rows[0]).toHaveTextContent('¥2,816');
-    expect(rows[0]).toHaveTextContent('55%');
+    expect(rows[0]).toHaveTextContent('71%');
     expect(rows[1]).toHaveTextContent('交通');
-    expect(rows[1]).toHaveTextContent('¥2,300');
-    expect(rows[1]).toHaveTextContent('45%');
+    expect(rows[1]).toHaveTextContent('¥1,150');
+    expect(rows[1]).toHaveTextContent('29%');
   });
 
   it('日別推移を古い順に並べる', async () => {

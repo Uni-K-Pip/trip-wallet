@@ -22,7 +22,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
 
   const list = expenses;
   const summary = summarize(list, trip);
-  const categories = breakdownByCategory(list, trip);
+  const categories = breakdownByCategory(list, trip, 'mine');
   const days = totalsByDate(list, trip);
   const maxDayJpy = days.reduce((max, d) => Math.max(max, d.jpy), 1);
 
