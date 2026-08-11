@@ -18,7 +18,7 @@ export class TripWalletDb extends Dexie {
     });
 
     // 予算フィールドはインデックス対象ではないので stores は変えず、
-    // 旧 budgetJpy を個別予算へ移すだけの upgrade を足す。
+    // 旅行フィールドの移行と旧フィールドの削除を upgrade で行う。
     this.version(2).upgrade((tx) =>
       tx
         .table('trips')
@@ -28,6 +28,28 @@ export class TripWalletDb extends Dexie {
           delete trip.budgetJpy;
         }),
     );
+
+    // v3: 換算先通貨を旅行ごとに持たせる。レートも base だけでなく quote で引けるようにする。
+    this.version(3)
+      .stores({ rates: 'key, base, quote, [base+quote], [base+date], date' })
+      .upgrade(async (tx) => {
+        await tx
+          .table('trips')
+          .toCollection()
+          .modify((trip: Record<string, unknown>) => {
+            Object.assign(trip, migrateTrip(trip));
+            delete trip.budgetJpy;
+            delete trip.personalBudgetJpy;
+            delete trip.sharedBudgetJpy;
+          });
+        // v2 までに貯めたキャッシュはすべて円建てだった
+        await tx
+          .table('rates')
+          .toCollection()
+          .modify((r: Record<string, unknown>) => {
+            r.quote = 'JPY';
+          });
+      });
   }
 }
 
