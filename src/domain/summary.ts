@@ -12,9 +12,12 @@ export type TripSummary = {
   sharedPerPersonJpy: number;
   /** 個別 + 共有の自己負担 */
   myTotalJpy: number;
-  budgetJpy: number | null;
-  /** 予算 - 支出合計。予算未設定なら null */
-  remainingJpy: number | null;
+  personalBudgetJpy: number | null;
+  /** 個別予算 - 個別支出。予算未設定なら null */
+  personalRemainingJpy: number | null;
+  sharedBudgetJpy: number | null;
+  /** 共有予算 - 共有支出の自己負担分。予算未設定なら null */
+  sharedRemainingJpy: number | null;
 };
 
 export type CategoryBreakdown = { category: Category; jpy: number; ratio: number };
@@ -51,8 +54,12 @@ export function summarize(expenses: Expense[], trip: Trip): TripSummary {
     sharedJpy,
     sharedPerPersonJpy,
     myTotalJpy: personalJpy + sharedPerPersonJpy,
-    budgetJpy: trip.budgetJpy,
-    remainingJpy: trip.budgetJpy === null ? null : trip.budgetJpy - totalJpy,
+    personalBudgetJpy: trip.personalBudgetJpy,
+    personalRemainingJpy:
+      trip.personalBudgetJpy === null ? null : trip.personalBudgetJpy - personalJpy,
+    sharedBudgetJpy: trip.sharedBudgetJpy,
+    sharedRemainingJpy:
+      trip.sharedBudgetJpy === null ? null : trip.sharedBudgetJpy - sharedPerPersonJpy,
   };
 }
 

@@ -1,12 +1,13 @@
 import { toIsoDate } from '../domain/date';
 import type { Expense, Trip } from '../domain/types';
 import { db } from './db';
+import { migrateTripBudget } from './migrateTrip';
 
 export type BackupPhoto = { id: string; type: string; dataBase64: string };
 
 export type BackupFile = {
   format: 'trip-wallet-backup';
-  version: 1;
+  version: 2;
   exportedAt: number;
   trips: Trip[];
   expenses: Expense[];
@@ -42,7 +43,7 @@ export async function exportBackup(): Promise<BackupFile> {
 
   return {
     format: 'trip-wallet-backup',
-    version: 1,
+    version: 2,
     exportedAt: Date.now(),
     trips,
     expenses,
@@ -60,6 +61,14 @@ export function serializeBackup(backup: BackupFile): string {
   return JSON.stringify(backup);
 }
 
+/**
+ * 予算は v1 の budgetJpy と v2 の 2 フィールドのどちらの形でも受け入れる。
+ * ここの目的は壊れた JSON を弾くことで、形式ごとの網羅は migrateTripBudget の責務。
+ */
+function isBudgetField(v: unknown): boolean {
+  return v === undefined || v === null || typeof v === 'number';
+}
+
 function isTrip(v: unknown): v is Trip {
   if (typeof v !== 'object' || v === null) return false;
   const t = v as Record<string, unknown>;
@@ -71,7 +80,9 @@ function isTrip(v: unknown): v is Trip {
     (t.endDate === null || typeof t.endDate === 'string') &&
     typeof t.currencyDecimals === 'number' &&
     typeof t.memberCount === 'number' &&
-    (t.budgetJpy === null || typeof t.budgetJpy === 'number')
+    isBudgetField(t.budgetJpy) &&
+    isBudgetField(t.personalBudgetJpy) &&
+    isBudgetField(t.sharedBudgetJpy)
   );
 }
 
@@ -109,8 +120,10 @@ export function parseBackup(text: string): BackupFile {
   if (!b || b.format !== 'trip-wallet-backup') {
     throw new Error('Trip Wallet のバックアップファイルではありません');
   }
-  if (b.version !== 1) {
-    throw new Error(`対応していないバージョンです: ${String(b.version)}`);
+  // 書き出しは v2 だが、v1.0.2 以前が書いた v1 も取り込めるようにする
+  const version = (b as { version?: unknown }).version;
+  if (version !== 1 && version !== 2) {
+    throw new Error(`対応していないバージョンです: ${String(version)}`);
   }
   if (!Array.isArray(b.trips) || !Array.isArray(b.expenses)) {
     throw new Error('バックアップの中身が壊れています');
@@ -123,9 +136,9 @@ export function parseBackup(text: string): BackupFile {
 
   return {
     format: 'trip-wallet-backup',
-    version: 1,
+    version: 2,
     exportedAt: typeof b.exportedAt === 'number' ? b.exportedAt : 0,
-    trips: b.trips,
+    trips: b.trips.map((t) => migrateTripBudget(t as unknown as Record<string, unknown>)),
     expenses: b.expenses,
     photos,
   };

@@ -19,8 +19,10 @@ export type Trip = {
   /** "2026-09-12" */
   startDate: string;
   endDate: string | null;
-  /** 予算(円)。未設定は null */
-  budgetJpy: number | null;
+  /** 個別支出の予算(円)。未設定は null */
+  personalBudgetJpy: number | null;
+  /** 共有支出のうち自分の負担分の予算(円)。未設定は null */
+  sharedBudgetJpy: number | null;
   /** 共有支出を割る人数。既定 1 */
   memberCount: number;
   createdAt: number;

@@ -38,7 +38,12 @@ describe('backupFileName', () => {
 
 describe('exportBackup / importBackup', () => {
   async function seed() {
-    const trip = await createTrip({ name: '上海', currency: 'CNY', budgetJpy: 100000 });
+    const trip = await createTrip({
+      name: '上海',
+      currency: 'CNY',
+      personalBudgetJpy: 100000,
+      sharedBudgetJpy: 30000,
+    });
     const photoId = await savePhoto(new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' }));
     const expense = await addExpense({
       tripId: trip.id,
@@ -60,7 +65,7 @@ describe('exportBackup / importBackup', () => {
     const backup = await exportBackup();
 
     expect(backup.format).toBe('trip-wallet-backup');
-    expect(backup.version).toBe(1);
+    expect(backup.version).toBe(2);
     expect(backup.trips.map((t) => t.id)).toEqual([trip.id]);
     expect(backup.expenses).toHaveLength(1);
     expect(backup.photos.map((p) => p.id)).toEqual([photoId]);
@@ -80,7 +85,8 @@ describe('exportBackup / importBackup', () => {
 
     const trips = await listTrips();
     expect(trips[0].id).toBe(trip.id);
-    expect(trips[0].budgetJpy).toBe(100000);
+    expect(trips[0].personalBudgetJpy).toBe(100000);
+    expect(trips[0].sharedBudgetJpy).toBe(30000);
 
     const expenses = await listExpenses(trip.id);
     expect(expenses[0].id).toBe(expense.id);
@@ -129,6 +135,37 @@ describe('parseBackup', () => {
     expect(() =>
       parseBackup(JSON.stringify({ format: 'trip-wallet-backup', version: 99 })),
     ).toThrow();
+  });
+
+  it('v1 のバックアップを取り込むと旧予算が個別予算に入る', async () => {
+    const parsed = parseBackup(
+      JSON.stringify({
+        format: 'trip-wallet-backup',
+        version: 1,
+        exportedAt: 0,
+        trips: [
+          {
+            id: 't1',
+            name: '上海',
+            currency: 'CNY',
+            currencyDecimals: 2,
+            startDate: '2026-09-12',
+            endDate: null,
+            budgetJpy: 80000,
+            memberCount: 1,
+            createdAt: 0,
+          },
+        ],
+        expenses: [],
+      }),
+    );
+    expect(parsed.version).toBe(2);
+
+    await importBackup(parsed);
+    const trips = await listTrips();
+    expect(trips[0].personalBudgetJpy).toBe(80000);
+    expect(trips[0].sharedBudgetJpy).toBeNull();
+    expect('budgetJpy' in trips[0]).toBe(false);
   });
 
   it('photos が無い古い形式は空配列として受け入れる', () => {

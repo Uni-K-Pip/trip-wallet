@@ -15,7 +15,8 @@ const trip: Trip = {
   currencyDecimals: 2,
   startDate: '2026-09-12',
   endDate: '2026-09-15',
-  budgetJpy: 100000,
+  personalBudgetJpy: 100000,
+  sharedBudgetJpy: 50000,
   memberCount: 2,
   createdAt: 0,
 };
@@ -58,7 +59,8 @@ describe('summarize', () => {
     expect(s.totalMinor).toBe(0);
     expect(s.totalJpy).toBe(0);
     expect(s.myTotalJpy).toBe(0);
-    expect(s.remainingJpy).toBe(100000);
+    expect(s.personalRemainingJpy).toBe(100000);
+    expect(s.sharedRemainingJpy).toBe(50000);
   });
 
   it('個別と共有を分けて集計し、共有は人数で割る', () => {
@@ -75,14 +77,34 @@ describe('summarize', () => {
     expect(s.totalJpy).toBe(6000);
   });
 
-  it('残額は支出合計(自己負担ではない)を予算から引く', () => {
-    const s = summarize([expense({ amountMinor: 20000, scope: 'shared' })], trip);
-    expect(s.remainingJpy).toBe(96000);
+  it('個別の残額は個別支出だけを引く', () => {
+    const s = summarize(
+      [expense({ amountMinor: 10000 }), expense({ amountMinor: 20000, scope: 'shared' })],
+      trip,
+    );
+    expect(s.personalBudgetJpy).toBe(100000);
+    expect(s.personalRemainingJpy).toBe(98000);
   });
 
-  it('予算未設定なら残額は null', () => {
-    const s = summarize([expense()], { ...trip, budgetJpy: null });
-    expect(s.remainingJpy).toBeNull();
+  it('共有の残額は人数割り後の自己負担を引く', () => {
+    // 共有 4000 円 / 2 人 = 自己負担 2000 円
+    const s = summarize([expense({ amountMinor: 20000, scope: 'shared' })], trip);
+    expect(s.sharedBudgetJpy).toBe(50000);
+    expect(s.sharedRemainingJpy).toBe(48000);
+  });
+
+  it('予算未設定なら残額は null。片方だけ設定もできる', () => {
+    const none = summarize([expense()], {
+      ...trip,
+      personalBudgetJpy: null,
+      sharedBudgetJpy: null,
+    });
+    expect(none.personalRemainingJpy).toBeNull();
+    expect(none.sharedRemainingJpy).toBeNull();
+
+    const personalOnly = summarize([expense()], { ...trip, sharedBudgetJpy: null });
+    expect(personalOnly.personalRemainingJpy).toBe(98000);
+    expect(personalOnly.sharedRemainingJpy).toBeNull();
   });
 
   it('人数が 0 でも 0 除算しない', () => {

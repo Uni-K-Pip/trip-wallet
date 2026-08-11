@@ -10,7 +10,8 @@ function trip(id: string): Trip {
     currencyDecimals: 2,
     startDate: '2026-09-12',
     endDate: null,
-    budgetJpy: null,
+    personalBudgetJpy: null,
+    sharedBudgetJpy: null,
     memberCount: 1,
     createdAt: 0,
   };

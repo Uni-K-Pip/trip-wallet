@@ -46,7 +46,8 @@ describe('tripRepo', () => {
   it('既定値は 1 人・予算なし・終了日なし', async () => {
     const trip = await createTrip({ name: '上海', currency: 'CNY' });
     expect(trip.memberCount).toBe(1);
-    expect(trip.budgetJpy).toBeNull();
+    expect(trip.personalBudgetJpy).toBeNull();
+    expect(trip.sharedBudgetJpy).toBeNull();
     expect(trip.endDate).toBeNull();
   });
 
