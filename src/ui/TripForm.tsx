@@ -17,7 +17,9 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
   const [currency, setCurrency] = useState(trip?.currency ?? 'USD');
   const [startDate, setStartDate] = useState(trip?.startDate ?? todayLocal());
   const [endDate, setEndDate] = useState(trip?.endDate ?? '');
-  const [budget, setBudget] = useState(trip?.budgetJpy === null || trip === undefined ? '' : String(trip.budgetJpy));
+  const [budget, setBudget] = useState(
+    trip === undefined || trip.personalBudgetJpy === null ? '' : String(trip.personalBudgetJpy),
+  );
   const [memberCount, setMemberCount] = useState(String(trip?.memberCount ?? 1));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -34,7 +36,7 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
     setSaving(true);
     // "1.2.3" や "abc" など数値として解釈できない入力は NaN のまま保存せず null にする
     const parsedBudget = Number(budget);
-    const budgetJpy =
+    const personalBudgetJpy =
       budget.trim() === '' || !Number.isFinite(parsedBudget)
         ? null
         : Math.max(0, Math.round(parsedBudget));
@@ -43,7 +45,7 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
       currency,
       startDate,
       endDate: endDate === '' ? null : endDate,
-      budgetJpy,
+      personalBudgetJpy,
       memberCount: Math.max(1, Math.round(Number(memberCount) || 1)),
     };
 

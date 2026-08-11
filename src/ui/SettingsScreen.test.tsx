@@ -39,7 +39,7 @@ describe('SettingsScreen のエクスポート', () => {
   it('正常時は「バックアップを書き出しました」が出る', async () => {
     vi.mocked(exportBackup).mockResolvedValue({
       format: 'trip-wallet-backup',
-      version: 1,
+      version: 2,
       exportedAt: 0,
       trips: [],
       expenses: [],

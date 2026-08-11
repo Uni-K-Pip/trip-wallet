@@ -84,7 +84,9 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
                 <span className="trip-meta">
                   {trip.currency} / {formatDateLabel(trip.startDate)}
                   {trip.endDate ? `〜${formatDateLabel(trip.endDate)}` : ''} / {trip.memberCount}人
-                  {trip.budgetJpy !== null ? ` / 予算 ${formatJpy(trip.budgetJpy)}` : ''}
+                  {trip.personalBudgetJpy !== null
+                    ? ` / 予算 ${formatJpy(trip.personalBudgetJpy)}`
+                    : ''}
                 </span>
               </button>
               <button type="button" className="btn-ghost" onClick={() => setEditing(trip)}>

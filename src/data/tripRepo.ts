@@ -8,7 +8,8 @@ export type TripInput = {
   currency: string;
   startDate?: string;
   endDate?: string | null;
-  budgetJpy?: number | null;
+  personalBudgetJpy?: number | null;
+  sharedBudgetJpy?: number | null;
   memberCount?: number;
 };
 
@@ -20,7 +21,8 @@ export async function createTrip(input: TripInput): Promise<Trip> {
     currencyDecimals: currencyDecimals(input.currency),
     startDate: input.startDate ?? todayLocal(),
     endDate: input.endDate ?? null,
-    budgetJpy: input.budgetJpy ?? null,
+    personalBudgetJpy: input.personalBudgetJpy ?? null,
+    sharedBudgetJpy: input.sharedBudgetJpy ?? null,
     memberCount: Math.max(1, input.memberCount ?? 1),
     createdAt: Date.now(),
   };
@@ -33,7 +35,8 @@ export async function updateTrip(id: string, patch: Partial<TripInput>): Promise
   if (patch.name !== undefined) changes.name = patch.name;
   if (patch.startDate !== undefined) changes.startDate = patch.startDate;
   if (patch.endDate !== undefined) changes.endDate = patch.endDate;
-  if (patch.budgetJpy !== undefined) changes.budgetJpy = patch.budgetJpy;
+  if (patch.personalBudgetJpy !== undefined) changes.personalBudgetJpy = patch.personalBudgetJpy;
+  if (patch.sharedBudgetJpy !== undefined) changes.sharedBudgetJpy = patch.sharedBudgetJpy;
   if (patch.memberCount !== undefined) changes.memberCount = Math.max(1, patch.memberCount);
   if (patch.currency !== undefined) {
     changes.currency = patch.currency;

@@ -49,9 +49,9 @@ export function HomeScreen({ trip }: { trip: Trip }) {
   const summary = summarize(list, trip);
   const groups = groupByDate(list, trip);
   const usedRatio =
-    summary.budgetJpy === null || summary.budgetJpy === 0
+    summary.personalBudgetJpy === null || summary.personalBudgetJpy === 0
       ? 0
-      : Math.min(1, summary.totalJpy / summary.budgetJpy);
+      : Math.min(1, summary.personalJpy / summary.personalBudgetJpy);
 
   async function handleDelete(e: Expense) {
     if (!confirm('この支出を削除しますか?')) return;
@@ -90,7 +90,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
           </div>
         </div>
 
-        {summary.budgetJpy !== null && summary.remainingJpy !== null && (
+        {summary.personalBudgetJpy !== null && summary.personalRemainingJpy !== null && (
           <div className="budget">
             <div className="budget-bar">
               <div
@@ -99,7 +99,8 @@ export function HomeScreen({ trip }: { trip: Trip }) {
               />
             </div>
             <span className="card-sub" data-testid="remaining-jpy">
-              予算 {formatJpy(summary.budgetJpy)} / 残り {formatJpy(summary.remainingJpy)}
+              予算 {formatJpy(summary.personalBudgetJpy)} / 残り{' '}
+              {formatJpy(summary.personalRemainingJpy)}
             </span>
           </div>
         )}

@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { Expense, Photo, RateCache, Trip } from '../domain/types';
+import { migrateTripBudget } from './migrateTrip';
 
 export class TripWalletDb extends Dexie {
   trips!: EntityTable<Trip, 'id'>;
@@ -15,6 +16,20 @@ export class TripWalletDb extends Dexie {
       photos: 'id',
       rates: 'key, base, [base+date], date',
     });
+
+    // 予算フィールドはインデックス対象ではないので stores は変えず、
+    // 旧 budgetJpy を個別予算へ移すだけの upgrade を足す。
+    this.version(2).upgrade((tx) =>
+      tx
+        .table('trips')
+        .toCollection()
+        .modify((trip: Record<string, unknown>) => {
+          const migrated = migrateTripBudget(trip);
+          trip.personalBudgetJpy = migrated.personalBudgetJpy;
+          trip.sharedBudgetJpy = migrated.sharedBudgetJpy;
+          delete trip.budgetJpy;
+        }),
+    );
   }
 }
 

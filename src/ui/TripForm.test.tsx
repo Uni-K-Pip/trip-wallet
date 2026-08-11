@@ -41,10 +41,10 @@ describe('TripForm', () => {
     expect(trips[0].currency).toBe('CNY');
     expect(trips[0].currencyDecimals).toBe(2);
     expect(trips[0].memberCount).toBe(2);
-    expect(trips[0].budgetJpy).toBe(100000);
+    expect(trips[0].personalBudgetJpy).toBe(100000);
   });
 
-  it('予算に数値として解釈できない文字列を入れたら budgetJpy は null になる', async () => {
+  it('予算に数値として解釈できない文字列を入れたら null になる', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
     render(<TripForm onDone={onDone} onCancel={() => {}} />);
@@ -56,7 +56,7 @@ describe('TripForm', () => {
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     const trips = await listTrips();
     expect(trips).toHaveLength(1);
-    expect(trips[0].budgetJpy).toBeNull();
+    expect(trips[0].personalBudgetJpy).toBeNull();
   });
 
   it('旅行名が空なら保存しない', async () => {

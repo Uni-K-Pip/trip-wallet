@@ -27,7 +27,7 @@ beforeEach(async () => {
     name: '上海',
     currency: 'CNY',
     memberCount: 2,
-    budgetJpy: 10000,
+    personalBudgetJpy: 10000,
   });
   await addExpense({
     tripId: trip.id,
@@ -63,7 +63,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('personal-jpy')).toHaveTextContent('¥2,816');
     expect(screen.getByTestId('shared-jpy')).toHaveTextContent('¥2,300');
     expect(screen.getByTestId('shared-per-person')).toHaveTextContent('¥1,150');
-    expect(screen.getByTestId('remaining-jpy')).toHaveTextContent('¥4,884');
+    expect(screen.getByTestId('remaining-jpy')).toHaveTextContent('¥7,184');
   });
 
   it('日付ごとに支出を並べる', async () => {
