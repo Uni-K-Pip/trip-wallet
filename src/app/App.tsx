@@ -3,6 +3,7 @@ import { todayLocal } from '../domain/date';
 import { HomeScreen } from '../ui/HomeScreen';
 import { SettingsScreen } from '../ui/SettingsScreen';
 import { SummaryScreen } from '../ui/SummaryScreen';
+import { TripPickerSheet } from '../ui/TripPickerSheet';
 import { usePwaUpdate, requestPersistentStorage } from './pwa';
 import { dismissReminder, needsExportReminder, readDismissedReminder } from './reminders';
 import { useActiveTrip } from './useActiveTrip';
@@ -14,6 +15,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>('home');
   const { needRefresh, updateApp } = usePwaUpdate();
   const [dismissed, setDismissed] = useState<string | null>(() => readDismissedReminder());
+  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     void requestPersistentStorage();
@@ -33,7 +35,23 @@ export function App() {
     <>
       <main className="screen">
         <header className="app-header">
-          <h1>{activeTrip?.name ?? 'Trip Wallet'}</h1>
+          {/* 設定タブには旅行リストがあるので切り替えボタンを出さない。
+              旅行が 1 件以下のときも切り替える先が無いのでただの見出しにする。 */}
+          {tab !== 'settings' && activeTrip !== null && trips.length > 1 ? (
+            <h1>
+              <button
+                type="button"
+                className="trip-switch"
+                aria-haspopup="dialog"
+                onClick={() => setPicking(true)}
+              >
+                {activeTrip.name}
+                <span aria-hidden="true"> ▾</span>
+              </button>
+            </h1>
+          ) : (
+            <h1>{activeTrip?.name ?? 'Trip Wallet'}</h1>
+          )}
         </header>
 
         {showExportReminder && activeTrip !== null && (
@@ -73,6 +91,18 @@ export function App() {
           <SettingsScreen trips={trips} activeTrip={activeTrip} onSelectTrip={selectTrip} />
         )}
       </main>
+
+      {picking && activeTrip !== null && (
+        <TripPickerSheet
+          trips={trips}
+          activeTripId={activeTrip.id}
+          onSelect={(id) => {
+            selectTrip(id);
+            setPicking(false);
+          }}
+          onClose={() => setPicking(false)}
+        />
+      )}
 
       {needRefresh && (
         <button type="button" className="toast update" onClick={updateApp}>
