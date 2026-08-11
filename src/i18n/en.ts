@@ -17,6 +17,19 @@ export const en: Dictionary = {
     people: (n) => `${n} ${n === 1 ? 'person' : 'people'}`,
     items: (n) => `${n} ${n === 1 ? 'item' : 'items'}`,
   },
+  app: {
+    noTrip: 'Create a trip from the Settings tab first.',
+    exportReminder: 'Your trip has ended. Export your data from Settings.',
+    toSettings: 'Settings',
+    update: 'A new version is available. Tap to update',
+    tabHome: 'Home',
+    tabSummary: 'Summary',
+    tabSettings: 'Settings',
+  },
+  tripPicker: {
+    title: 'Choose a trip',
+    label: 'Trip',
+  },
   category: {
     food: 'Food',
     transport: 'Transit',

@@ -91,3 +91,11 @@ describe('App のヘッダー', () => {
     expect(heading.querySelector('button')).toBeNull();
   });
 });
+
+describe('App の多言語表示', () => {
+  it('英語ならタブが英語で出る', async () => {
+    renderWithLang(<App />, 'en');
+    expect(await screen.findByRole('button', { name: /Summary/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Settings/ })).toBeInTheDocument();
+  });
+});

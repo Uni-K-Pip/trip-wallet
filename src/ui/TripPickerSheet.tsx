@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Trip } from '../domain/types';
+import { useI18n } from '../i18n/LangContext';
 import { Sheet } from './Sheet';
 import { WheelPicker } from './WheelPicker';
 
@@ -11,20 +12,21 @@ type Props = {
 };
 
 export function TripPickerSheet({ trips, activeTripId, onSelect, onClose }: Props) {
+  const { t } = useI18n();
   // 「決定」を押すまでは確定させない。✕ や背景タップで閉じたら選択を捨てる。
   const [pickedId, setPickedId] = useState(activeTripId);
 
   return (
-    <Sheet title="旅行を選ぶ" onClose={onClose}>
+    <Sheet title={t.tripPicker.title} onClose={onClose}>
       <WheelPicker
-        items={trips.map((t) => ({ id: t.id, label: t.name }))}
+        items={trips.map((trip) => ({ id: trip.id, label: trip.name }))}
         selectedId={pickedId}
         onChange={setPickedId}
-        label="旅行"
+        label={t.tripPicker.label}
       />
       <div className="form-actions">
         <button type="button" className="btn-primary" onClick={() => onSelect(pickedId)}>
-          決定
+          {t.common.confirm}
         </button>
       </div>
     </Sheet>

@@ -17,6 +17,19 @@ export const ko: Dictionary = {
     people: (n) => `${n}명`,
     items: (n) => `${n}건`,
   },
+  app: {
+    noTrip: '먼저 「설정」 탭에서 여행을 만들어 주세요.',
+    exportReminder: '여행이 끝났습니다. 설정에서 데이터를 내보내 두세요.',
+    toSettings: '설정으로',
+    update: '새 버전이 있습니다. 탭하여 업데이트',
+    tabHome: '홈',
+    tabSummary: '집계',
+    tabSettings: '설정',
+  },
+  tripPicker: {
+    title: '여행 선택',
+    label: '여행',
+  },
   category: {
     food: '식사',
     transport: '교통',
