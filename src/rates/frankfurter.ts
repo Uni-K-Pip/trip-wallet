@@ -24,7 +24,7 @@ export async function fetchFrankfurterRate(
   const json = (await res.json()) as { date?: string; rates?: Record<string, number> };
   const scaled = json.rates?.[quote];
   if (typeof scaled !== 'number' || !Number.isFinite(scaled) || scaled <= 0) {
-    throw new Error(`Frankfurter が ${base} のレートを返さなかった`);
+    throw new Error(`Frankfurter が ${quote} のレートを返さなかった`);
   }
   return { rate: scaled / AMOUNT, effectiveDate: json.date ?? date };
 }
