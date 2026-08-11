@@ -5,6 +5,7 @@ import {
   myShareJpy,
   summarize,
   breakdownByCategory,
+  dailySeries,
   totalsByDate,
   groupByDate,
 } from './summary';
@@ -219,6 +220,72 @@ describe('breakdownByCategory', () => {
 
   it('選んだスコープに該当が無ければ空配列', () => {
     expect(breakdownByCategory([expense()], trip, 'shared')).toEqual([]);
+  });
+});
+
+describe('dailySeries', () => {
+  it('支出のない日を 0 円で埋める', () => {
+    const s = dailySeries(
+      [expense({ date: '2026-09-12' }), expense({ date: '2026-09-15' })],
+      trip,
+      'mine',
+    );
+    expect(s.points.map((p) => p.date)).toEqual([
+      '2026-09-12',
+      '2026-09-13',
+      '2026-09-14',
+      '2026-09-15',
+    ]);
+    expect(s.points.map((p) => p.jpy)).toEqual([2000, 0, 0, 2000]);
+  });
+
+  it('範囲は旅行期間ではなく最初と最後の支出日', () => {
+    // 旅行は 9/12〜9/15 だが支出は 9/13 の 1 件だけ。まだ来ていない日は出さない。
+    const s = dailySeries([expense({ date: '2026-09-13' })], trip, 'mine');
+    expect(s.points.map((p) => p.date)).toEqual(['2026-09-13']);
+  });
+
+  it('平均は 0 円の日も分母に入れる', () => {
+    const s = dailySeries(
+      [expense({ date: '2026-09-12' }), expense({ date: '2026-09-14' })],
+      trip,
+      'mine',
+    );
+    expect(s.totalJpy).toBe(4000);
+    expect(s.averageJpy).toBe(1333); // 4000 / 3 日
+  });
+
+  it('最高額の日を返す。同額なら先の日', () => {
+    const s = dailySeries(
+      [
+        expense({ date: '2026-09-12', amountMinor: 5000 }),
+        expense({ date: '2026-09-13', amountMinor: 20000 }),
+        expense({ date: '2026-09-14', amountMinor: 20000 }),
+      ],
+      trip,
+      'mine',
+    );
+    expect(s.maxJpy).toBe(4000);
+    expect(s.peakDate).toBe('2026-09-13');
+  });
+
+  it('表示スコープで対象を絞る', () => {
+    const s = dailySeries(
+      [expense({ date: '2026-09-12' }), expense({ date: '2026-09-13', scope: 'shared' })],
+      trip,
+      'shared',
+    );
+    expect(s.points).toEqual([{ date: '2026-09-13', jpy: 2000 }]);
+  });
+
+  it('選んだスコープに該当が無ければ空', () => {
+    expect(dailySeries([expense()], trip, 'shared')).toEqual({
+      points: [],
+      totalJpy: 0,
+      maxJpy: 0,
+      peakDate: null,
+      averageJpy: 0,
+    });
   });
 });
 
