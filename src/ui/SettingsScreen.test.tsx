@@ -73,8 +73,9 @@ describe('SettingsScreen の旅行一覧', () => {
     const trip = await createTrip({
       name: '上海',
       currency: 'CNY',
-      personalBudgetJpy: 50000,
-      sharedBudgetJpy: 30000,
+      homeCurrency: 'JPY',
+      personalBudgetHome: 50000,
+      sharedBudgetHome: 30000,
     });
     render(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
 
@@ -82,7 +83,12 @@ describe('SettingsScreen の旅行一覧', () => {
   });
 
   it('片方だけ設定されていればその側だけ出す', async () => {
-    const trip = await createTrip({ name: 'NY', currency: 'USD', sharedBudgetJpy: 30000 });
+    const trip = await createTrip({
+      name: 'NY',
+      currency: 'USD',
+      homeCurrency: 'JPY',
+      sharedBudgetHome: 30000,
+    });
     render(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
 
     expect(screen.getByText(/\/ 共有 ¥30,000/)).toBeInTheDocument();

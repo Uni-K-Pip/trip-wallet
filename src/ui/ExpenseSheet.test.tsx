@@ -38,7 +38,7 @@ beforeEach(async () => {
   await db.open();
   localStorage.clear();
   vi.mocked(resolveRate).mockReset();
-  trip = await createTrip({ name: '上海', currency: 'CNY', memberCount: 2 });
+  trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY', memberCount: 2 });
 });
 
 describe('ExpenseSheet', () => {

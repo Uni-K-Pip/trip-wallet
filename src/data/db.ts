@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { Expense, Photo, RateCache, Trip } from '../domain/types';
-import { migrateTripBudget } from './migrateTrip';
+import { migrateTrip } from './migrateTrip';
 
 export class TripWalletDb extends Dexie {
   trips!: EntityTable<Trip, 'id'>;
@@ -24,9 +24,7 @@ export class TripWalletDb extends Dexie {
         .table('trips')
         .toCollection()
         .modify((trip: Record<string, unknown>) => {
-          const migrated = migrateTripBudget(trip);
-          trip.personalBudgetJpy = migrated.personalBudgetJpy;
-          trip.sharedBudgetJpy = migrated.sharedBudgetJpy;
+          Object.assign(trip, migrateTrip(trip));
           delete trip.budgetJpy;
         }),
     );

@@ -58,6 +58,8 @@ export async function resolveRate(
     await deps.putCachedRate({
       key: rateKey(base, date),
       base,
+      // 暫定で JPY 固定。Task 9 で任意の通貨ペアに対応する
+      quote: 'JPY',
       date,
       rate: fetched.rate,
       effectiveDate: fetched.effectiveDate,

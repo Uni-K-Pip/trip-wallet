@@ -6,6 +6,7 @@ function cacheEntry(over: Partial<RateCache> = {}): RateCache {
   return {
     key: 'CNY:JPY:2026-09-12',
     base: 'CNY',
+    quote: 'JPY',
     date: '2026-09-12',
     rate: 23.4,
     effectiveDate: '2026-09-12',

@@ -90,12 +90,12 @@ export function summarize(expenses: Expense[], trip: Trip): TripSummary {
     sharedJpy,
     sharedPerPersonJpy,
     myTotalJpy: personalJpy + sharedPerPersonJpy,
-    personalBudgetJpy: trip.personalBudgetJpy,
+    personalBudgetJpy: trip.personalBudgetHome,
     personalRemainingJpy:
-      trip.personalBudgetJpy === null ? null : trip.personalBudgetJpy - personalJpy,
-    sharedBudgetJpy: trip.sharedBudgetJpy,
+      trip.personalBudgetHome === null ? null : trip.personalBudgetHome - personalJpy,
+    sharedBudgetJpy: trip.sharedBudgetHome,
     sharedRemainingJpy:
-      trip.sharedBudgetJpy === null ? null : trip.sharedBudgetJpy - sharedPerPersonJpy,
+      trip.sharedBudgetHome === null ? null : trip.sharedBudgetHome - sharedPerPersonJpy,
   };
 }
 
