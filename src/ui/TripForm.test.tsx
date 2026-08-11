@@ -12,6 +12,16 @@ beforeEach(async () => {
 });
 
 describe('TripForm', () => {
+  it('新規作成時の初期通貨は米ドル', () => {
+    render(<TripForm onDone={() => {}} onCancel={() => {}} />);
+    expect(screen.getByLabelText('通貨')).toHaveValue('USD');
+  });
+
+  it('旅行名の入力例は NY 2026-09', () => {
+    render(<TripForm onDone={() => {}} onCancel={() => {}} />);
+    expect(screen.getByLabelText('旅行名')).toHaveAttribute('placeholder', 'NY 2026-09');
+  });
+
   it('入力した内容で旅行を作る', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();

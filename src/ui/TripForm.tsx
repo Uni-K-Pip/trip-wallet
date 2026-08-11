@@ -14,7 +14,7 @@ type Props = {
 
 export function TripForm({ trip, onDone, onCancel }: Props) {
   const [name, setName] = useState(trip?.name ?? '');
-  const [currency, setCurrency] = useState(trip?.currency ?? 'CNY');
+  const [currency, setCurrency] = useState(trip?.currency ?? 'USD');
   const [startDate, setStartDate] = useState(trip?.startDate ?? todayLocal());
   const [endDate, setEndDate] = useState(trip?.endDate ?? '');
   const [budget, setBudget] = useState(trip?.budgetJpy === null || trip === undefined ? '' : String(trip.budgetJpy));
@@ -64,7 +64,7 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
         id="trip-name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="上海 2026-09"
+        placeholder="NY 2026-09"
       />
 
       <label htmlFor="trip-currency">通貨</label>

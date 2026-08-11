@@ -32,7 +32,7 @@ npm run preview
 
 ## 対応通貨
 
-Frankfurter が使う ECB 参照レートの対象通貨のみ: CNY / KRW / USD / EUR / THB / HKD / SGD / GBP / AUD。TWD など ECB が公表していない通貨は自動取得できないため入れていない。
+Frankfurter が使う ECB 参照レートの対象通貨のみ: AUD / CNY / EUR / GBP / HKD / KRW / SGD / THB / USD。TWD など ECB が公表していない通貨は自動取得できないため入れていない。
 
 ## 手動確認チェックリスト
 
