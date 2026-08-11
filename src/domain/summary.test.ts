@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { Expense, Trip } from './types';
 import {
   expenseJpy,
+  myShareJpy,
   summarize,
   breakdownByCategory,
   totalsByDate,
@@ -49,6 +50,25 @@ describe('expenseJpy', () => {
 
   it('支出ごとにレートが違っても各自のレートを使う', () => {
     expect(expenseJpy(expense({ rate: 25 }), trip)).toBe(2500);
+  });
+});
+
+describe('myShareJpy', () => {
+  it('個別はそのままの額', () => {
+    expect(myShareJpy(expense(), trip)).toBe(2000);
+  });
+
+  it('共有は人数で割る', () => {
+    expect(myShareJpy(expense({ scope: 'shared' }), trip)).toBe(1000);
+  });
+
+  it('割り切れないときは 1 件ごとに四捨五入する', () => {
+    // 2000 円 / 3 人 = 666.67 → 667 円
+    expect(myShareJpy(expense({ scope: 'shared' }), { ...trip, memberCount: 3 })).toBe(667);
+  });
+
+  it('人数が 0 でも 0 除算しない', () => {
+    expect(myShareJpy(expense({ scope: 'shared' }), { ...trip, memberCount: 0 })).toBe(2000);
   });
 });
 
@@ -110,6 +130,17 @@ describe('summarize', () => {
   it('人数が 0 でも 0 除算しない', () => {
     const s = summarize([expense({ scope: 'shared' })], { ...trip, memberCount: 0 });
     expect(s.sharedPerPersonJpy).toBe(2000);
+  });
+
+  it('共有の自己負担は 1 件ずつ割ってから足す', () => {
+    // 2000 円 / 3 人 = 667 円が 2 件で 1334 円。先に合計 4000 円を割ると 1333 円になり、
+    // カテゴリ別・日別の積み上げと合わなくなる。
+    const s = summarize([expense({ scope: 'shared' }), expense({ scope: 'shared' })], {
+      ...trip,
+      memberCount: 3,
+    });
+    expect(s.sharedPerPersonJpy).toBe(1334);
+    expect(s.myTotalJpy).toBe(1334);
   });
 
   it('合計は行ごとに丸めた円の和にする(表示と一致させるため)', () => {
