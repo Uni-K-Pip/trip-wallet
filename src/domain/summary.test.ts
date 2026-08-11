@@ -6,7 +6,6 @@ import {
   summarize,
   breakdownByCategory,
   dailySeries,
-  totalsByDate,
   groupByDate,
 } from './summary';
 
@@ -286,17 +285,6 @@ describe('dailySeries', () => {
       peakDate: null,
       averageJpy: 0,
     });
-  });
-});
-
-describe('totalsByDate', () => {
-  it('日付の昇順で日別合計を返す', () => {
-    const rows = totalsByDate(
-      [expense({ date: '2026-09-13' }), expense({ date: '2026-09-12' })],
-      trip,
-    );
-    expect(rows.map((r) => r.date)).toEqual(['2026-09-12', '2026-09-13']);
-    expect(rows[0].jpy).toBe(2000);
   });
 });
 

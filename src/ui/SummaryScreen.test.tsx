@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense } from '../data/expenseRepo';
 import { createTrip } from '../data/tripRepo';
@@ -49,7 +50,7 @@ describe('SummaryScreen', () => {
     expect(screen.getByTestId('summary-mine')).toHaveTextContent('¥3,966');
   });
 
-  it('カテゴリ別を自己負担の多い順に並べる', async () => {
+  it('初期表示は自己負担で、カテゴリ別を多い順に並べる', async () => {
     render(<SummaryScreen trip={trip} />);
 
     const rows = await screen.findAllByTestId('cat-row');
@@ -60,22 +61,82 @@ describe('SummaryScreen', () => {
     expect(rows[1]).toHaveTextContent('交通');
     expect(rows[1]).toHaveTextContent('¥1,150');
     expect(rows[1]).toHaveTextContent('29%');
+    expect(screen.getByTestId('category-head-note')).toHaveTextContent('自己負担 ¥3,966');
+    expect(screen.getByTestId('daily-head-note')).toHaveTextContent('自己負担');
   });
 
-  it('日別推移を古い順に並べる', async () => {
+  it('日別推移を古い順に並べ、日付と金額を読み上げられる', async () => {
     render(<SummaryScreen trip={trip} />);
 
-    const rows = await screen.findAllByTestId('day-row');
-    expect(rows.map((r) => r.textContent)).toEqual([
-      expect.stringContaining('9/11(金)'),
-      expect.stringContaining('9/12(土)'),
+    const cols = await screen.findAllByTestId('day-col');
+    expect(cols.map((c) => c.getAttribute('aria-label'))).toEqual([
+      '9/11(金) ¥1,150',
+      '9/12(土) ¥2,816',
     ]);
+  });
+
+  it('共有に切り替えると共有だけの図になる', async () => {
+    render(<SummaryScreen trip={trip} />);
+    await screen.findAllByTestId('cat-row');
+
+    await userEvent.click(screen.getByRole('button', { name: '共有' }));
+
+    const rows = screen.getAllByTestId('cat-row');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('交通');
     expect(rows[0]).toHaveTextContent('¥2,300');
-    expect(rows[1]).toHaveTextContent('¥2,816');
+    expect(screen.getByTestId('category-head-note')).toHaveTextContent('共有 ¥2,300');
+    expect(screen.getAllByTestId('day-col')).toHaveLength(1);
+  });
+
+  it('個別に切り替えると個別だけの図になる', async () => {
+    render(<SummaryScreen trip={trip} />);
+    await screen.findAllByTestId('cat-row');
+
+    await userEvent.click(screen.getByRole('button', { name: '個別' }));
+
+    const rows = screen.getAllByTestId('cat-row');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('食事');
+    expect(rows[0]).toHaveTextContent('¥2,816');
+    expect(screen.getByTestId('category-head-note')).toHaveTextContent('個別 ¥2,816');
+  });
+
+  it('切り替えても合計カードは変わらない', async () => {
+    render(<SummaryScreen trip={trip} />);
+    expect(await screen.findByTestId('summary-total')).toHaveTextContent('¥5,116');
+
+    await userEvent.click(screen.getByRole('button', { name: '個別' }));
+
+    expect(screen.getByTestId('summary-total')).toHaveTextContent('¥5,116');
+    expect(screen.getByTestId('summary-mine')).toHaveTextContent('¥3,966');
+  });
+
+  it('選んだスコープに支出が無ければその旨を出す', async () => {
+    const solo = await createTrip({ name: '香港', currency: 'HKD' });
+    await addExpense({
+      tripId: solo.id,
+      date: '2026-09-12',
+      amountMinor: 10000,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '',
+      rate: 20,
+      rateSource: 'api',
+      photoId: null,
+    });
+    render(<SummaryScreen trip={solo} />);
+    await screen.findAllByTestId('cat-row');
+
+    await userEvent.click(screen.getByRole('button', { name: '共有' }));
+
+    expect(screen.getByText('共有の支出はまだありません。')).toBeInTheDocument();
+    expect(screen.queryAllByTestId('cat-row')).toHaveLength(0);
   });
 
   it('支出が無ければ案内を出す', async () => {
-    const empty = await createTrip({ name: '香港', currency: 'HKD' });
+    const empty = await createTrip({ name: '台北', currency: 'USD' });
     render(<SummaryScreen trip={empty} />);
 
     expect(await screen.findByText('集計する支出がまだありません。')).toBeInTheDocument();
