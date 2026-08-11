@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import type { Expense, Trip } from './types';
 import {
   expenseJpy,
+  myShareJpy,
   summarize,
   breakdownByCategory,
-  totalsByDate,
+  dailySeries,
   groupByDate,
 } from './summary';
 
@@ -49,6 +50,25 @@ describe('expenseJpy', () => {
 
   it('支出ごとにレートが違っても各自のレートを使う', () => {
     expect(expenseJpy(expense({ rate: 25 }), trip)).toBe(2500);
+  });
+});
+
+describe('myShareJpy', () => {
+  it('個別はそのままの額', () => {
+    expect(myShareJpy(expense(), trip)).toBe(2000);
+  });
+
+  it('共有は人数で割る', () => {
+    expect(myShareJpy(expense({ scope: 'shared' }), trip)).toBe(1000);
+  });
+
+  it('割り切れないときは 1 件ごとに四捨五入する', () => {
+    // 2000 円 / 3 人 = 666.67 → 667 円
+    expect(myShareJpy(expense({ scope: 'shared' }), { ...trip, memberCount: 3 })).toBe(667);
+  });
+
+  it('人数が 0 でも 0 除算しない', () => {
+    expect(myShareJpy(expense({ scope: 'shared' }), { ...trip, memberCount: 0 })).toBe(2000);
   });
 });
 
@@ -112,6 +132,17 @@ describe('summarize', () => {
     expect(s.sharedPerPersonJpy).toBe(2000);
   });
 
+  it('共有の自己負担は 1 件ずつ割ってから足す', () => {
+    // 2000 円 / 3 人 = 667 円が 2 件で 1334 円。先に合計 4000 円を割ると 1333 円になり、
+    // カテゴリ別・日別の積み上げと合わなくなる。
+    const s = summarize([expense({ scope: 'shared' }), expense({ scope: 'shared' })], {
+      ...trip,
+      memberCount: 3,
+    });
+    expect(s.sharedPerPersonJpy).toBe(1334);
+    expect(s.myTotalJpy).toBe(1334);
+  });
+
   it('合計は行ごとに丸めた円の和にする(表示と一致させるため)', () => {
     // 0.03 元 × 23.465 = 0.70395 → 行の表示は 1 円。2 行なので合計 2 円。
     // 先に合計してから丸めると 1 円になり、画面の行と合わない。
@@ -131,6 +162,7 @@ describe('breakdownByCategory', () => {
         expense({ amountMinor: 20000, category: 'transport' }),
       ],
       trip,
+      'mine',
     );
     expect(rows.map((r) => r.category)).toEqual(['transport', 'food']);
     expect(rows[0].jpy).toBe(4000);
@@ -141,24 +173,118 @@ describe('breakdownByCategory', () => {
     const rows = breakdownByCategory(
       [expense({ category: 'food' }), expense({ category: 'food' })],
       trip,
+      'mine',
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].jpy).toBe(4000);
   });
 
   it('支出が無ければ空配列', () => {
-    expect(breakdownByCategory([], trip)).toEqual([]);
+    expect(breakdownByCategory([], trip, 'mine')).toEqual([]);
+  });
+
+  it('個別は共有を除く', () => {
+    const rows = breakdownByCategory(
+      [expense({ category: 'food' }), expense({ category: 'transport', scope: 'shared' })],
+      trip,
+      'personal',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category).toBe('food');
+    expect(rows[0].jpy).toBe(2000);
+  });
+
+  it('共有は人数で割らない支払総額', () => {
+    const rows = breakdownByCategory(
+      [expense({ category: 'food' }), expense({ category: 'transport', scope: 'shared' })],
+      trip,
+      'shared',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category).toBe('transport');
+    expect(rows[0].jpy).toBe(2000);
+  });
+
+  it('自己負担は共有を人数で割って個別と混ぜる', () => {
+    const rows = breakdownByCategory(
+      [expense({ category: 'food' }), expense({ category: 'transport', scope: 'shared' })],
+      trip,
+      'mine',
+    );
+    expect(rows.map((r) => r.category)).toEqual(['food', 'transport']);
+    expect(rows[0].jpy).toBe(2000);
+    expect(rows[1].jpy).toBe(1000);
+    expect(rows[0].ratio).toBeCloseTo(2 / 3, 5);
+  });
+
+  it('選んだスコープに該当が無ければ空配列', () => {
+    expect(breakdownByCategory([expense()], trip, 'shared')).toEqual([]);
   });
 });
 
-describe('totalsByDate', () => {
-  it('日付の昇順で日別合計を返す', () => {
-    const rows = totalsByDate(
-      [expense({ date: '2026-09-13' }), expense({ date: '2026-09-12' })],
+describe('dailySeries', () => {
+  it('支出のない日を 0 円で埋める', () => {
+    const s = dailySeries(
+      [expense({ date: '2026-09-12' }), expense({ date: '2026-09-15' })],
       trip,
+      'mine',
     );
-    expect(rows.map((r) => r.date)).toEqual(['2026-09-12', '2026-09-13']);
-    expect(rows[0].jpy).toBe(2000);
+    expect(s.points.map((p) => p.date)).toEqual([
+      '2026-09-12',
+      '2026-09-13',
+      '2026-09-14',
+      '2026-09-15',
+    ]);
+    expect(s.points.map((p) => p.jpy)).toEqual([2000, 0, 0, 2000]);
+  });
+
+  it('範囲は旅行期間ではなく最初と最後の支出日', () => {
+    // 旅行は 9/12〜9/15 だが支出は 9/13 の 1 件だけ。まだ来ていない日は出さない。
+    const s = dailySeries([expense({ date: '2026-09-13' })], trip, 'mine');
+    expect(s.points.map((p) => p.date)).toEqual(['2026-09-13']);
+  });
+
+  it('平均は 0 円の日も分母に入れる', () => {
+    const s = dailySeries(
+      [expense({ date: '2026-09-12' }), expense({ date: '2026-09-14' })],
+      trip,
+      'mine',
+    );
+    expect(s.totalJpy).toBe(4000);
+    expect(s.averageJpy).toBe(1333); // 4000 / 3 日
+  });
+
+  it('最高額の日を返す。同額なら先の日', () => {
+    const s = dailySeries(
+      [
+        expense({ date: '2026-09-12', amountMinor: 5000 }),
+        expense({ date: '2026-09-13', amountMinor: 20000 }),
+        expense({ date: '2026-09-14', amountMinor: 20000 }),
+      ],
+      trip,
+      'mine',
+    );
+    expect(s.maxJpy).toBe(4000);
+    expect(s.peakDate).toBe('2026-09-13');
+  });
+
+  it('表示スコープで対象を絞る', () => {
+    const s = dailySeries(
+      [expense({ date: '2026-09-12' }), expense({ date: '2026-09-13', scope: 'shared' })],
+      trip,
+      'shared',
+    );
+    expect(s.points).toEqual([{ date: '2026-09-13', jpy: 2000 }]);
+  });
+
+  it('選んだスコープに該当が無ければ空', () => {
+    expect(dailySeries([expense()], trip, 'shared')).toEqual({
+      points: [],
+      totalJpy: 0,
+      maxJpy: 0,
+      peakDate: null,
+      averageJpy: 0,
+    });
   });
 });
 
