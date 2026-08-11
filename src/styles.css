@@ -714,3 +714,84 @@ h3 {
   font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
+
+.daily-bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.daily-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.daily-bar {
+  display: block;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+}
+
+.daily-bar.peak {
+  background: #7dd3fc;
+}
+
+.daily-bar.zero {
+  height: 2px;
+  background: var(--surface-2);
+}
+
+.daily-avg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #f472b6;
+}
+
+.daily-avg span {
+  position: absolute;
+  right: 0;
+  top: -14px;
+  font-size: 10px;
+  color: #f472b6;
+  background: var(--bg);
+  padding: 0 3px;
+}
+
+.daily-axis {
+  display: flex;
+  margin-top: 5px;
+}
+
+.daily-tick {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+
+.daily-tick.sat {
+  color: #7dd3fc;
+}
+
+.daily-tick.sun {
+  color: #fca5a5;
+}
+
+.daily-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.daily-foot b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
