@@ -29,22 +29,36 @@ export function expenseJpy(e: Expense, trip: Trip): number {
   return toJpy(e.amountMinor, trip.currencyDecimals, e.rate);
 }
 
+/**
+ * 支出 1 件の自己負担。共有は人数で割る。
+ * 合計を割るのではなく 1 件ごとに丸めるのは、カテゴリ別・日別の積み上げと
+ * 合計カードの数字を一致させるため。
+ */
+export function myShareJpy(e: Expense, trip: Trip): number {
+  const jpy = expenseJpy(e, trip);
+  if (e.scope === 'personal') return jpy;
+  return Math.round(jpy / Math.max(1, trip.memberCount));
+}
+
 export function summarize(expenses: Expense[], trip: Trip): TripSummary {
   let totalMinor = 0;
   let personalJpy = 0;
   let sharedJpy = 0;
+  let sharedPerPersonJpy = 0;
 
   for (const e of expenses) {
     totalMinor += e.amountMinor;
     // 行ごとに丸めてから足す。画面に出る各行の合計と一致させるため。
     const jpy = expenseJpy(e, trip);
-    if (e.scope === 'shared') sharedJpy += jpy;
-    else personalJpy += jpy;
+    if (e.scope === 'shared') {
+      sharedJpy += jpy;
+      sharedPerPersonJpy += myShareJpy(e, trip);
+    } else {
+      personalJpy += jpy;
+    }
   }
 
   const totalJpy = personalJpy + sharedJpy;
-  const members = Math.max(1, trip.memberCount);
-  const sharedPerPersonJpy = Math.round(sharedJpy / members);
 
   return {
     count: expenses.length,
