@@ -12,13 +12,22 @@ type Props = {
   onCancel: () => void;
 };
 
+/** "1.2.3" や "abc" など数値として解釈できない入力は NaN のまま保存せず null にする。 */
+function parseBudget(text: string): number | null {
+  const n = Number(text);
+  return text.trim() === '' || !Number.isFinite(n) ? null : Math.max(0, Math.round(n));
+}
+
 export function TripForm({ trip, onDone, onCancel }: Props) {
   const [name, setName] = useState(trip?.name ?? '');
   const [currency, setCurrency] = useState(trip?.currency ?? 'USD');
   const [startDate, setStartDate] = useState(trip?.startDate ?? todayLocal());
   const [endDate, setEndDate] = useState(trip?.endDate ?? '');
-  const [budget, setBudget] = useState(
+  const [personalBudget, setPersonalBudget] = useState(
     trip === undefined || trip.personalBudgetJpy === null ? '' : String(trip.personalBudgetJpy),
+  );
+  const [sharedBudget, setSharedBudget] = useState(
+    trip === undefined || trip.sharedBudgetJpy === null ? '' : String(trip.sharedBudgetJpy),
   );
   const [memberCount, setMemberCount] = useState(String(trip?.memberCount ?? 1));
   const [error, setError] = useState('');
@@ -34,18 +43,13 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
     }
 
     setSaving(true);
-    // "1.2.3" や "abc" など数値として解釈できない入力は NaN のまま保存せず null にする
-    const parsedBudget = Number(budget);
-    const personalBudgetJpy =
-      budget.trim() === '' || !Number.isFinite(parsedBudget)
-        ? null
-        : Math.max(0, Math.round(parsedBudget));
     const input = {
       name: name.trim(),
       currency,
       startDate,
       endDate: endDate === '' ? null : endDate,
-      personalBudgetJpy,
+      personalBudgetJpy: parseBudget(personalBudget),
+      sharedBudgetJpy: parseBudget(sharedBudget),
       memberCount: Math.max(1, Math.round(Number(memberCount) || 1)),
     };
 
@@ -100,12 +104,21 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
         onChange={(e) => setEndDate(e.target.value)}
       />
 
-      <label htmlFor="trip-budget">予算(円)</label>
+      <label htmlFor="trip-personal-budget">個別予算(円)</label>
       <input
-        id="trip-budget"
+        id="trip-personal-budget"
         inputMode="numeric"
-        value={budget}
-        onChange={(e) => setBudget(e.target.value)}
+        value={personalBudget}
+        onChange={(e) => setPersonalBudget(e.target.value)}
+        placeholder="未設定"
+      />
+
+      <label htmlFor="trip-shared-budget">共有予算(円・自分の負担分)</label>
+      <input
+        id="trip-shared-budget"
+        inputMode="numeric"
+        value={sharedBudget}
+        onChange={(e) => setSharedBudget(e.target.value)}
         placeholder="未設定"
       />
 

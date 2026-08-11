@@ -31,7 +31,8 @@ describe('TripForm', () => {
     await user.selectOptions(screen.getByLabelText('通貨'), 'CNY');
     await user.clear(screen.getByLabelText('人数'));
     await user.type(screen.getByLabelText('人数'), '2');
-    await user.type(screen.getByLabelText('予算(円)'), '100000');
+    await user.type(screen.getByLabelText('個別予算(円)'), '100000');
+    await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '30000');
     await user.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
@@ -42,6 +43,7 @@ describe('TripForm', () => {
     expect(trips[0].currencyDecimals).toBe(2);
     expect(trips[0].memberCount).toBe(2);
     expect(trips[0].personalBudgetJpy).toBe(100000);
+    expect(trips[0].sharedBudgetJpy).toBe(30000);
   });
 
   it('予算に数値として解釈できない文字列を入れたら null になる', async () => {
@@ -49,14 +51,31 @@ describe('TripForm', () => {
     const onDone = vi.fn();
     render(<TripForm onDone={onDone} onCancel={() => {}} />);
 
-    await user.type(screen.getByLabelText('旅行名'), '上海 2026-09');
-    await user.type(screen.getByLabelText('予算(円)'), 'abc');
+    await user.type(screen.getByLabelText('旅行名'), 'NY 2026-09');
+    await user.type(screen.getByLabelText('個別予算(円)'), 'abc');
+    await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '1.2.3');
     await user.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     const trips = await listTrips();
     expect(trips).toHaveLength(1);
     expect(trips[0].personalBudgetJpy).toBeNull();
+    expect(trips[0].sharedBudgetJpy).toBeNull();
+  });
+
+  it('片方だけ予算を入れても保存できる', async () => {
+    const user = userEvent.setup();
+    const onDone = vi.fn();
+    render(<TripForm onDone={onDone} onCancel={() => {}} />);
+
+    await user.type(screen.getByLabelText('旅行名'), 'NY 2026-09');
+    await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '30000');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    const trips = await listTrips();
+    expect(trips[0].personalBudgetJpy).toBeNull();
+    expect(trips[0].sharedBudgetJpy).toBe(30000);
   });
 
   it('旅行名が空なら保存しない', async () => {

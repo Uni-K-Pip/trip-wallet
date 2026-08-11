@@ -21,6 +21,14 @@ type Props = {
   onSelectTrip: (id: string) => void;
 };
 
+/** 設定されている側だけを ` / 個別 ¥50,000 / 共有 ¥30,000` の形で返す。両方未設定なら空文字。 */
+function budgetLabel(trip: Trip): string {
+  const parts: string[] = [];
+  if (trip.personalBudgetJpy !== null) parts.push(`個別 ${formatJpy(trip.personalBudgetJpy)}`);
+  if (trip.sharedBudgetJpy !== null) parts.push(`共有 ${formatJpy(trip.sharedBudgetJpy)}`);
+  return parts.length === 0 ? '' : ` / ${parts.join(' / ')}`;
+}
+
 export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
   const [editing, setEditing] = useState<Trip | 'new' | null>(null);
   const [message, setMessage] = useState('');
@@ -84,9 +92,7 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
                 <span className="trip-meta">
                   {trip.currency} / {formatDateLabel(trip.startDate)}
                   {trip.endDate ? `〜${formatDateLabel(trip.endDate)}` : ''} / {trip.memberCount}人
-                  {trip.personalBudgetJpy !== null
-                    ? ` / 予算 ${formatJpy(trip.personalBudgetJpy)}`
-                    : ''}
+                  {budgetLabel(trip)}
                 </span>
               </button>
               <button type="button" className="btn-ghost" onClick={() => setEditing(trip)}>
