@@ -8,3 +8,7 @@ import 'fake-indexeddb/auto';
 // Node 組み込みの Blob / File に差し替えて写真の保存と読み出しを検証できるようにする。
 globalThis.Blob = NodeBlob;
 globalThis.File = NodeFile;
+
+// テストの既定言語を日本語に固定する。CI と手元で navigator.languages が違うと
+// 画面の文言アサーションが環境依存になるため。
+Object.defineProperty(navigator, 'languages', { value: ['ja-JP', 'ja'], configurable: true });
