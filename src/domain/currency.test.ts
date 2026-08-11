@@ -16,6 +16,11 @@ describe('CURRENCIES', () => {
     const codes = CURRENCIES.map((c) => c.code);
     expect(new Set(codes).size).toBe(codes.length);
   });
+
+  it('ISO 4217 コードの昇順に並んでいる', () => {
+    const codes = CURRENCIES.map((c) => c.code);
+    expect(codes).toEqual([...codes].sort());
+  });
 });
 
 describe('currencyDecimals', () => {
