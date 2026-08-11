@@ -7,23 +7,26 @@ export type Category =
   | 'lodging'
   | 'other';
 export type Payment = 'cash' | 'mobile' | 'card';
-export type RateSource = 'api' | 'cache' | 'manual';
+/** same は現地通貨と換算先通貨が同じでレートが 1 の場合 */
+export type RateSource = 'api' | 'cache' | 'manual' | 'same';
 
 export type Trip = {
   id: string;
   name: string;
-  /** ISO 4217。"CNY" など */
+  /** 現地通貨。ISO 4217。"CNY" など */
   currency: string;
-  /** 最小単位の桁数。CNY は 2、KRW は 0 */
+  /** 現地通貨の最小単位の桁数。旅行を作った時点の値を保存する */
   currencyDecimals: number;
-  /** "2026-09-12" */
+  /** 換算先通貨。ISO 4217。"JPY" など */
+  homeCurrency: string;
+  /** 換算先通貨の最小単位の桁数 */
+  homeCurrencyDecimals: number;
   startDate: string;
   endDate: string | null;
-  /** 個別支出の予算(円)。未設定は null */
-  personalBudgetJpy: number | null;
-  /** 共有支出のうち自分の負担分の予算(円)。未設定は null */
-  sharedBudgetJpy: number | null;
-  /** 共有支出を割る人数。既定 1 */
+  /** 個別支出の予算(換算先通貨の最小単位)。未設定は null */
+  personalBudgetHome: number | null;
+  /** 共有支出のうち自分の負担分の予算(換算先通貨の最小単位)。未設定は null */
+  sharedBudgetHome: number | null;
   memberCount: number;
   createdAt: number;
 };
@@ -57,6 +60,8 @@ export type RateCache = {
   /** "CNY:JPY:2026-09-12" */
   key: string;
   base: string;
+  /** 換算先通貨 */
+  quote: string;
   date: string;
   rate: number;
   /** API が実際に返した日付。土日祝は直近営業日になる */

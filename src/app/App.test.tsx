@@ -26,8 +26,8 @@ beforeEach(async () => {
  * どちらがアクティブかを createdAt の並びに頼ると不安定なので localStorage で固定する。
  */
 async function seedTwoTrips(): Promise<void> {
-  await createTrip({ name: '上海 2026-09', currency: 'CNY' });
-  const ny = await createTrip({ name: 'NY 2026-09', currency: 'USD' });
+  await createTrip({ name: '上海 2026-09', currency: 'CNY', homeCurrency: 'JPY' });
+  const ny = await createTrip({ name: 'NY 2026-09', currency: 'USD', homeCurrency: 'JPY' });
   localStorage.setItem('trip-wallet:active-trip', ny.id);
 }
 
@@ -41,7 +41,7 @@ describe('App のヘッダー', () => {
   });
 
   it('旅行が 1 件ならヘッダーはボタンにならない', async () => {
-    await createTrip({ name: 'NY 2026-09', currency: 'USD' });
+    await createTrip({ name: 'NY 2026-09', currency: 'USD', homeCurrency: 'JPY' });
     render(<App />);
 
     // ▾ の span は aria-hidden なので、ボタンでもアクセシブル名は旅行名だけになる。

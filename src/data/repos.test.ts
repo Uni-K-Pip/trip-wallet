@@ -35,44 +35,49 @@ function expenseInput(over: Partial<ExpenseInput> = {}): ExpenseInput {
 
 describe('tripRepo', () => {
   it('通貨から小数桁数を自動で決めて保存する', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     expect(trip.currencyDecimals).toBe(2);
     expect((await getTrip(trip.id))?.name).toBe('上海');
 
-    const seoul = await createTrip({ name: 'ソウル', currency: 'KRW' });
+    const seoul = await createTrip({ name: 'ソウル', currency: 'KRW', homeCurrency: 'JPY' });
     expect(seoul.currencyDecimals).toBe(0);
   });
 
   it('既定値は 1 人・予算なし・終了日なし', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     expect(trip.memberCount).toBe(1);
-    expect(trip.personalBudgetJpy).toBeNull();
-    expect(trip.sharedBudgetJpy).toBeNull();
+    expect(trip.personalBudgetHome).toBeNull();
+    expect(trip.sharedBudgetHome).toBeNull();
     expect(trip.endDate).toBeNull();
   });
 
   it('新しい旅行から順に並ぶ', async () => {
-    const a = await createTrip({ name: '古い', currency: 'CNY' });
+    const a = await createTrip({ name: '古い', currency: 'CNY', homeCurrency: 'JPY' });
     await new Promise((r) => setTimeout(r, 2));
-    const b = await createTrip({ name: '新しい', currency: 'CNY' });
+    const b = await createTrip({ name: '新しい', currency: 'CNY', homeCurrency: 'JPY' });
     expect((await listTrips()).map((t) => t.id)).toEqual([b.id, a.id]);
   });
 
   it('通貨を変えると小数桁数も追随する', async () => {
-    const trip = await createTrip({ name: '旅', currency: 'CNY' });
+    const trip = await createTrip({ name: '旅', currency: 'CNY', homeCurrency: 'JPY' });
     await updateTrip(trip.id, { currency: 'KRW' });
     expect((await getTrip(trip.id))?.currencyDecimals).toBe(0);
   });
 
   it('人数は 1 未満にできない', async () => {
-    const trip = await createTrip({ name: '旅', currency: 'CNY', memberCount: 0 });
+    const trip = await createTrip({
+      name: '旅',
+      currency: 'CNY',
+      homeCurrency: 'JPY',
+      memberCount: 0,
+    });
     expect(trip.memberCount).toBe(1);
     await updateTrip(trip.id, { memberCount: -3 });
     expect((await getTrip(trip.id))?.memberCount).toBe(1);
   });
 
   it('旅行を消すと支出と写真も消える', async () => {
-    const trip = await createTrip({ name: '旅', currency: 'CNY' });
+    const trip = await createTrip({ name: '旅', currency: 'CNY', homeCurrency: 'JPY' });
     const photoId = await savePhoto(new Blob(['x'], { type: 'image/jpeg' }));
     await addExpense(expenseInput({ tripId: trip.id, photoId }));
     await deleteTrip(trip.id);
@@ -132,6 +137,7 @@ describe('rateCacheRepo', () => {
     await putCachedRate({
       key: rateKey('CNY', '2026-09-12'),
       base: 'CNY',
+      quote: 'JPY',
       date: '2026-09-12',
       rate: 23.465,
       effectiveDate: '2026-09-11',
@@ -151,6 +157,7 @@ describe('rateCacheRepo', () => {
       await putCachedRate({
         key: rateKey('CNY', date),
         base: 'CNY',
+        quote: 'JPY',
         date,
         rate,
         effectiveDate: date,
@@ -161,6 +168,7 @@ describe('rateCacheRepo', () => {
     await putCachedRate({
       key: rateKey('KRW', '2026-12-31'),
       base: 'KRW',
+      quote: 'JPY',
       date: '2026-12-31',
       rate: 0.1,
       effectiveDate: '2026-12-31',

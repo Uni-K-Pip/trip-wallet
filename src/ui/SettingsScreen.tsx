@@ -24,8 +24,8 @@ type Props = {
 /** 設定されている側だけを ` / 個別 ¥50,000 / 共有 ¥30,000` の形で返す。両方未設定なら空文字。 */
 function budgetLabel(trip: Trip): string {
   const parts: string[] = [];
-  if (trip.personalBudgetJpy !== null) parts.push(`個別 ${formatJpy(trip.personalBudgetJpy)}`);
-  if (trip.sharedBudgetJpy !== null) parts.push(`共有 ${formatJpy(trip.sharedBudgetJpy)}`);
+  if (trip.personalBudgetHome !== null) parts.push(`個別 ${formatJpy(trip.personalBudgetHome)}`);
+  if (trip.sharedBudgetHome !== null) parts.push(`共有 ${formatJpy(trip.sharedBudgetHome)}`);
   return parts.length === 0 ? '' : ` / ${parts.join(' / ')}`;
 }
 

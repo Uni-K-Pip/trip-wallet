@@ -41,8 +41,9 @@ describe('exportBackup / importBackup', () => {
     const trip = await createTrip({
       name: '上海',
       currency: 'CNY',
-      personalBudgetJpy: 100000,
-      sharedBudgetJpy: 30000,
+      homeCurrency: 'JPY',
+      personalBudgetHome: 100000,
+      sharedBudgetHome: 30000,
     });
     const photoId = await savePhoto(new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' }));
     const expense = await addExpense({
@@ -85,8 +86,8 @@ describe('exportBackup / importBackup', () => {
 
     const trips = await listTrips();
     expect(trips[0].id).toBe(trip.id);
-    expect(trips[0].personalBudgetJpy).toBe(100000);
-    expect(trips[0].sharedBudgetJpy).toBe(30000);
+    expect(trips[0].personalBudgetHome).toBe(100000);
+    expect(trips[0].sharedBudgetHome).toBe(30000);
 
     const expenses = await listExpenses(trip.id);
     expect(expenses[0].id).toBe(expense.id);
@@ -103,7 +104,7 @@ describe('exportBackup / importBackup', () => {
 
     await db.delete();
     await db.open();
-    const other = await createTrip({ name: '別の旅', currency: 'KRW' });
+    const other = await createTrip({ name: '別の旅', currency: 'KRW', homeCurrency: 'JPY' });
 
     await importBackup(parseBackup(text));
     const ids = (await listTrips()).map((t) => t.id);
@@ -163,8 +164,8 @@ describe('parseBackup', () => {
 
     await importBackup(parsed);
     const trips = await listTrips();
-    expect(trips[0].personalBudgetJpy).toBe(80000);
-    expect(trips[0].sharedBudgetJpy).toBeNull();
+    expect(trips[0].personalBudgetHome).toBe(80000);
+    expect(trips[0].sharedBudgetHome).toBeNull();
     expect('budgetJpy' in trips[0]).toBe(false);
   });
 

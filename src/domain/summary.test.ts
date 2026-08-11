@@ -14,10 +14,12 @@ const trip: Trip = {
   name: '上海 2026-09',
   currency: 'CNY',
   currencyDecimals: 2,
+  homeCurrency: 'JPY',
+  homeCurrencyDecimals: 0,
   startDate: '2026-09-12',
   endDate: '2026-09-15',
-  personalBudgetJpy: 100000,
-  sharedBudgetJpy: 50000,
+  personalBudgetHome: 100000,
+  sharedBudgetHome: 50000,
   memberCount: 2,
   createdAt: 0,
 };
@@ -116,13 +118,13 @@ describe('summarize', () => {
   it('予算未設定なら残額は null。片方だけ設定もできる', () => {
     const none = summarize([expense()], {
       ...trip,
-      personalBudgetJpy: null,
-      sharedBudgetJpy: null,
+      personalBudgetHome: null,
+      sharedBudgetHome: null,
     });
     expect(none.personalRemainingJpy).toBeNull();
     expect(none.sharedRemainingJpy).toBeNull();
 
-    const personalOnly = summarize([expense()], { ...trip, sharedBudgetJpy: null });
+    const personalOnly = summarize([expense()], { ...trip, sharedBudgetHome: null });
     expect(personalOnly.personalRemainingJpy).toBe(98000);
     expect(personalOnly.sharedRemainingJpy).toBeNull();
   });

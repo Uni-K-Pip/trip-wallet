@@ -1,7 +1,7 @@
 import { toIsoDate } from '../domain/date';
 import type { Expense, Trip } from '../domain/types';
 import { db } from './db';
-import { migrateTripBudget } from './migrateTrip';
+import { migrateTrip } from './migrateTrip';
 
 export type BackupPhoto = { id: string; type: string; dataBase64: string };
 
@@ -61,10 +61,7 @@ export function serializeBackup(backup: BackupFile): string {
   return JSON.stringify(backup);
 }
 
-/**
- * 予算は v1 の budgetJpy と v2 の 2 フィールドのどちらの形でも受け入れる。
- * ここの目的は壊れた JSON を弾くことで、形式ごとの網羅は migrateTripBudget の責務。
- */
+/** 予算は v1〜v3 で名前が違う。どれも「数値または null、あるいは未設定」を許す。 */
 function isBudgetField(v: unknown): boolean {
   return v === undefined || v === null || typeof v === 'number';
 }
@@ -82,7 +79,12 @@ function isTrip(v: unknown): v is Trip {
     typeof t.memberCount === 'number' &&
     isBudgetField(t.budgetJpy) &&
     isBudgetField(t.personalBudgetJpy) &&
-    isBudgetField(t.sharedBudgetJpy)
+    isBudgetField(t.sharedBudgetJpy) &&
+    isBudgetField(t.personalBudgetHome) &&
+    isBudgetField(t.sharedBudgetHome) &&
+    // v1.0.4 以前のバックアップには換算先通貨が無い
+    (t.homeCurrency === undefined || typeof t.homeCurrency === 'string') &&
+    (t.homeCurrencyDecimals === undefined || typeof t.homeCurrencyDecimals === 'number')
   );
 }
 
@@ -138,7 +140,7 @@ export function parseBackup(text: string): BackupFile {
     format: 'trip-wallet-backup',
     version: 2,
     exportedAt: typeof b.exportedAt === 'number' ? b.exportedAt : 0,
-    trips: b.trips.map((t) => migrateTripBudget(t as unknown as Record<string, unknown>)),
+    trips: b.trips.map((t) => migrateTrip(t as unknown as Record<string, unknown>)),
     expenses: b.expenses,
     photos,
   };

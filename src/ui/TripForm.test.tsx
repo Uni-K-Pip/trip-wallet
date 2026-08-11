@@ -42,8 +42,8 @@ describe('TripForm', () => {
     expect(trips[0].currency).toBe('CNY');
     expect(trips[0].currencyDecimals).toBe(2);
     expect(trips[0].memberCount).toBe(2);
-    expect(trips[0].personalBudgetJpy).toBe(100000);
-    expect(trips[0].sharedBudgetJpy).toBe(30000);
+    expect(trips[0].personalBudgetHome).toBe(100000);
+    expect(trips[0].sharedBudgetHome).toBe(30000);
   });
 
   it('予算に数値として解釈できない文字列を入れたら null になる', async () => {
@@ -59,8 +59,8 @@ describe('TripForm', () => {
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     const trips = await listTrips();
     expect(trips).toHaveLength(1);
-    expect(trips[0].personalBudgetJpy).toBeNull();
-    expect(trips[0].sharedBudgetJpy).toBeNull();
+    expect(trips[0].personalBudgetHome).toBeNull();
+    expect(trips[0].sharedBudgetHome).toBeNull();
   });
 
   it('片方だけ予算を入れても保存できる', async () => {
@@ -74,8 +74,8 @@ describe('TripForm', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     const trips = await listTrips();
-    expect(trips[0].personalBudgetJpy).toBeNull();
-    expect(trips[0].sharedBudgetJpy).toBe(30000);
+    expect(trips[0].personalBudgetHome).toBeNull();
+    expect(trips[0].sharedBudgetHome).toBe(30000);
   });
 
   it('旅行名が空なら保存しない', async () => {
@@ -91,7 +91,7 @@ describe('TripForm', () => {
   });
 
   it('既存の旅行を編集する', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     const user = userEvent.setup();
     const onDone = vi.fn();
     render(<TripForm trip={trip} onDone={onDone} onCancel={() => {}} />);
@@ -107,7 +107,7 @@ describe('TripForm', () => {
   });
 
   it('支出が 1 件以上ある旅行を編集すると通貨 select が disabled になり説明文が出る', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     await addExpense({
       tripId: trip.id,
       date: '2026-09-12',
@@ -128,7 +128,7 @@ describe('TripForm', () => {
   });
 
   it('支出が 0 件の旅行を編集しても通貨 select は disabled にならない', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     render(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
 
     // useLiveQuery の解決を待ってから確認する

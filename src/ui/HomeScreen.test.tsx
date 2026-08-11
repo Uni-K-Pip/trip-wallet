@@ -26,9 +26,10 @@ beforeEach(async () => {
   trip = await createTrip({
     name: '上海',
     currency: 'CNY',
+    homeCurrency: 'JPY',
     memberCount: 2,
-    personalBudgetJpy: 10000,
-    sharedBudgetJpy: 3000,
+    personalBudgetHome: 10000,
+    sharedBudgetHome: 3000,
   });
   await addExpense({
     tripId: trip.id,
@@ -72,7 +73,8 @@ describe('HomeScreen', () => {
     const personalOnly = await createTrip({
       name: 'NY',
       currency: 'USD',
-      personalBudgetJpy: 5000,
+      homeCurrency: 'JPY',
+      personalBudgetHome: 5000,
     });
     render(<HomeScreen trip={personalOnly} />);
 
@@ -81,7 +83,7 @@ describe('HomeScreen', () => {
   });
 
   it('予算が両方とも未設定ならバーを出さない', async () => {
-    const noBudget = await createTrip({ name: '香港', currency: 'HKD' });
+    const noBudget = await createTrip({ name: '香港', currency: 'HKD', homeCurrency: 'JPY' });
     render(<HomeScreen trip={noBudget} />);
 
     await screen.findByText('まだ支出がありません。右下の + から追加してください。');
@@ -103,7 +105,7 @@ describe('HomeScreen', () => {
   });
 
   it('支出が無ければ案内を出す', async () => {
-    const empty = await createTrip({ name: '香港', currency: 'HKD' });
+    const empty = await createTrip({ name: '香港', currency: 'HKD', homeCurrency: 'JPY' });
     render(<HomeScreen trip={empty} />);
 
     expect(await screen.findByText('まだ支出がありません。右下の + から追加してください。')).toBeInTheDocument();

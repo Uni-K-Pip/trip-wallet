@@ -24,10 +24,10 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
   const [startDate, setStartDate] = useState(trip?.startDate ?? todayLocal());
   const [endDate, setEndDate] = useState(trip?.endDate ?? '');
   const [personalBudget, setPersonalBudget] = useState(
-    trip === undefined || trip.personalBudgetJpy === null ? '' : String(trip.personalBudgetJpy),
+    trip === undefined || trip.personalBudgetHome === null ? '' : String(trip.personalBudgetHome),
   );
   const [sharedBudget, setSharedBudget] = useState(
-    trip === undefined || trip.sharedBudgetJpy === null ? '' : String(trip.sharedBudgetJpy),
+    trip === undefined || trip.sharedBudgetHome === null ? '' : String(trip.sharedBudgetHome),
   );
   const [memberCount, setMemberCount] = useState(String(trip?.memberCount ?? 1));
   const [error, setError] = useState('');
@@ -46,10 +46,12 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
     const input = {
       name: name.trim(),
       currency,
+      // 換算先通貨を選ぶ UI はまだ無い。暫定で JPY 固定(Task 16 で対応)
+      homeCurrency: trip?.homeCurrency ?? 'JPY',
       startDate,
       endDate: endDate === '' ? null : endDate,
-      personalBudgetJpy: parseBudget(personalBudget),
-      sharedBudgetJpy: parseBudget(sharedBudget),
+      personalBudgetHome: parseBudget(personalBudget),
+      sharedBudgetHome: parseBudget(sharedBudget),
       memberCount: Math.max(1, Math.round(Number(memberCount) || 1)),
     };
 

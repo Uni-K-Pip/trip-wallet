@@ -12,7 +12,7 @@ let trip: Trip;
 beforeEach(async () => {
   await db.delete();
   await db.open();
-  trip = await createTrip({ name: '上海', currency: 'CNY', memberCount: 2 });
+  trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY', memberCount: 2 });
   await addExpense({
     tripId: trip.id,
     date: '2026-09-12',
@@ -113,7 +113,7 @@ describe('SummaryScreen', () => {
   });
 
   it('選んだスコープに支出が無ければその旨を出す', async () => {
-    const solo = await createTrip({ name: '香港', currency: 'HKD' });
+    const solo = await createTrip({ name: '香港', currency: 'HKD', homeCurrency: 'JPY' });
     await addExpense({
       tripId: solo.id,
       date: '2026-09-12',
@@ -136,7 +136,7 @@ describe('SummaryScreen', () => {
   });
 
   it('支出が無ければ案内を出す', async () => {
-    const empty = await createTrip({ name: '台北', currency: 'USD' });
+    const empty = await createTrip({ name: '台北', currency: 'USD', homeCurrency: 'JPY' });
     render(<SummaryScreen trip={empty} />);
 
     expect(await screen.findByText('集計する支出がまだありません。')).toBeInTheDocument();
