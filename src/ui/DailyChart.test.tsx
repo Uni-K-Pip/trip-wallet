@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { eachDate } from '../domain/date';
 import type { DailySeries } from '../domain/summary';
+import { renderWithLang } from '../test/renderWithLang';
 import { DailyChart } from './DailyChart';
 
 const threeDays: DailySeries = {
@@ -18,7 +19,7 @@ const threeDays: DailySeries = {
 
 describe('DailyChart', () => {
   it('0 円の日にも棒と日付を出す', () => {
-    render(<DailyChart series={threeDays} />);
+    renderWithLang(<DailyChart series={threeDays} />);
 
     const cols = screen.getAllByTestId('day-col');
     expect(cols).toHaveLength(3);
@@ -27,7 +28,7 @@ describe('DailyChart', () => {
   });
 
   it('最高額の日と 0 円の日で棒の見た目を変える', () => {
-    render(<DailyChart series={threeDays} />);
+    renderWithLang(<DailyChart series={threeDays} />);
 
     const cols = screen.getAllByTestId('day-col');
     expect(cols[0].firstChild).toHaveClass('peak');
@@ -36,7 +37,7 @@ describe('DailyChart', () => {
   });
 
   it('平均と最高を図の下に出す', () => {
-    render(<DailyChart series={threeDays} />);
+    renderWithLang(<DailyChart series={threeDays} />);
 
     expect(screen.getByTestId('daily-average')).toHaveTextContent('1日あたり平均 ¥1,322');
     expect(screen.getByTestId('daily-peak')).toHaveTextContent('最高 9/12(土) ¥2,816');
@@ -44,7 +45,7 @@ describe('DailyChart', () => {
 
   it('31 日分では日付ラベルを間引く', () => {
     const points = eachDate('2026-09-01', '2026-10-01').map((date) => ({ date, home: 1000 }));
-    render(
+    renderWithLang(
       <DailyChart
         series={{
           points,
@@ -62,7 +63,7 @@ describe('DailyChart', () => {
   });
 
   it('points が空なら何も描かない', () => {
-    const { container } = render(
+    const { container } = renderWithLang(
       <DailyChart
         series={{ points: [], totalHome: 0, maxHome: 0, peakDate: null, averageHome: 0 }}
       />,
@@ -83,7 +84,7 @@ describe('DailyChart', () => {
       averageHome: 50,
     };
 
-    render(<DailyChart series={cleanData} />);
+    renderWithLang(<DailyChart series={cleanData} />);
 
     const cols = screen.getAllByTestId('day-col');
     // maxHome = 100, BAR_HEIGHT = 110 なので scale = 100

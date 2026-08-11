@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderWithLang } from '../test/renderWithLang';
 import { WHEEL_ITEM_HEIGHT, WheelPicker, indexFromScroll, offsetForIndex } from './WheelPicker';
 
 describe('indexFromScroll', () => {
@@ -45,7 +46,7 @@ describe('WheelPicker', () => {
   ];
 
   it('listbox として項目を並べる', () => {
-    render(<WheelPicker items={items} selectedId="a" onChange={() => {}} label="旅行" />);
+    renderWithLang(<WheelPicker items={items} selectedId="a" onChange={() => {}} label="旅行" />);
 
     expect(screen.getByRole('listbox', { name: '旅行' })).toBeInTheDocument();
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
@@ -55,7 +56,7 @@ describe('WheelPicker', () => {
   });
 
   it('選択中の項目に aria-selected を付ける', () => {
-    render(<WheelPicker items={items} selectedId="b" onChange={() => {}} label="旅行" />);
+    renderWithLang(<WheelPicker items={items} selectedId="b" onChange={() => {}} label="旅行" />);
 
     expect(screen.getByRole('option', { name: 'NY 2026-09' })).toHaveAttribute(
       'aria-selected',
@@ -70,7 +71,7 @@ describe('WheelPicker', () => {
   it('項目をタップすると onChange が呼ばれる', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(<WheelPicker items={items} selectedId="a" onChange={onChange} label="旅行" />);
+    renderWithLang(<WheelPicker items={items} selectedId="a" onChange={onChange} label="旅行" />);
 
     await user.click(screen.getByRole('option', { name: 'NY 2026-09' }));
 
@@ -80,7 +81,7 @@ describe('WheelPicker', () => {
   it('選択中の項目をタップしても onChange は呼ばない', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
-    render(<WheelPicker items={items} selectedId="a" onChange={onChange} label="旅行" />);
+    renderWithLang(<WheelPicker items={items} selectedId="a" onChange={onChange} label="旅行" />);
 
     await user.click(screen.getByRole('option', { name: '上海 2026-09' }));
 

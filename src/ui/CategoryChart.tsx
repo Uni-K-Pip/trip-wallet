@@ -1,6 +1,8 @@
-import { categoryColor, categoryIcon, categoryLabel } from '../domain/categories';
+import { categoryColor, categoryIcon } from '../domain/categories';
 import { formatJpy } from '../domain/money';
 import type { CategoryBreakdown } from '../domain/summary';
+// Task 14 で useI18n の t に差し替える
+import { ja } from '../i18n/ja';
 
 /** 構成比の帯と、同じ色・同じ順の内訳リスト。色が凡例の役割を兼ねる。 */
 export function CategoryChart({ rows }: { rows: CategoryBreakdown[] }) {
@@ -27,7 +29,7 @@ export function CategoryChart({ rows }: { rows: CategoryBreakdown[] }) {
               style={{ backgroundColor: categoryColor(r.category) }}
             />
             <span className="legend-name">
-              {categoryIcon(r.category)} {categoryLabel(r.category)}
+              {categoryIcon(r.category)} {ja.category[r.category]}
             </span>
             <span className="legend-jpy">{formatJpy(r.home)}</span>
             <span className="legend-pct">{Math.round(r.ratio * 100)}%</span>

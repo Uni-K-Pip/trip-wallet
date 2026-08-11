@@ -6,6 +6,8 @@ import { currencySymbol } from '../domain/currency';
 import { formatDateLabel, todayLocal } from '../domain/date';
 import { formatJpy, minorToMajor, parseMajorToMinor, toHomeMinor } from '../domain/money';
 import type { Category, Expense, Payment, RateSource, Scope, Trip } from '../domain/types';
+// Task 15 で useI18n の t に差し替える
+import { ja } from '../i18n/ja';
 import { compressImage } from '../media/compressImage';
 import { resolveRate } from '../rates/resolveRate';
 import { Numpad } from './Numpad';
@@ -126,8 +128,8 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
               rate: r.rate,
               source: r.source,
               note: r.stale
-                ? `${formatDateLabel(r.effectiveDate)}時点のレートを使用中`
-                : `${formatDateLabel(r.effectiveDate)}のレート`,
+                ? `${formatDateLabel(r.effectiveDate, ja.weekdays)}時点のレートを使用中`
+                : `${formatDateLabel(r.effectiveDate, ja.weekdays)}のレート`,
               stale: r.stale,
             },
       );
@@ -321,12 +323,12 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       <div className="segment">
         {SCOPES.map((s) => (
           <button
-            key={s.value}
+            key={s}
             type="button"
-            className={s.value === scope ? 'seg active' : 'seg'}
-            onClick={() => setScope(s.value)}
+            className={s === scope ? 'seg active' : 'seg'}
+            onClick={() => setScope(s)}
           >
-            {s.label}
+            {ja.scope[s]}
           </button>
         ))}
       </div>
@@ -340,7 +342,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
             onClick={() => setCategory(c.value)}
           >
             <span className="cat-icon">{c.icon}</span>
-            <span>{c.label}</span>
+            <span>{ja.category[c.value]}</span>
           </button>
         ))}
       </div>
@@ -353,7 +355,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
             className={p.value === payment ? 'chip active' : 'chip'}
             onClick={() => setPayment(p.value)}
           >
-            {p.icon} {p.label}
+            {p.icon} {ja.payment[p.value]}
           </button>
         ))}
       </div>
