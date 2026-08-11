@@ -598,3 +598,55 @@ h3 {
   color: #062033;
   font-weight: 600;
 }
+
+.wheel {
+  --wheel-item-h: 44px;
+  --wheel-h: 220px;
+  position: relative;
+  height: var(--wheel-h);
+  margin: 8px 0 16px;
+}
+
+.wheel-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((var(--wheel-h) - var(--wheel-item-h)) / 2);
+  height: var(--wheel-item-h);
+  border-radius: 10px;
+  background: var(--surface-2);
+  pointer-events: none;
+}
+
+.wheel-list {
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  padding: calc((var(--wheel-h) - var(--wheel-item-h)) / 2) 0;
+  /* iOS で慣性スクロール中もスナップさせる */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.wheel-list::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--wheel-item-h);
+  scroll-snap-align: center;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  padding: 0 12px;
+}
+
+.wheel-item.selected {
+  color: var(--text);
+  font-weight: 600;
+}
