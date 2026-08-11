@@ -1,4 +1,4 @@
-import { currencyDecimals, currencySymbol } from './currency';
+import { findCurrency } from './currency';
 
 function group(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -34,15 +34,30 @@ export function toJpy(amountMinor: number, decimals: number, rate: number): numb
   return Math.round(minorToMajor(amountMinor, decimals) * rate);
 }
 
+/**
+ * 外貨の最小単位を換算先通貨の最小単位にする。換算はこの関数だけを通す。
+ * 桁数は旅行に保存した値を使う(通貨マスタを後から変えても過去の数字が動かないため)。
+ */
+export function toHomeMinor(
+  amountMinor: number,
+  decimals: number,
+  rate: number,
+  homeDecimals: number,
+): number {
+  return Math.round(minorToMajor(amountMinor, decimals) * rate * 10 ** homeDecimals);
+}
+
 export function formatJpy(jpy: number): string {
   const rounded = Math.round(jpy);
   const sign = rounded < 0 ? '-' : '';
   return `${sign}¥${group(Math.abs(rounded))}`;
 }
 
-/** 通貨記号を添えた外貨表示。記号が後置の通貨(元)は末尾に付ける。 */
+/** 通貨記号を添えた表示。後置記号の通貨は末尾に付け、負号は必ず先頭に置く。 */
 export function formatWithCurrency(amountMinor: number, currency: string): string {
-  const body = formatMajor(amountMinor, currencyDecimals(currency));
-  const symbol = currencySymbol(currency);
-  return currency === 'CNY' ? `${body}${symbol}` : `${symbol}${body}`;
+  const info = findCurrency(currency);
+  const sign = amountMinor < 0 ? '-' : '';
+  const body = formatMajor(Math.abs(amountMinor), info?.decimals ?? 2);
+  const symbol = info?.symbol ?? currency;
+  return info?.symbolAfter ? `${sign}${body}${symbol}` : `${sign}${symbol}${body}`;
 }
