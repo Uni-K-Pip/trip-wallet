@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense, listExpenses, updateExpense } from '../data/expenseRepo';
@@ -7,6 +7,7 @@ import { getPhoto, savePhoto } from '../data/photoRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
 import { resolveRate } from '../rates/resolveRate';
+import { renderWithLang } from '../test/renderWithLang';
 import { ExpenseSheet } from './ExpenseSheet';
 
 vi.mock('../rates/resolveRate', () => ({
@@ -51,7 +52,7 @@ describe('ExpenseSheet', () => {
     });
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={onClose} />);
 
     await screen.findByText(/23\.465/);
     await user.click(screen.getByRole('button', { name: '1' }));
@@ -78,7 +79,7 @@ describe('ExpenseSheet', () => {
   it('レートを解決できないときは手動入力しないと保存できない', async () => {
     vi.mocked(resolveRate).mockResolvedValue(null);
     const user = userEvent.setup();
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     expect(
       await screen.findByText('レートを取得できません。手動で入力してください'),
@@ -100,7 +101,7 @@ describe('ExpenseSheet', () => {
     });
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={onClose} />);
 
     await screen.findByText(/23\.465/);
     await user.click(screen.getByRole('button', { name: 'レートを編集' }));
@@ -127,7 +128,7 @@ describe('ExpenseSheet', () => {
       source: 'cache',
       stale: true,
     });
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     expect(await screen.findByText(/9\/10.*時点のレートを使用中/)).toBeInTheDocument();
   });
@@ -146,7 +147,7 @@ describe('ExpenseSheet', () => {
         source: 'api',
         stale: false,
       });
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     await screen.findByText(/9\/10.*時点のレートを使用中/);
     fireEvent(window, new Event('online'));
@@ -163,7 +164,7 @@ describe('ExpenseSheet', () => {
       stale: false,
     });
     localStorage.setItem(`trip-wallet:manual-rate:${trip.id}`, '24');
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     await screen.findByText(/前回入力した手動レート/);
     fireEvent(window, new Event('online'));
@@ -175,7 +176,7 @@ describe('ExpenseSheet', () => {
   it('前回の手動レートを引き継いだときは、引き継ぎだと分かる形で知らせる', async () => {
     vi.mocked(resolveRate).mockResolvedValue(null);
     localStorage.setItem(`trip-wallet:manual-rate:${trip.id}`, '24');
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     const note = await screen.findByText(/前回入力した手動レート/);
     expect(note).toHaveTextContent('1元 = 24円(前回入力した手動レート)');
@@ -191,7 +192,7 @@ describe('ExpenseSheet', () => {
       stale: true,
     });
     const user = userEvent.setup();
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     await screen.findByText(/9\/10.*時点のレートを使用中/);
     await user.click(screen.getByRole('button', { name: 'レートを編集' }));
@@ -222,7 +223,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -247,7 +248,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={onClose} />);
 
     await screen.findByText(/23\.465/);
     await user.click(screen.getByRole('button', { name: '1' }));
@@ -283,7 +284,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -315,7 +316,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -355,7 +356,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -413,7 +414,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);

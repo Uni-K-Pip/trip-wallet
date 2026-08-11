@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Trip } from '../domain/types';
+import { renderWithLang } from '../test/renderWithLang';
 import { TripPickerSheet } from './TripPickerSheet';
 
 function trip(id: string, name: string): Trip {
@@ -25,7 +26,7 @@ const trips = [trip('a', '上海 2026-09'), trip('b', 'NY 2026-09')];
 
 describe('TripPickerSheet', () => {
   it('開いた時点では今の旅行が選ばれている', () => {
-    render(
+    renderWithLang(
       <TripPickerSheet trips={trips} activeTripId="b" onSelect={() => {}} onClose={() => {}} />,
     );
 
@@ -38,7 +39,7 @@ describe('TripPickerSheet', () => {
   it('決定を押すと選んだ旅行の id を返す', async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithLang(
       <TripPickerSheet trips={trips} activeTripId="a" onSelect={onSelect} onClose={() => {}} />,
     );
 
@@ -51,7 +52,7 @@ describe('TripPickerSheet', () => {
   it('選び直さずに決定を押すと今の旅行の id を返す', async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithLang(
       <TripPickerSheet trips={trips} activeTripId="a" onSelect={onSelect} onClose={() => {}} />,
     );
 
@@ -64,7 +65,7 @@ describe('TripPickerSheet', () => {
     const onSelect = vi.fn();
     const onClose = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithLang(
       <TripPickerSheet trips={trips} activeTripId="a" onSelect={onSelect} onClose={onClose} />,
     );
 

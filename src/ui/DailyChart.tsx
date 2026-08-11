@@ -1,6 +1,8 @@
-import { WEEKDAYS, dayOfMonth, formatDateLabel, weekdayIndex } from '../domain/date';
+import { dayOfMonth, formatDateLabel, weekdayIndex } from '../domain/date';
 import { formatJpy } from '../domain/money';
 import type { DailySeries } from '../domain/summary';
+// Task 14 で useI18n の t に差し替える
+import { ja } from '../i18n/ja';
 
 const BAR_HEIGHT = 110;
 
@@ -44,7 +46,7 @@ export function DailyChart({ series }: { series: DailySeries }) {
             data-testid="day-col"
             key={p.date}
             role="img"
-            aria-label={`${formatDateLabel(p.date)} ${formatJpy(p.home)}`}
+            aria-label={`${formatDateLabel(p.date, ja.weekdays)} ${formatJpy(p.home)}`}
           >
             <span
               className={barClass(p.home, p.date === peakDate && maxHome > 0)}
@@ -61,7 +63,7 @@ export function DailyChart({ series }: { series: DailySeries }) {
               <span data-testid="day-label">
                 {dayOfMonth(p.date)}
                 <br />
-                {WEEKDAYS[weekdayIndex(p.date)]}
+                {ja.weekdays[weekdayIndex(p.date)]}
               </span>
             )}
           </span>
@@ -74,7 +76,7 @@ export function DailyChart({ series }: { series: DailySeries }) {
         </span>
         {maxHome > 0 && peakDate && (
           <span data-testid="daily-peak">
-            最高 {formatDateLabel(peakDate)} <b>{formatJpy(maxHome)}</b>
+            最高 {formatDateLabel(peakDate, ja.weekdays)} <b>{formatJpy(maxHome)}</b>
           </span>
         )}
       </div>

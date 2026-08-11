@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense } from '../data/expenseRepo';
 import { createTrip, listTrips, getTrip } from '../data/tripRepo';
+import { renderWithLang } from '../test/renderWithLang';
 import { TripForm } from './TripForm';
 
 beforeEach(async () => {
@@ -13,19 +14,19 @@ beforeEach(async () => {
 
 describe('TripForm', () => {
   it('新規作成時の初期通貨は米ドル', () => {
-    render(<TripForm onDone={() => {}} onCancel={() => {}} />);
+    renderWithLang(<TripForm onDone={() => {}} onCancel={() => {}} />);
     expect(screen.getByLabelText('通貨')).toHaveValue('USD');
   });
 
   it('旅行名の入力例は NY 2026-09', () => {
-    render(<TripForm onDone={() => {}} onCancel={() => {}} />);
+    renderWithLang(<TripForm onDone={() => {}} onCancel={() => {}} />);
     expect(screen.getByLabelText('旅行名')).toHaveAttribute('placeholder', 'NY 2026-09');
   });
 
   it('入力した内容で旅行を作る', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
-    render(<TripForm onDone={onDone} onCancel={() => {}} />);
+    renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
 
     await user.type(screen.getByLabelText('旅行名'), '上海 2026-09');
     await user.selectOptions(screen.getByLabelText('通貨'), 'CNY');
@@ -49,7 +50,7 @@ describe('TripForm', () => {
   it('予算に数値として解釈できない文字列を入れたら null になる', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
-    render(<TripForm onDone={onDone} onCancel={() => {}} />);
+    renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
 
     await user.type(screen.getByLabelText('旅行名'), 'NY 2026-09');
     await user.type(screen.getByLabelText('個別予算(円)'), 'abc');
@@ -66,7 +67,7 @@ describe('TripForm', () => {
   it('片方だけ予算を入れても保存できる', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
-    render(<TripForm onDone={onDone} onCancel={() => {}} />);
+    renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
 
     await user.type(screen.getByLabelText('旅行名'), 'NY 2026-09');
     await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '30000');
@@ -81,7 +82,7 @@ describe('TripForm', () => {
   it('旅行名が空なら保存しない', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
-    render(<TripForm onDone={onDone} onCancel={() => {}} />);
+    renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
 
     await user.click(screen.getByRole('button', { name: '保存' }));
 
@@ -94,7 +95,7 @@ describe('TripForm', () => {
     const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     const user = userEvent.setup();
     const onDone = vi.fn();
-    render(<TripForm trip={trip} onDone={onDone} onCancel={() => {}} />);
+    renderWithLang(<TripForm trip={trip} onDone={onDone} onCancel={() => {}} />);
 
     const name = screen.getByLabelText('旅行名');
     await user.clear(name);
@@ -120,7 +121,7 @@ describe('TripForm', () => {
       rateSource: 'api',
       photoId: null,
     });
-    render(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
+    renderWithLang(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
 
     // useLiveQuery は初回レンダーで既定値 0 を返すため、disabled になるまで待つ
     await waitFor(() => expect(screen.getByLabelText('通貨')).toBeDisabled());
@@ -129,7 +130,7 @@ describe('TripForm', () => {
 
   it('支出が 0 件の旅行を編集しても通貨 select は disabled にならない', async () => {
     const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
-    render(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
+    renderWithLang(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
 
     // useLiveQuery の解決を待ってから確認する
     await waitFor(() => expect(screen.getByLabelText('通貨')).not.toBeDisabled());

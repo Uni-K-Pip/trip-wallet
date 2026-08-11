@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { createTrip } from '../data/tripRepo';
 import { exportBackup } from '../data/backup';
+import { renderWithLang } from '../test/renderWithLang';
 import { SettingsScreen } from './SettingsScreen';
 
 // exportBackup だけモックする。serializeBackup / parseBackup / importBackup /
@@ -29,7 +30,7 @@ describe('SettingsScreen のエクスポート', () => {
   it('exportBackup が失敗したら失敗メッセージを出し、成功メッセージは出さない', async () => {
     vi.mocked(exportBackup).mockRejectedValue(new Error('メモリ不足'));
     const user = userEvent.setup();
-    render(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
 
     await user.click(screen.getByRole('button', { name: 'バックアップを書き出す' }));
 
@@ -47,7 +48,7 @@ describe('SettingsScreen のエクスポート', () => {
       photos: [],
     });
     const user = userEvent.setup();
-    render(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
 
     await user.click(screen.getByRole('button', { name: 'バックアップを書き出す' }));
 
@@ -58,7 +59,7 @@ describe('SettingsScreen のエクスポート', () => {
 describe('SettingsScreen のインポート', () => {
   it('壊れた JSON を取り込むとエラー文言が出る', async () => {
     const user = userEvent.setup();
-    render(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
 
     const file = new File(['not json'], 'broken.json', { type: 'application/json' });
     const input = screen.getByLabelText('取り込む');
@@ -77,7 +78,7 @@ describe('SettingsScreen の旅行一覧', () => {
       personalBudgetHome: 50000,
       sharedBudgetHome: 30000,
     });
-    render(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
+    renderWithLang(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
 
     expect(screen.getByText(/個別 ¥50,000 \/ 共有 ¥30,000/)).toBeInTheDocument();
   });
@@ -89,7 +90,7 @@ describe('SettingsScreen の旅行一覧', () => {
       homeCurrency: 'JPY',
       sharedBudgetHome: 30000,
     });
-    render(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
+    renderWithLang(<SettingsScreen trips={[trip]} activeTrip={trip} onSelectTrip={() => {}} />);
 
     expect(screen.getByText(/\/ 共有 ¥30,000/)).toBeInTheDocument();
     expect(screen.queryByText(/個別 ¥/)).not.toBeInTheDocument();

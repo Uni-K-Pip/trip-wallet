@@ -13,6 +13,8 @@ import { deleteTrip } from '../data/tripRepo';
 import { formatDateLabel } from '../domain/date';
 import { formatJpy } from '../domain/money';
 import type { Trip } from '../domain/types';
+// Task 17 で useI18n の t に差し替える
+import { ja } from '../i18n/ja';
 import { Sheet } from './Sheet';
 import { TripForm } from './TripForm';
 
@@ -106,8 +108,8 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
               <button type="button" className="trip-main" onClick={() => onSelectTrip(trip.id)}>
                 <span className="trip-name">{trip.name}</span>
                 <span className="trip-meta">
-                  {trip.currency} / {formatDateLabel(trip.startDate)}
-                  {trip.endDate ? `〜${formatDateLabel(trip.endDate)}` : ''} / {trip.memberCount}人
+                  {trip.currency} / {formatDateLabel(trip.startDate, ja.weekdays)}
+                  {trip.endDate ? `〜${formatDateLabel(trip.endDate, ja.weekdays)}` : ''} / {trip.memberCount}人
                   {budgetLabel(trip)}
                 </span>
               </button>

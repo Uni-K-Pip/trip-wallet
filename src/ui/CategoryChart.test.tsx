@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import type { CategoryBreakdown } from '../domain/summary';
+import { renderWithLang } from '../test/renderWithLang';
 import { CategoryChart } from './CategoryChart';
 
 const rows: CategoryBreakdown[] = [
@@ -10,7 +11,7 @@ const rows: CategoryBreakdown[] = [
 
 describe('CategoryChart', () => {
   it('帯の区画を構成比の幅とカテゴリ色で並べる', () => {
-    render(<CategoryChart rows={rows} />);
+    renderWithLang(<CategoryChart rows={rows} />);
 
     const segs = screen.getAllByTestId('stack-seg');
     expect(segs).toHaveLength(2);
@@ -19,7 +20,7 @@ describe('CategoryChart', () => {
   });
 
   it('凡例を帯と同じ順・同じ色で並べる', () => {
-    render(<CategoryChart rows={rows} />);
+    renderWithLang(<CategoryChart rows={rows} />);
 
     const legend = screen.getAllByTestId('cat-row');
     expect(legend).toHaveLength(2);
@@ -33,7 +34,7 @@ describe('CategoryChart', () => {
   });
 
   it('行が無ければ何も描かない', () => {
-    const { container } = render(<CategoryChart rows={[]} />);
+    const { container } = renderWithLang(<CategoryChart rows={[]} />);
     expect(container).toBeEmptyDOMElement();
   });
 });

@@ -1,45 +1,25 @@
 import type { Category, Payment, Scope } from './types';
 
-export const CATEGORIES: { value: Category; label: string; icon: string; color: string }[] = [
-  { value: 'food', label: '食事', icon: '🍜', color: '#38bdf8' },
-  { value: 'transport', label: '交通', icon: '🚇', color: '#a78bfa' },
-  { value: 'sightseeing', label: '観光', icon: '🎫', color: '#4ade80' },
-  { value: 'shopping', label: '買物', icon: '🛍️', color: '#fbbf24' },
-  { value: 'lodging', label: '宿泊', icon: '🏨', color: '#f472b6' },
-  { value: 'other', label: 'その他', icon: '📝', color: '#64748b' },
+export const CATEGORIES: { value: Category; icon: string; color: string }[] = [
+  { value: 'food', icon: '🍜', color: '#38bdf8' },
+  { value: 'transport', icon: '🚇', color: '#a78bfa' },
+  { value: 'sightseeing', icon: '🎫', color: '#4ade80' },
+  { value: 'shopping', icon: '🛍️', color: '#fbbf24' },
+  { value: 'lodging', icon: '🏨', color: '#f472b6' },
+  { value: 'other', icon: '📝', color: '#64748b' },
 ];
 
-export const PAYMENTS: { value: Payment; label: string; icon: string }[] = [
-  { value: 'cash', label: '現金', icon: '💴' },
-  { value: 'mobile', label: 'QR決済', icon: '📱' },
-  { value: 'card', label: 'カード', icon: '💳' },
+export const PAYMENTS: { value: Payment; icon: string }[] = [
+  { value: 'cash', icon: '💴' },
+  { value: 'mobile', icon: '📱' },
+  { value: 'card', icon: '💳' },
 ];
 
-export const SCOPES: { value: Scope; label: string }[] = [
-  { value: 'personal', label: '個別' },
-  { value: 'shared', label: '共有' },
-];
-
-export function categoryLabel(v: Category): string {
-  return CATEGORIES.find((c) => c.value === v)?.label ?? 'その他';
-}
+export const SCOPES: Scope[] = ['personal', 'shared'];
 
 export function categoryIcon(v: Category): string {
   return CATEGORIES.find((c) => c.value === v)?.icon ?? '📝';
 }
-
 export function categoryColor(v: Category): string {
   return CATEGORIES.find((c) => c.value === v)?.color ?? '#64748b';
-}
-
-export function paymentLabel(v: Payment): string {
-  return PAYMENTS.find((p) => p.value === v)?.label ?? '現金';
-}
-
-export function paymentIcon(v: Payment): string {
-  return PAYMENTS.find((p) => p.value === v)?.icon ?? '💴';
-}
-
-export function scopeLabel(v: Scope): string {
-  return SCOPES.find((s) => s.value === v)?.label ?? '個別';
 }

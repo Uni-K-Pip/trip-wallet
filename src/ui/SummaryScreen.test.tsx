@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense } from '../data/expenseRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
+import { renderWithLang } from '../test/renderWithLang';
 import { SummaryScreen } from './SummaryScreen';
 
 let trip: Trip;
@@ -41,7 +42,7 @@ beforeEach(async () => {
 
 describe('SummaryScreen', () => {
   it('個別・共有・人数割りを表示する', async () => {
-    render(<SummaryScreen trip={trip} />);
+    renderWithLang(<SummaryScreen trip={trip} />);
 
     expect(await screen.findByTestId('summary-total')).toHaveTextContent('¥5,116');
     expect(screen.getByTestId('summary-personal')).toHaveTextContent('¥2,816');
@@ -51,7 +52,7 @@ describe('SummaryScreen', () => {
   });
 
   it('初期表示は自己負担で、カテゴリ別を多い順に並べる', async () => {
-    render(<SummaryScreen trip={trip} />);
+    renderWithLang(<SummaryScreen trip={trip} />);
 
     const rows = await screen.findAllByTestId('cat-row');
     expect(rows).toHaveLength(2);
@@ -66,7 +67,7 @@ describe('SummaryScreen', () => {
   });
 
   it('日別推移を古い順に並べ、日付と金額を読み上げられる', async () => {
-    render(<SummaryScreen trip={trip} />);
+    renderWithLang(<SummaryScreen trip={trip} />);
 
     const cols = await screen.findAllByTestId('day-col');
     expect(cols.map((c) => c.getAttribute('aria-label'))).toEqual([
@@ -76,7 +77,7 @@ describe('SummaryScreen', () => {
   });
 
   it('共有に切り替えると共有だけの図になる', async () => {
-    render(<SummaryScreen trip={trip} />);
+    renderWithLang(<SummaryScreen trip={trip} />);
     await screen.findAllByTestId('cat-row');
 
     await userEvent.click(screen.getByRole('button', { name: '共有' }));
@@ -90,7 +91,7 @@ describe('SummaryScreen', () => {
   });
 
   it('個別に切り替えると個別だけの図になる', async () => {
-    render(<SummaryScreen trip={trip} />);
+    renderWithLang(<SummaryScreen trip={trip} />);
     await screen.findAllByTestId('cat-row');
 
     await userEvent.click(screen.getByRole('button', { name: '個別' }));
@@ -103,7 +104,7 @@ describe('SummaryScreen', () => {
   });
 
   it('切り替えても合計カードは変わらない', async () => {
-    render(<SummaryScreen trip={trip} />);
+    renderWithLang(<SummaryScreen trip={trip} />);
     expect(await screen.findByTestId('summary-total')).toHaveTextContent('¥5,116');
 
     await userEvent.click(screen.getByRole('button', { name: '個別' }));
@@ -126,7 +127,7 @@ describe('SummaryScreen', () => {
       rateSource: 'api',
       photoId: null,
     });
-    render(<SummaryScreen trip={solo} />);
+    renderWithLang(<SummaryScreen trip={solo} />);
     await screen.findAllByTestId('cat-row');
 
     await userEvent.click(screen.getByRole('button', { name: '共有' }));
@@ -137,7 +138,7 @@ describe('SummaryScreen', () => {
 
   it('支出が無ければ案内を出す', async () => {
     const empty = await createTrip({ name: '台北', currency: 'USD', homeCurrency: 'JPY' });
-    render(<SummaryScreen trip={empty} />);
+    renderWithLang(<SummaryScreen trip={empty} />);
 
     expect(await screen.findByText('集計する支出がまだありません。')).toBeInTheDocument();
   });

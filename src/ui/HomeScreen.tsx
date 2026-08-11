@@ -2,11 +2,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { deleteExpense, listExpenses } from '../data/expenseRepo';
 import { getPhoto } from '../data/photoRepo';
-import { categoryIcon, categoryLabel, scopeLabel } from '../domain/categories';
+import { categoryIcon } from '../domain/categories';
 import { formatDateLabel } from '../domain/date';
 import { formatJpy, formatWithCurrency } from '../domain/money';
 import { expenseHome, groupByDate, summarize } from '../domain/summary';
 import type { Expense, Trip } from '../domain/types';
+// Task 13 で useI18n の t に差し替える
+import { ja } from '../i18n/ja';
 import { ExpenseSheet } from './ExpenseSheet';
 
 function PhotoThumb({ photoId }: { photoId: string }) {
@@ -145,7 +147,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
       {groups.map((group) => (
         <section key={group.date} className="day">
           <div className="day-head">
-            <h3>{formatDateLabel(group.date)}</h3>
+            <h3>{formatDateLabel(group.date, ja.weekdays)}</h3>
             <span className="card-sub">{formatJpy(group.home)}</span>
           </div>
           <ul className="ex-list">
@@ -155,7 +157,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
                   <span className="ex-icon">{categoryIcon(e.category)}</span>
                   <span className="ex-text">
                     <span className="ex-memo">
-                      {e.memo === '' ? categoryLabel(e.category) : e.memo}
+                      {e.memo === '' ? ja.category[e.category] : e.memo}
                     </span>
                     <span className="ex-sub">
                       {formatWithCurrency(e.amountMinor, trip.currency)} →{' '}
@@ -163,7 +165,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
                     </span>
                   </span>
                   <span className={e.scope === 'shared' ? 'badge shared' : 'badge'}>
-                    {scopeLabel(e.scope)}
+                    {ja.scope[e.scope]}
                   </span>
                 </button>
                 {e.photoId !== null && <PhotoThumb photoId={e.photoId} />}
