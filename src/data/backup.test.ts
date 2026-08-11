@@ -11,6 +11,7 @@ import {
   parseBackup,
   importBackup,
   backupFileName,
+  BackupError,
 } from './backup';
 
 beforeEach(async () => {
@@ -66,7 +67,7 @@ describe('exportBackup / importBackup', () => {
     const backup = await exportBackup();
 
     expect(backup.format).toBe('trip-wallet-backup');
-    expect(backup.version).toBe(2);
+    expect(backup.version).toBe(3);
     expect(backup.trips.map((t) => t.id)).toEqual([trip.id]);
     expect(backup.expenses).toHaveLength(1);
     expect(backup.photos.map((p) => p.id)).toEqual([photoId]);
@@ -160,7 +161,7 @@ describe('parseBackup', () => {
         expenses: [],
       }),
     );
-    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(3);
 
     await importBackup(parsed);
     const trips = await listTrips();
@@ -205,7 +206,7 @@ describe('parseBackup', () => {
           expenses: [],
         }),
       ),
-    ).toThrow('バックアップの中身が壊れています');
+    ).toThrowError(expect.objectContaining({ code: 'broken' }));
   });
 
   it('amountMinor が文字列の expense を含む JSON は例外', () => {
@@ -235,6 +236,84 @@ describe('parseBackup', () => {
           ],
         }),
       ),
-    ).toThrow('バックアップの中身が壊れています');
+    ).toThrowError(expect.objectContaining({ code: 'broken' }));
+  });
+});
+
+describe('parseBackup のエラー', () => {
+  it('JSON でなければ invalid-json', () => {
+    expect(() => parseBackup('{')).toThrowError(
+      expect.objectContaining({ code: 'invalid-json' }),
+    );
+  });
+
+  it('形が違えば not-backup', () => {
+    expect(() => parseBackup('{"foo":1}')).toThrowError(
+      expect.objectContaining({ code: 'not-backup' }),
+    );
+  });
+
+  it('未知のバージョンは unsupported-version とその値', () => {
+    const err = (() => {
+      try {
+        parseBackup(
+          '{"format":"trip-wallet-backup","version":9,"trips":[],"expenses":[],"photos":[]}',
+        );
+        return null;
+      } catch (e) {
+        return e as BackupError;
+      }
+    })();
+    expect(err?.code).toBe('unsupported-version');
+    expect(err?.detail).toBe('9');
+  });
+
+  it('中身が壊れていれば broken', () => {
+    expect(() =>
+      parseBackup(
+        '{"format":"trip-wallet-backup","version":3,"trips":[{"id":1}],"expenses":[],"photos":[]}',
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'broken' }));
+  });
+});
+
+describe('parseBackup のバージョン互換', () => {
+  it('v2 の旅行に換算先通貨を補う', () => {
+    const json = JSON.stringify({
+      format: 'trip-wallet-backup',
+      version: 2,
+      exportedAt: 0,
+      trips: [
+        {
+          id: 't1',
+          name: 'NY',
+          currency: 'USD',
+          currencyDecimals: 2,
+          startDate: '2026-09-12',
+          endDate: null,
+          personalBudgetJpy: 50000,
+          sharedBudgetJpy: null,
+          memberCount: 1,
+          createdAt: 0,
+        },
+      ],
+      expenses: [],
+      photos: [],
+    });
+    const parsed = parseBackup(json);
+    expect(parsed.trips[0].homeCurrency).toBe('JPY');
+    expect(parsed.trips[0].personalBudgetHome).toBe(50000);
+  });
+
+  it('書き出しは v3', () => {
+    const json = serializeBackup({
+      format: 'trip-wallet-backup',
+      version: 3,
+      exportedAt: 0,
+      trips: [],
+      expenses: [],
+      photos: [],
+    });
+    expect(JSON.parse(json).version).toBe(3);
   });
 });

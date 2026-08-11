@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type ChangeEvent } from 'react';
 import {
+  BackupError,
   backupFileName,
   exportBackup,
   importBackup,
@@ -27,6 +28,21 @@ function budgetLabel(trip: Trip): string {
   if (trip.personalBudgetHome !== null) parts.push(`個別 ${formatJpy(trip.personalBudgetHome)}`);
   if (trip.sharedBudgetHome !== null) parts.push(`共有 ${formatJpy(trip.sharedBudgetHome)}`);
   return parts.length === 0 ? '' : ` / ${parts.join(' / ')}`;
+}
+
+// Task 17 で t.backup.error に置き換える
+function importErrorMessage(err: unknown): string {
+  if (!(err instanceof BackupError)) return '取り込みに失敗しました';
+  switch (err.code) {
+    case 'invalid-json':
+      return 'JSON として読み込めませんでした';
+    case 'not-backup':
+      return 'Trip Wallet のバックアップファイルではありません';
+    case 'unsupported-version':
+      return `対応していないバージョンです: ${err.detail ?? ''}`;
+    case 'broken':
+      return 'バックアップの中身が壊れています';
+  }
 }
 
 export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
@@ -62,7 +78,7 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
       const result = await importBackup(parseBackup(await file.text()));
       setMessage(`旅行 ${result.trips} 件・支出 ${result.expenses} 件を取り込みました`);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : '取り込みに失敗しました');
+      setMessage(importErrorMessage(err));
     }
   }
 
