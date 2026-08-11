@@ -24,9 +24,9 @@ export type ResolveRateDeps = {
 
 function defaultDeps(): ResolveRateDeps {
   return {
-    getCachedRate,
+    getCachedRate: (base, date) => getCachedRate(base, 'JPY', date),
     putCachedRate,
-    latestCachedRate,
+    latestCachedRate: (base) => latestCachedRate(base, 'JPY'),
     // quote を通すのは Task 9。ここでは従来どおり円建てで呼ぶ。
     fetchFrankfurter: (base, date) => fetchFrankfurterRate(base, 'JPY', date),
     fetchErApi: (base, fallbackDate) => fetchErApiRate(base, 'JPY', fallbackDate),
@@ -57,7 +57,7 @@ export async function resolveRate(
 
   const save = async (fetched: FetchedRate, source: RateCache['source']) => {
     await deps.putCachedRate({
-      key: rateKey(base, date),
+      key: rateKey(base, 'JPY', date),
       base,
       // 暫定で JPY 固定。Task 9 で任意の通貨ペアに対応する
       quote: 'JPY',
