@@ -116,7 +116,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   useEffect(() => {
     if (manualRate !== null || keepSavedRate) return;
     let cancelled = false;
-    void resolveRate(trip.currency, date).then((r) => {
+    void resolveRate(trip.currency, trip.homeCurrency, date).then((r) => {
       if (cancelled) return;
       setAutoLoaded(true);
       setAutoRate(
@@ -135,7 +135,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [trip.currency, date, manualRate, keepSavedRate, onlineRetry]);
+  }, [trip.currency, trip.homeCurrency, date, manualRate, keepSavedRate, onlineRetry]);
 
   const rate = manualRate ?? autoRate?.rate ?? null;
   const rateSource: RateSource = manualRate !== null ? 'manual' : (autoRate?.source ?? 'api');

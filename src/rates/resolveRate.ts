@@ -14,22 +14,21 @@ export type ResolvedRate = {
 };
 
 export type ResolveRateDeps = {
-  getCachedRate: (base: string, date: string) => Promise<RateCache | undefined>;
+  getCachedRate: (base: string, quote: string, date: string) => Promise<RateCache | undefined>;
   putCachedRate: (entry: RateCache) => Promise<void>;
-  latestCachedRate: (base: string) => Promise<RateCache | undefined>;
-  fetchFrankfurter: (base: string, date: string) => Promise<FetchedRate>;
-  fetchErApi: (base: string, fallbackDate: string) => Promise<FetchedRate>;
+  latestCachedRate: (base: string, quote: string) => Promise<RateCache | undefined>;
+  fetchFrankfurter: (base: string, quote: string, date: string) => Promise<FetchedRate>;
+  fetchErApi: (base: string, quote: string, fallbackDate: string) => Promise<FetchedRate>;
   today: string;
 };
 
 function defaultDeps(): ResolveRateDeps {
   return {
-    getCachedRate: (base, date) => getCachedRate(base, 'JPY', date),
+    getCachedRate,
     putCachedRate,
-    latestCachedRate: (base) => latestCachedRate(base, 'JPY'),
-    // quote を通すのは Task 9。ここでは従来どおり円建てで呼ぶ。
-    fetchFrankfurter: (base, date) => fetchFrankfurterRate(base, 'JPY', date),
-    fetchErApi: (base, fallbackDate) => fetchErApiRate(base, 'JPY', fallbackDate),
+    latestCachedRate,
+    fetchFrankfurter: (base, quote, date) => fetchFrankfurterRate(base, quote, date),
+    fetchErApi: (base, quote, fallbackDate) => fetchErApiRate(base, quote, fallbackDate),
     today: todayLocal(),
   };
 }
@@ -40,12 +39,18 @@ function defaultDeps(): ResolveRateDeps {
  */
 export async function resolveRate(
   base: string,
+  quote: string,
   date: string,
   overrides: Partial<ResolveRateDeps> = {},
 ): Promise<ResolvedRate | null> {
+  // 同じ通貨なら換算しない。通信もキャッシュもせず 1 を返す。
+  if (base === quote) {
+    return { rate: 1, effectiveDate: date, source: 'same', stale: false };
+  }
+
   const deps = { ...defaultDeps(), ...overrides };
 
-  const cached = await deps.getCachedRate(base, date);
+  const cached = await deps.getCachedRate(base, quote, date);
   if (cached) {
     return {
       rate: cached.rate,
@@ -57,10 +62,9 @@ export async function resolveRate(
 
   const save = async (fetched: FetchedRate, source: RateCache['source']) => {
     await deps.putCachedRate({
-      key: rateKey(base, 'JPY', date),
+      key: rateKey(base, quote, date),
       base,
-      // 暫定で JPY 固定。Task 9 で任意の通貨ペアに対応する
-      quote: 'JPY',
+      quote,
       date,
       rate: fetched.rate,
       effectiveDate: fetched.effectiveDate,
@@ -76,7 +80,7 @@ export async function resolveRate(
   };
 
   try {
-    return await save(await deps.fetchFrankfurter(base, date), 'frankfurter');
+    return await save(await deps.fetchFrankfurter(base, quote, date), 'frankfurter');
   } catch {
     // 次のフォールバックへ進む
   }
@@ -84,19 +88,19 @@ export async function resolveRate(
   // er-api は当日レートしか返さない。当日以外(過去日・未来日とも)に使うと嘘の値になる。
   if (date === deps.today) {
     try {
-      return await save(await deps.fetchErApi(base, date), 'er-api');
+      return await save(await deps.fetchErApi(base, quote, date), 'er-api');
     } catch {
       // 次のフォールバックへ進む
     }
   }
 
-  const latest = await deps.latestCachedRate(base);
+  const latest = await deps.latestCachedRate(base, quote);
   if (latest) {
     return {
       rate: latest.rate,
       effectiveDate: latest.effectiveDate,
       source: 'cache',
-      stale: latest.effectiveDate !== date,
+      stale: true,
     };
   }
 
@@ -104,6 +108,6 @@ export async function resolveRate(
 }
 
 /** 起動時に当日レートを温めておく。現地で電波が悪くても入力を止めないため。 */
-export function prefetchTodayRate(base: string): Promise<ResolvedRate | null> {
-  return resolveRate(base, todayLocal());
+export async function prefetchTodayRate(base: string, quote: string): Promise<void> {
+  await resolveRate(base, quote, todayLocal());
 }
