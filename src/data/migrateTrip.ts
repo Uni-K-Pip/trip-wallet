@@ -1,20 +1,31 @@
+import { currencyDecimals } from '../domain/currency';
 import type { Trip } from '../domain/types';
 
 /**
- * v1 形式(budgetJpy を持つ)の旅行を v2 形式に直す。v2 形式ならそのまま返す。
- *
- * 引数は backup.ts の isTrip を通ったもの、または DB に入っている旅行レコードだけを
- * 想定する。予算以外のフィールドは touch しない。
- * DB の upgrade とバックアップ取り込みの両方から呼ぶので、IndexedDB に依存させない。
+ * 旧バージョンの旅行を今の形に直す。DB の upgrade とバックアップ取り込みの両方から使う。
+ * v1: 予算が budgetJpy 1 本 / v2: 個別・共有の 2 本(円固定) / v3: 換算先通貨つき
  */
-export function migrateTripBudget(trip: Record<string, unknown>): Trip {
-  const { budgetJpy, ...rest } = trip;
-  const migrated = rest as unknown as Trip;
-  if ('personalBudgetJpy' in trip) return migrated;
+export function migrateTrip(trip: Record<string, unknown>): Trip {
+  const t: Record<string, unknown> = { ...trip };
 
-  return {
-    ...migrated,
-    personalBudgetJpy: typeof budgetJpy === 'number' ? budgetJpy : null,
-    sharedBudgetJpy: null,
-  };
+  // v1 → v2: 1 本だった予算は個別予算として引き継ぐ
+  if (!('personalBudgetJpy' in t) && !('personalBudgetHome' in t)) {
+    t.personalBudgetJpy = t.budgetJpy ?? null;
+    t.sharedBudgetJpy = null;
+  }
+
+  // v2 → v3: 予算は円建てだった。JPY は小数 0 桁なので値の変換は要らず、名前だけ移す
+  if (!('personalBudgetHome' in t)) {
+    t.personalBudgetHome = t.personalBudgetJpy ?? null;
+    t.sharedBudgetHome = t.sharedBudgetJpy ?? null;
+  }
+
+  t.homeCurrency ??= 'JPY';
+  t.homeCurrencyDecimals ??= currencyDecimals(t.homeCurrency as string);
+
+  delete t.budgetJpy;
+  delete t.personalBudgetJpy;
+  delete t.sharedBudgetJpy;
+
+  return t as unknown as Trip;
 }

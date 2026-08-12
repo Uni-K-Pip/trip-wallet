@@ -1,16 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import type { CategoryBreakdown } from '../domain/summary';
+import { renderWithLang } from '../test/renderWithLang';
 import { CategoryChart } from './CategoryChart';
 
 const rows: CategoryBreakdown[] = [
-  { category: 'food', jpy: 2816, ratio: 0.71 },
-  { category: 'transport', jpy: 1150, ratio: 0.29 },
+  { category: 'food', home: 2816, ratio: 0.71 },
+  { category: 'transport', home: 1150, ratio: 0.29 },
 ];
 
 describe('CategoryChart', () => {
   it('帯の区画を構成比の幅とカテゴリ色で並べる', () => {
-    render(<CategoryChart rows={rows} />);
+    renderWithLang(<CategoryChart rows={rows} homeCurrency="JPY" />);
 
     const segs = screen.getAllByTestId('stack-seg');
     expect(segs).toHaveLength(2);
@@ -19,7 +20,7 @@ describe('CategoryChart', () => {
   });
 
   it('凡例を帯と同じ順・同じ色で並べる', () => {
-    render(<CategoryChart rows={rows} />);
+    renderWithLang(<CategoryChart rows={rows} homeCurrency="JPY" />);
 
     const legend = screen.getAllByTestId('cat-row');
     expect(legend).toHaveLength(2);
@@ -33,7 +34,12 @@ describe('CategoryChart', () => {
   });
 
   it('行が無ければ何も描かない', () => {
-    const { container } = render(<CategoryChart rows={[]} />);
+    const { container } = renderWithLang(<CategoryChart rows={[]} homeCurrency="JPY" />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('換算先通貨の記号で金額を出す', () => {
+    renderWithLang(<CategoryChart rows={rows} homeCurrency="EUR" />);
+    expect(screen.getAllByTestId('cat-row')[0]).toHaveTextContent('€');
   });
 });

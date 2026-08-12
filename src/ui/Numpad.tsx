@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n/LangContext';
+
 export type NumpadKey = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | 'del';
 
 const MAX_INT_DIGITS = 9;
@@ -31,6 +33,7 @@ type Props = {
 };
 
 export function Numpad({ value, decimals, onChange }: Props) {
+  const { t } = useI18n();
   return (
     <div className="numpad">
       {KEYS.map((key) => (
@@ -38,7 +41,7 @@ export function Numpad({ value, decimals, onChange }: Props) {
           key={key}
           type="button"
           className="numpad-key"
-          aria-label={key === 'del' ? '1 文字削除' : key}
+          aria-label={key === 'del' ? t.common.deleteDigit : key}
           disabled={key === '.' && decimals === 0}
           onClick={() => onChange(pressKey(value, key, decimals))}
         >

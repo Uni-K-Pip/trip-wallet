@@ -1,5 +1,3 @@
-export const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
-
 /** Date を端末ローカルの "YYYY-MM-DD" にする。toISOString は UTC になるので使わない。 */
 export function toIsoDate(d: Date): string {
   const y = d.getFullYear();
@@ -19,10 +17,10 @@ export function parseIsoDate(isoDate: string): Date {
   return new Date(y, m - 1, d);
 }
 
-/** "2026-09-12" → "9/12(土)" */
-export function formatDateLabel(isoDate: string): string {
+/** "2026-09-12" → "9/12(土)"。曜日名は辞書から渡す。 */
+export function formatDateLabel(isoDate: string, weekdays: readonly string[]): string {
   const d = parseIsoDate(isoDate);
-  return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+  return `${d.getMonth() + 1}/${d.getDate()}(${weekdays[d.getDay()]})`;
 }
 
 export function addDays(isoDate: string, days: number): string {

@@ -11,6 +11,7 @@ import {
   parseBackup,
   importBackup,
   backupFileName,
+  BackupError,
 } from './backup';
 
 beforeEach(async () => {
@@ -41,8 +42,9 @@ describe('exportBackup / importBackup', () => {
     const trip = await createTrip({
       name: '上海',
       currency: 'CNY',
-      personalBudgetJpy: 100000,
-      sharedBudgetJpy: 30000,
+      homeCurrency: 'JPY',
+      personalBudgetHome: 100000,
+      sharedBudgetHome: 30000,
     });
     const photoId = await savePhoto(new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' }));
     const expense = await addExpense({
@@ -65,7 +67,7 @@ describe('exportBackup / importBackup', () => {
     const backup = await exportBackup();
 
     expect(backup.format).toBe('trip-wallet-backup');
-    expect(backup.version).toBe(2);
+    expect(backup.version).toBe(3);
     expect(backup.trips.map((t) => t.id)).toEqual([trip.id]);
     expect(backup.expenses).toHaveLength(1);
     expect(backup.photos.map((p) => p.id)).toEqual([photoId]);
@@ -85,8 +87,8 @@ describe('exportBackup / importBackup', () => {
 
     const trips = await listTrips();
     expect(trips[0].id).toBe(trip.id);
-    expect(trips[0].personalBudgetJpy).toBe(100000);
-    expect(trips[0].sharedBudgetJpy).toBe(30000);
+    expect(trips[0].personalBudgetHome).toBe(100000);
+    expect(trips[0].sharedBudgetHome).toBe(30000);
 
     const expenses = await listExpenses(trip.id);
     expect(expenses[0].id).toBe(expense.id);
@@ -103,7 +105,7 @@ describe('exportBackup / importBackup', () => {
 
     await db.delete();
     await db.open();
-    const other = await createTrip({ name: '別の旅', currency: 'KRW' });
+    const other = await createTrip({ name: '別の旅', currency: 'KRW', homeCurrency: 'JPY' });
 
     await importBackup(parseBackup(text));
     const ids = (await listTrips()).map((t) => t.id);
@@ -159,12 +161,12 @@ describe('parseBackup', () => {
         expenses: [],
       }),
     );
-    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(3);
 
     await importBackup(parsed);
     const trips = await listTrips();
-    expect(trips[0].personalBudgetJpy).toBe(80000);
-    expect(trips[0].sharedBudgetJpy).toBeNull();
+    expect(trips[0].personalBudgetHome).toBe(80000);
+    expect(trips[0].sharedBudgetHome).toBeNull();
     expect('budgetJpy' in trips[0]).toBe(false);
   });
 
@@ -204,7 +206,7 @@ describe('parseBackup', () => {
           expenses: [],
         }),
       ),
-    ).toThrow('バックアップの中身が壊れています');
+    ).toThrowError(expect.objectContaining({ code: 'broken' }));
   });
 
   it('amountMinor が文字列の expense を含む JSON は例外', () => {
@@ -234,6 +236,84 @@ describe('parseBackup', () => {
           ],
         }),
       ),
-    ).toThrow('バックアップの中身が壊れています');
+    ).toThrowError(expect.objectContaining({ code: 'broken' }));
+  });
+});
+
+describe('parseBackup のエラー', () => {
+  it('JSON でなければ invalid-json', () => {
+    expect(() => parseBackup('{')).toThrowError(
+      expect.objectContaining({ code: 'invalid-json' }),
+    );
+  });
+
+  it('形が違えば not-backup', () => {
+    expect(() => parseBackup('{"foo":1}')).toThrowError(
+      expect.objectContaining({ code: 'not-backup' }),
+    );
+  });
+
+  it('未知のバージョンは unsupported-version とその値', () => {
+    const err = (() => {
+      try {
+        parseBackup(
+          '{"format":"trip-wallet-backup","version":9,"trips":[],"expenses":[],"photos":[]}',
+        );
+        return null;
+      } catch (e) {
+        return e as BackupError;
+      }
+    })();
+    expect(err?.code).toBe('unsupported-version');
+    expect(err?.detail).toBe('9');
+  });
+
+  it('中身が壊れていれば broken', () => {
+    expect(() =>
+      parseBackup(
+        '{"format":"trip-wallet-backup","version":3,"trips":[{"id":1}],"expenses":[],"photos":[]}',
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'broken' }));
+  });
+});
+
+describe('parseBackup のバージョン互換', () => {
+  it('v2 の旅行に換算先通貨を補う', () => {
+    const json = JSON.stringify({
+      format: 'trip-wallet-backup',
+      version: 2,
+      exportedAt: 0,
+      trips: [
+        {
+          id: 't1',
+          name: 'NY',
+          currency: 'USD',
+          currencyDecimals: 2,
+          startDate: '2026-09-12',
+          endDate: null,
+          personalBudgetJpy: 50000,
+          sharedBudgetJpy: null,
+          memberCount: 1,
+          createdAt: 0,
+        },
+      ],
+      expenses: [],
+      photos: [],
+    });
+    const parsed = parseBackup(json);
+    expect(parsed.trips[0].homeCurrency).toBe('JPY');
+    expect(parsed.trips[0].personalBudgetHome).toBe(50000);
+  });
+
+  it('書き出しは v3', () => {
+    const json = serializeBackup({
+      format: 'trip-wallet-backup',
+      version: 3,
+      exportedAt: 0,
+      trips: [],
+      expenses: [],
+      photos: [],
+    });
+    expect(JSON.parse(json).version).toBe(3);
   });
 });

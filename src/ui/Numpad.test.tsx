@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderWithLang } from '../test/renderWithLang';
 import { Numpad, pressKey } from './Numpad';
 
 describe('pressKey', () => {
@@ -47,7 +48,7 @@ describe('Numpad', () => {
   it('押したキーを onChange に渡す', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<Numpad value="1" decimals={2} onChange={onChange} />);
+    renderWithLang(<Numpad value="1" decimals={2} onChange={onChange} />);
 
     await user.click(screen.getByRole('button', { name: '2' }));
 
@@ -55,7 +56,7 @@ describe('Numpad', () => {
   });
 
   it('小数桁が 0 の通貨では . を押せない', () => {
-    render(<Numpad value="" decimals={0} onChange={() => {}} />);
+    renderWithLang(<Numpad value="" decimals={0} onChange={() => {}} />);
     expect(screen.getByRole('button', { name: '.' })).toBeDisabled();
   });
 });
