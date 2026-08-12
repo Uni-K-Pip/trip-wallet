@@ -4,10 +4,9 @@ import { deletePhoto, savePhoto } from '../data/photoRepo';
 import { CATEGORIES, PAYMENTS, SCOPES } from '../domain/categories';
 import { currencySymbol } from '../domain/currency';
 import { formatDateLabel, todayLocal } from '../domain/date';
-import { formatJpy, minorToMajor, parseMajorToMinor, toHomeMinor } from '../domain/money';
+import { formatWithCurrency, minorToMajor, parseMajorToMinor, toHomeMinor } from '../domain/money';
 import type { Category, Expense, Payment, RateSource, Scope, Trip } from '../domain/types';
-// Task 15 で useI18n の t に差し替える
-import { ja } from '../i18n/ja';
+import { useI18n } from '../i18n/LangContext';
 import { compressImage } from '../media/compressImage';
 import { resolveRate } from '../rates/resolveRate';
 import { Numpad } from './Numpad';
@@ -56,6 +55,7 @@ type Props = {
 };
 
 export function ExpenseSheet({ trip, expense, onClose }: Props) {
+  const { t } = useI18n();
   const decimals = trip.currencyDecimals;
   const symbol = currencySymbol(trip.currency);
 
@@ -81,7 +81,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
 
   const [autoRate, setAutoRate] = useState<AutoRate | null>(
     expense && expense.rateSource !== 'manual'
-      ? { rate: expense.rate, source: expense.rateSource, note: '記録時のレート', stale: false }
+      ? { rate: expense.rate, source: expense.rateSource, note: t.expense.noteSaved, stale: false }
       : null,
   );
   const [autoLoaded, setAutoLoaded] = useState(expense !== undefined);
@@ -128,8 +128,8 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
               rate: r.rate,
               source: r.source,
               note: r.stale
-                ? `${formatDateLabel(r.effectiveDate, ja.weekdays)}時点のレートを使用中`
-                : `${formatDateLabel(r.effectiveDate, ja.weekdays)}のレート`,
+                ? t.expense.noteStale(formatDateLabel(r.effectiveDate, t.weekdays))
+                : t.expense.noteOn(formatDateLabel(r.effectiveDate, t.weekdays)),
               stale: r.stale,
             },
       );
@@ -143,16 +143,19 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   const rateSource: RateSource = manualRate !== null ? 'manual' : (autoRate?.source ?? 'api');
   // 注記と警告色は、いま実際に使っているレートに合わせる。手動レートを使っている
   // ときに自動レートの stale を見せると、どちらの話なのか分からなくなる。
-  const manualNote = manualCarriedOver ? '前回入力した手動レート' : '手動';
+  const manualNote = manualCarriedOver ? t.expense.noteCarried : t.expense.noteManual;
   const rateNote = manualRate !== null ? manualNote : (autoRate?.note ?? '');
   const rateStale = manualRate !== null ? manualCarriedOver : (autoRate?.stale ?? false);
   const amountMinor = parseMajorToMinor(amount, decimals);
   const home = rate === null ? null : toHomeMinor(amountMinor, decimals, rate, trip.homeCurrencyDecimals);
+  // 現地通貨と換算先が同じ旅行(国内旅行や、円で使う日本人が JPY 建ての旅行を作った場合)では
+  // レートは常に 1 なので、レート行と換算プレビューを出さない
+  const sameCurrency = trip.currency === trip.homeCurrency;
 
   function confirmRate() {
     const n = Number(rateInput);
     if (!Number.isFinite(n) || n <= 0) {
-      setError('レートは 0 より大きい数で入力してください');
+      setError(t.expense.rateInvalid);
       return;
     }
     setManualRate(n);
@@ -169,11 +172,11 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
 
   async function handleSave() {
     if (amountMinor <= 0) {
-      setError('金額を入力してください');
+      setError(t.expense.needAmount);
       return;
     }
     if (rate === null || rate <= 0) {
-      setError('レートを入力してください');
+      setError(t.expense.needRate);
       return;
     }
 
@@ -198,9 +201,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       } catch (e) {
         // 容量超過は原因が分かるように文言を分ける。どちらの場合も写真だけ諦めて支出は保存する
         const quota = e instanceof DOMException && e.name === 'QuotaExceededError';
-        warning = quota
-          ? '端末の空き容量が足りず、写真なしで保存しました'
-          : '写真は保存できませんでした';
+        warning = quota ? t.expense.savedWithoutPhoto : t.expense.photoFailed;
       }
     }
 
@@ -229,9 +230,9 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
       }
       if (manualRate !== null) storeManualRate(trip.id, manualRate);
       setSaving(false);
-      onClose(warning === '' ? '保存しました' : warning);
+      onClose(warning === '' ? t.expense.saved : warning);
     } catch {
-      setError('保存できませんでした');
+      setError(t.expense.saveFailed);
       setSaving(false);
     }
   }
@@ -265,58 +266,65 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
   }
 
   return (
-    <Sheet title={expense ? '支出を編集' : '支出を追加'} onClose={() => void handleClose()}>
+    <Sheet
+      title={expense ? t.expense.editTitle : t.expense.addTitle}
+      onClose={() => void handleClose()}
+    >
       <div className="amount-display">
         <span className="amount-major">
           {amount === '' ? '0' : amount}
           {symbol}
         </span>
-        <span className="amount-jpy" data-testid="jpy-preview">
-          {home === null ? 'レート未設定' : formatJpy(home)}
-        </span>
-      </div>
-
-      <div className="rate-row">
-        {editingRate ? (
-          <>
-            <label htmlFor="rate-input">{`1${symbol} = ? 円`}</label>
-            <input
-              id="rate-input"
-              inputMode="decimal"
-              value={rateInput}
-              onChange={(e) => setRateInput(e.target.value)}
-            />
-            <button type="button" className="btn-primary" onClick={confirmRate}>
-              レートを確定
-            </button>
-          </>
-        ) : (
-          <>
-            <span className={rateStale ? 'rate-note stale' : 'rate-note'}>
-              {rate === null
-                ? autoLoaded
-                  ? 'レートを取得できません。手動で入力してください'
-                  : 'レートを取得中…'
-                : `1${symbol} = ${rate}円(${rateNote})`}
-            </span>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                setRateInput(rate === null ? '' : String(rate));
-                setEditingRate(true);
-              }}
-            >
-              レートを編集
-            </button>
-            {manualRate !== null && (
-              <button type="button" className="btn-ghost" onClick={() => setManualRate(null)}>
-                自動に戻す
-              </button>
-            )}
-          </>
+        {!sameCurrency && (
+          <span className="amount-jpy" data-testid="home-preview">
+            {home === null ? t.expense.noRate : formatWithCurrency(home, trip.homeCurrency)}
+          </span>
         )}
       </div>
+
+      {!sameCurrency && (
+        <div className="rate-row">
+          {editingRate ? (
+            <>
+              <label htmlFor="rate-input">{t.expense.rateAsk(symbol, trip.homeCurrency)}</label>
+              <input
+                id="rate-input"
+                inputMode="decimal"
+                value={rateInput}
+                onChange={(e) => setRateInput(e.target.value)}
+              />
+              <button type="button" className="btn-primary" onClick={confirmRate}>
+                {t.expense.rateConfirm}
+              </button>
+            </>
+          ) : (
+            <>
+              <span className={rateStale ? 'rate-note stale' : 'rate-note'}>
+                {rate === null
+                  ? autoLoaded
+                    ? t.expense.rateFailed
+                    : t.expense.rateLoading
+                  : t.expense.rateLine(symbol, String(rate), trip.homeCurrency, rateNote)}
+              </span>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  setRateInput(rate === null ? '' : String(rate));
+                  setEditingRate(true);
+                }}
+              >
+                {t.expense.rateEdit}
+              </button>
+              {manualRate !== null && (
+                <button type="button" className="btn-ghost" onClick={() => setManualRate(null)}>
+                  {t.expense.rateAuto}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       <Numpad value={amount} decimals={decimals} onChange={setAmount} />
 
@@ -328,7 +336,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
             className={s === scope ? 'seg active' : 'seg'}
             onClick={() => setScope(s)}
           >
-            {ja.scope[s]}
+            {t.scope[s]}
           </button>
         ))}
       </div>
@@ -342,7 +350,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
             onClick={() => setCategory(c.value)}
           >
             <span className="cat-icon">{c.icon}</span>
-            <span>{ja.category[c.value]}</span>
+            <span>{t.category[c.value]}</span>
           </button>
         ))}
       </div>
@@ -355,21 +363,21 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
             className={p.value === payment ? 'chip active' : 'chip'}
             onClick={() => setPayment(p.value)}
           >
-            {p.icon} {ja.payment[p.value]}
+            {p.icon} {t.payment[p.value]}
           </button>
         ))}
       </div>
 
       <div className="form">
-        <label htmlFor="expense-memo">メモ</label>
+        <label htmlFor="expense-memo">{t.expense.memo}</label>
         <input
           id="expense-memo"
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
-          placeholder="店名・内容"
+          placeholder={t.expense.memoPlaceholder}
         />
 
-        <label htmlFor="expense-date">日付</label>
+        <label htmlFor="expense-date">{t.expense.date}</label>
         <input
           id="expense-date"
           type="date"
@@ -378,7 +386,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
         />
 
         <label className="btn-ghost file-label">
-          {photoFile || photoId ? 'レシート写真: あり(撮り直す)' : 'レシート写真を撮る'}
+          {photoFile || photoId ? t.expense.photoRetake : t.expense.photoTake}
           <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} />
         </label>
       </div>
@@ -393,10 +401,10 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           onClick={() => void handleClose()}
           disabled={saving}
         >
-          キャンセル
+          {t.common.cancel}
         </button>
         <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
-          保存
+          {t.common.save}
         </button>
       </div>
     </Sheet>
