@@ -4,14 +4,14 @@ import { deleteExpense, listExpenses } from '../data/expenseRepo';
 import { getPhoto } from '../data/photoRepo';
 import { categoryIcon } from '../domain/categories';
 import { formatDateLabel } from '../domain/date';
-import { formatJpy, formatWithCurrency } from '../domain/money';
+import { formatWithCurrency } from '../domain/money';
 import { expenseHome, groupByDate, summarize } from '../domain/summary';
 import type { Expense, Trip } from '../domain/types';
-// Task 13 で useI18n の t に差し替える
-import { ja } from '../i18n/ja';
+import { useI18n } from '../i18n/LangContext';
 import { ExpenseSheet } from './ExpenseSheet';
 
 function PhotoThumb({ photoId }: { photoId: string }) {
+  const { t } = useI18n();
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ function PhotoThumb({ photoId }: { photoId: string }) {
     };
   }, [photoId]);
 
-  return url === null ? null : <img className="thumb" src={url} alt="レシート" />;
+  return url === null ? null : <img className="thumb" src={url} alt={t.home.receipt} />;
 }
 
 function BudgetBar({
@@ -36,14 +36,17 @@ function BudgetBar({
   budgetHome,
   usedHome,
   remainingHome,
+  currency,
   testId,
 }: {
   label: string;
   budgetHome: number;
   usedHome: number;
   remainingHome: number;
+  currency: string;
   testId: string;
 }) {
+  const { t } = useI18n();
   // 予算 0 のときは 0 除算を避けて使用率 0 として扱う
   const usedRatio = budgetHome === 0 ? 0 : Math.min(1, usedHome / budgetHome);
 
@@ -56,13 +59,15 @@ function BudgetBar({
         />
       </div>
       <span className="card-sub" data-testid={testId}>
-        {label} {formatJpy(budgetHome)} / 残り {formatJpy(remainingHome)}
+        {label} {formatWithCurrency(budgetHome, currency)} /{' '}
+        {t.home.remaining(formatWithCurrency(remainingHome, currency))}
       </span>
     </div>
   );
 }
 
 export function HomeScreen({ trip }: { trip: Trip }) {
+  const { t } = useI18n();
   const expenses = useLiveQuery(() => listExpenses(trip.id), [trip.id]);
   const [sheet, setSheet] = useState<Expense | 'new' | null>(null);
   const [message, setMessage] = useState('');
@@ -73,7 +78,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
   if (expenses === undefined) {
     return (
       <div className="home">
-        <p className="empty">読み込み中…</p>
+        <p className="empty">{t.common.loading}</p>
       </div>
     );
   }
@@ -83,12 +88,12 @@ export function HomeScreen({ trip }: { trip: Trip }) {
   const groups = groupByDate(list, trip);
 
   async function handleDelete(e: Expense) {
-    if (!confirm('この支出を削除しますか?')) return;
+    if (!confirm(t.home.confirmDelete)) return;
     try {
       await deleteExpense(e.id);
-      setMessage('削除しました');
+      setMessage(t.home.deleted);
     } catch {
-      setMessage('削除できませんでした');
+      setMessage(t.home.deleteFailed);
     }
   }
 
@@ -96,59 +101,66 @@ export function HomeScreen({ trip }: { trip: Trip }) {
     <div className="home">
       <div className="card">
         <div className="card-total">
-          <span className="card-label">合計</span>
+          <span className="card-label">{t.home.total}</span>
           <span className="card-jpy" data-testid="total-home">
-            {formatJpy(summary.totalHome)}
+            {formatWithCurrency(summary.totalHome, trip.homeCurrency)}
           </span>
           <span className="card-foreign">
-            {formatWithCurrency(summary.totalMinor, trip.currency)} / {summary.count}件
+            {formatWithCurrency(summary.totalMinor, trip.currency)} / {t.common.items(summary.count)}
           </span>
         </div>
 
         <div className="card-split">
           <div>
-            <span className="card-label">個別</span>
-            <span data-testid="personal-home">{formatJpy(summary.personalHome)}</span>
+            <span className="card-label">{t.scope.personal}</span>
+            <span data-testid="personal-home">
+              {formatWithCurrency(summary.personalHome, trip.homeCurrency)}
+            </span>
           </div>
           <div>
-            <span className="card-label">共有</span>
-            <span data-testid="shared-home">{formatJpy(summary.sharedHome)}</span>
+            <span className="card-label">{t.scope.shared}</span>
+            <span data-testid="shared-home">
+              {formatWithCurrency(summary.sharedHome, trip.homeCurrency)}
+            </span>
             <span className="card-sub" data-testid="shared-per-person">
-              自分の負担 {formatJpy(summary.sharedPerPersonHome)}({trip.memberCount}人)
+              {t.home.myShare(
+                formatWithCurrency(summary.sharedPerPersonHome, trip.homeCurrency),
+                trip.memberCount,
+              )}
             </span>
           </div>
         </div>
 
         {summary.personalBudgetHome !== null && summary.personalRemainingHome !== null && (
           <BudgetBar
-            label="個別予算"
+            label={t.home.personalBudget}
             budgetHome={summary.personalBudgetHome}
             usedHome={summary.personalHome}
             remainingHome={summary.personalRemainingHome}
+            currency={trip.homeCurrency}
             testId="personal-remaining-home"
           />
         )}
 
         {summary.sharedBudgetHome !== null && summary.sharedRemainingHome !== null && (
           <BudgetBar
-            label="共有予算"
+            label={t.home.sharedBudget}
             budgetHome={summary.sharedBudgetHome}
             usedHome={summary.sharedPerPersonHome}
             remainingHome={summary.sharedRemainingHome}
+            currency={trip.homeCurrency}
             testId="shared-remaining-home"
           />
         )}
       </div>
 
-      {groups.length === 0 && (
-        <p className="empty">まだ支出がありません。右下の + から追加してください。</p>
-      )}
+      {groups.length === 0 && <p className="empty">{t.home.empty}</p>}
 
       {groups.map((group) => (
         <section key={group.date} className="day">
           <div className="day-head">
-            <h3>{formatDateLabel(group.date, ja.weekdays)}</h3>
-            <span className="card-sub">{formatJpy(group.home)}</span>
+            <h3>{formatDateLabel(group.date, t.weekdays)}</h3>
+            <span className="card-sub">{formatWithCurrency(group.home, trip.homeCurrency)}</span>
           </div>
           <ul className="ex-list">
             {group.expenses.map((e) => (
@@ -157,22 +169,23 @@ export function HomeScreen({ trip }: { trip: Trip }) {
                   <span className="ex-icon">{categoryIcon(e.category)}</span>
                   <span className="ex-text">
                     <span className="ex-memo">
-                      {e.memo === '' ? ja.category[e.category] : e.memo}
+                      {e.memo === '' ? t.category[e.category] : e.memo}
                     </span>
                     <span className="ex-sub">
-                      {formatWithCurrency(e.amountMinor, trip.currency)} →{' '}
-                      {formatJpy(expenseHome(e, trip))}
+                      {formatWithCurrency(e.amountMinor, trip.currency)}
+                      {trip.currency !== trip.homeCurrency &&
+                        ` → ${formatWithCurrency(expenseHome(e, trip), trip.homeCurrency)}`}
                     </span>
                   </span>
                   <span className={e.scope === 'shared' ? 'badge shared' : 'badge'}>
-                    {ja.scope[e.scope]}
+                    {t.scope[e.scope]}
                   </span>
                 </button>
                 {e.photoId !== null && <PhotoThumb photoId={e.photoId} />}
                 <button
                   type="button"
                   className="btn-danger"
-                  aria-label="削除"
+                  aria-label={t.common.delete}
                   onClick={() => handleDelete(e)}
                 >
                   ✕
@@ -183,7 +196,12 @@ export function HomeScreen({ trip }: { trip: Trip }) {
         </section>
       ))}
 
-      <button type="button" className="fab" aria-label="支出を追加" onClick={() => setSheet('new')}>
+      <button
+        type="button"
+        className="fab"
+        aria-label={t.home.addExpense}
+        onClick={() => setSheet('new')}
+      >
         ＋
       </button>
 

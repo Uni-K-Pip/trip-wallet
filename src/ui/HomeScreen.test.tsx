@@ -161,4 +161,14 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('削除しました')).toBeInTheDocument();
     await waitFor(async () => expect(await listExpenses(trip.id)).toHaveLength(1));
   });
+
+  it('換算先通貨で合計を表示する', async () => {
+    renderWithLang(<HomeScreen trip={{ ...trip, homeCurrency: 'EUR', homeCurrencyDecimals: 2 }} />);
+    expect(await screen.findByTestId('total-home')).toHaveTextContent('€');
+  });
+
+  it('英語ならカードの見出しが英語になる', async () => {
+    renderWithLang(<HomeScreen trip={trip} />, 'en');
+    expect(await screen.findByText('Total')).toBeInTheDocument();
+  });
 });
