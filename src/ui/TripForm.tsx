@@ -23,6 +23,13 @@ function parseBudget(text: string, decimals: number): number | null {
   return Math.max(0, parseMajorToMinor(trimmed, decimals));
 }
 
+/** 数値として読める入力だけ、新しい通貨の桁数に表示し直す。それ以外は触らない。 */
+function reformatBudget(text: string, decimals: number): string {
+  const trimmed = text.trim();
+  if (trimmed === '' || !Number.isFinite(Number(trimmed))) return text;
+  return formatMajor(parseMajorToMinor(trimmed, decimals), decimals).replace(/,/g, '');
+}
+
 export function TripForm({ trip, onDone, onCancel }: Props) {
   const { t, lang } = useI18n();
   const [name, setName] = useState(trip?.name ?? '');
@@ -107,7 +114,13 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
       <select
         id="trip-home-currency"
         value={homeCurrency}
-        onChange={(e) => setHomeCurrency(e.target.value)}
+        onChange={(e) => {
+          const next = e.target.value;
+          const nextDecimals = currencyDecimals(next);
+          setHomeCurrency(next);
+          setPersonalBudget((b) => reformatBudget(b, nextDecimals));
+          setSharedBudget((b) => reformatBudget(b, nextDecimals));
+        }}
         disabled={lockCurrency}
       >
         {CURRENCIES.map((c) => (
