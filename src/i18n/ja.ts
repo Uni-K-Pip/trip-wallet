@@ -44,6 +44,22 @@ export const ja = {
     deleted: '削除しました',
     deleteFailed: '削除できませんでした',
   },
+  view: {
+    personal: '個別',
+    shared: '共有',
+    mine: '自己負担',
+  },
+  summary: {
+    empty: '集計する支出がまだありません。',
+    viewEmpty: (view: string) => `${view}の支出はまだありません。`,
+    myTotal: '自分の負担合計:',
+    myTotalNote: '(個別 + 共有の人数割り)',
+    byCategory: 'カテゴリ別',
+    daily: '日別推移',
+    average: (v: string) => `平均 ${v}`,
+    dailyAverage: '1日あたり平均',
+    peak: '最高',
+  },
   category: {
     food: '食事',
     transport: '交通',

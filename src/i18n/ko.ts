@@ -43,6 +43,22 @@ export const ko: Dictionary = {
     deleted: '삭제했습니다',
     deleteFailed: '삭제하지 못했습니다',
   },
+  view: {
+    personal: '개별',
+    shared: '공유',
+    mine: '내 부담',
+  },
+  summary: {
+    empty: '집계할 지출이 아직 없습니다.',
+    viewEmpty: (view) => `${view} 지출이 아직 없습니다.`,
+    myTotal: '내 부담 합계:',
+    myTotalNote: '(개별 + 공유 인원 분할)',
+    byCategory: '카테고리별',
+    daily: '일별 추이',
+    average: (v) => `평균 ${v}`,
+    dailyAverage: '하루 평균',
+    peak: '최고',
+  },
   category: {
     food: '식사',
     transport: '교통',

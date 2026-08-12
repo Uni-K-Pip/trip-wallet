@@ -43,6 +43,22 @@ export const en: Dictionary = {
     deleted: 'Deleted',
     deleteFailed: 'Could not delete',
   },
+  view: {
+    personal: 'Personal',
+    shared: 'Shared',
+    mine: 'My share',
+  },
+  summary: {
+    empty: 'No expenses to summarize yet.',
+    viewEmpty: (view) => `No ${view.toLowerCase()} expenses yet.`,
+    myTotal: 'Your total:',
+    myTotalNote: ' (personal + your split of shared)',
+    byCategory: 'By category',
+    daily: 'Daily trend',
+    average: (v) => `Avg ${v}`,
+    dailyAverage: 'Daily average',
+    peak: 'Peak',
+  },
   category: {
     food: 'Food',
     transport: 'Transit',

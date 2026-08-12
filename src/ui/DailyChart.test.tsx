@@ -19,7 +19,7 @@ const threeDays: DailySeries = {
 
 describe('DailyChart', () => {
   it('0 円の日にも棒と日付を出す', () => {
-    renderWithLang(<DailyChart series={threeDays} />);
+    renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />);
 
     const cols = screen.getAllByTestId('day-col');
     expect(cols).toHaveLength(3);
@@ -28,7 +28,7 @@ describe('DailyChart', () => {
   });
 
   it('最高額の日と 0 円の日で棒の見た目を変える', () => {
-    renderWithLang(<DailyChart series={threeDays} />);
+    renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />);
 
     const cols = screen.getAllByTestId('day-col');
     expect(cols[0].firstChild).toHaveClass('peak');
@@ -37,7 +37,7 @@ describe('DailyChart', () => {
   });
 
   it('平均と最高を図の下に出す', () => {
-    renderWithLang(<DailyChart series={threeDays} />);
+    renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />);
 
     expect(screen.getByTestId('daily-average')).toHaveTextContent('1日あたり平均 ¥1,322');
     expect(screen.getByTestId('daily-peak')).toHaveTextContent('最高 9/12(土) ¥2,816');
@@ -54,6 +54,7 @@ describe('DailyChart', () => {
           peakDate: '2026-09-01',
           averageHome: 1000,
         }}
+        homeCurrency="JPY"
       />,
     );
 
@@ -66,6 +67,7 @@ describe('DailyChart', () => {
     const { container } = renderWithLang(
       <DailyChart
         series={{ points: [], totalHome: 0, maxHome: 0, peakDate: null, averageHome: 0 }}
+        homeCurrency="JPY"
       />,
     );
     expect(container).toBeEmptyDOMElement();
@@ -84,7 +86,7 @@ describe('DailyChart', () => {
       averageHome: 50,
     };
 
-    renderWithLang(<DailyChart series={cleanData} />);
+    renderWithLang(<DailyChart series={cleanData} homeCurrency="JPY" />);
 
     const cols = screen.getAllByTestId('day-col');
     // maxHome = 100, BAR_HEIGHT = 110 なので scale = 100
@@ -94,5 +96,10 @@ describe('DailyChart', () => {
     expect(cols[1].querySelector('.daily-bar')).toHaveStyle({ height: '55px' });
     // 0円: style 属性なし（inline style が設定されない）
     expect(cols[2].querySelector('.daily-bar')).not.toHaveAttribute('style');
+  });
+
+  it('英語なら曜日と平均が英語になる', () => {
+    renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />, 'en');
+    expect(screen.getAllByTestId('day-label')[0]).toHaveTextContent('Sat');
   });
 });
