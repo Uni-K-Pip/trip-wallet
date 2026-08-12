@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense, listExpenses, updateExpense } from '../data/expenseRepo';
@@ -7,6 +7,7 @@ import { getPhoto, savePhoto } from '../data/photoRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
 import { resolveRate } from '../rates/resolveRate';
+import { renderWithLang } from '../test/renderWithLang';
 import { ExpenseSheet } from './ExpenseSheet';
 
 vi.mock('../rates/resolveRate', () => ({
@@ -38,7 +39,7 @@ beforeEach(async () => {
   await db.open();
   localStorage.clear();
   vi.mocked(resolveRate).mockReset();
-  trip = await createTrip({ name: '上海', currency: 'CNY', memberCount: 2 });
+  trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY', memberCount: 2 });
 });
 
 describe('ExpenseSheet', () => {
@@ -51,14 +52,14 @@ describe('ExpenseSheet', () => {
     });
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={onClose} />);
 
     await screen.findByText(/23\.465/);
     await user.click(screen.getByRole('button', { name: '1' }));
     await user.click(screen.getByRole('button', { name: '2' }));
     await user.click(screen.getByRole('button', { name: '0' }));
 
-    expect(screen.getByTestId('jpy-preview')).toHaveTextContent('¥2,816');
+    expect(screen.getByTestId('home-preview')).toHaveTextContent('¥2,816');
 
     await user.click(screen.getByRole('button', { name: /交通/ }));
     await user.click(screen.getByRole('button', { name: '共有' }));
@@ -78,7 +79,7 @@ describe('ExpenseSheet', () => {
   it('レートを解決できないときは手動入力しないと保存できない', async () => {
     vi.mocked(resolveRate).mockResolvedValue(null);
     const user = userEvent.setup();
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     expect(
       await screen.findByText('レートを取得できません。手動で入力してください'),
@@ -100,11 +101,11 @@ describe('ExpenseSheet', () => {
     });
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={onClose} />);
 
     await screen.findByText(/23\.465/);
     await user.click(screen.getByRole('button', { name: 'レートを編集' }));
-    const input = screen.getByLabelText('1元 = ? 円');
+    const input = screen.getByLabelText('1元 = ? JPY');
     await user.clear(input);
     await user.type(input, '24');
     await user.click(screen.getByRole('button', { name: 'レートを確定' }));
@@ -127,7 +128,7 @@ describe('ExpenseSheet', () => {
       source: 'cache',
       stale: true,
     });
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     expect(await screen.findByText(/9\/10.*時点のレートを使用中/)).toBeInTheDocument();
   });
@@ -146,7 +147,7 @@ describe('ExpenseSheet', () => {
         source: 'api',
         stale: false,
       });
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     await screen.findByText(/9\/10.*時点のレートを使用中/);
     fireEvent(window, new Event('online'));
@@ -163,22 +164,22 @@ describe('ExpenseSheet', () => {
       stale: false,
     });
     localStorage.setItem(`trip-wallet:manual-rate:${trip.id}`, '24');
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     await screen.findByText(/前回入力した手動レート/);
     fireEvent(window, new Event('online'));
 
-    await waitFor(() => expect(screen.getByText(/1元 = 24円/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/1元 = 24 JPY/)).toBeInTheDocument());
     expect(resolveRate).not.toHaveBeenCalled();
   });
 
   it('前回の手動レートを引き継いだときは、引き継ぎだと分かる形で知らせる', async () => {
     vi.mocked(resolveRate).mockResolvedValue(null);
     localStorage.setItem(`trip-wallet:manual-rate:${trip.id}`, '24');
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     const note = await screen.findByText(/前回入力した手動レート/);
-    expect(note).toHaveTextContent('1元 = 24円(前回入力した手動レート)');
+    expect(note).toHaveTextContent('1元 = 24 JPY(前回入力した手動レート)');
     expect(note).toHaveClass('stale');
     expect(resolveRate).not.toHaveBeenCalled();
   });
@@ -191,17 +192,17 @@ describe('ExpenseSheet', () => {
       stale: true,
     });
     const user = userEvent.setup();
-    render(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={vi.fn()} />);
 
     await screen.findByText(/9\/10.*時点のレートを使用中/);
     await user.click(screen.getByRole('button', { name: 'レートを編集' }));
-    const input = screen.getByLabelText('1元 = ? 円');
+    const input = screen.getByLabelText('1元 = ? JPY');
     await user.clear(input);
     await user.type(input, '24');
     await user.click(screen.getByRole('button', { name: 'レートを確定' }));
 
-    const note = await screen.findByText(/1元 = 24円/);
-    expect(note).toHaveTextContent('1元 = 24円(手動)');
+    const note = await screen.findByText(/1元 = 24 JPY/);
+    expect(note).toHaveTextContent('1元 = 24 JPY(手動)');
     expect(note).not.toHaveClass('stale');
   });
 
@@ -222,7 +223,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -247,7 +248,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} onClose={onClose} />);
 
     await screen.findByText(/23\.465/);
     await user.click(screen.getByRole('button', { name: '1' }));
@@ -283,7 +284,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -315,7 +316,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -355,7 +356,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -413,7 +414,7 @@ describe('ExpenseSheet', () => {
 
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
+    renderWithLang(<ExpenseSheet trip={trip} expense={expense} onClose={onClose} />);
 
     const newFile = new File(['new'], 'receipt.jpg', { type: 'image/jpeg' });
     await user.upload(screen.getByLabelText(/レシート写真/), newFile);
@@ -465,5 +466,55 @@ describe('ExpenseSheet', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledWith('保存しました');
+  });
+
+  it('現地通貨と換算先が同じならレート行を出さない', async () => {
+    vi.mocked(resolveRate).mockResolvedValue({
+      rate: 1,
+      effectiveDate: '2026-09-11',
+      source: 'same',
+      stale: false,
+    });
+    renderWithLang(
+      <ExpenseSheet
+        trip={{
+          ...trip,
+          currency: 'JPY',
+          currencyDecimals: 0,
+          homeCurrency: 'JPY',
+          homeCurrencyDecimals: 0,
+        }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    // 保存ボタンが出た = シートは描画済み。そのうえでレート行と換算プレビューが無いことを見る
+    expect(await screen.findByRole('button', { name: '保存' })).toBeInTheDocument();
+    expect(screen.queryByTestId('home-preview')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'レートを編集' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/1¥ =/)).not.toBeInTheDocument();
+  });
+
+  it('換算先が円以外ならレート行にその通貨コードが出る', async () => {
+    vi.mocked(resolveRate).mockResolvedValue({
+      rate: 0.14,
+      effectiveDate: '2026-09-11',
+      source: 'api',
+      stale: false,
+    });
+    renderWithLang(
+      <ExpenseSheet
+        trip={{
+          ...trip,
+          currency: 'CNY',
+          currencyDecimals: 2,
+          homeCurrency: 'USD',
+          homeCurrencyDecimals: 2,
+        }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(/1元 = 0\.14 USD/)).toBeInTheDocument();
   });
 });

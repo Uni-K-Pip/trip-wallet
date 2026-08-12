@@ -1,6 +1,7 @@
-import { WEEKDAYS, dayOfMonth, formatDateLabel, weekdayIndex } from '../domain/date';
-import { formatJpy } from '../domain/money';
+import { dayOfMonth, formatDateLabel, weekdayIndex } from '../domain/date';
+import { formatWithCurrency } from '../domain/money';
 import type { DailySeries } from '../domain/summary';
+import { useI18n } from '../i18n/LangContext';
 
 const BAR_HEIGHT = 110;
 
@@ -16,26 +17,28 @@ function tickClass(isoDate: string): string {
   return 'daily-tick';
 }
 
-function barClass(jpy: number, isPeak: boolean): string {
-  if (jpy === 0) return 'daily-bar zero';
+function barClass(home: number, isPeak: boolean): string {
+  if (home === 0) return 'daily-bar zero';
   return isPeak ? 'daily-bar peak' : 'daily-bar';
 }
 
-export function DailyChart({ series }: { series: DailySeries }) {
-  const { points, maxJpy, peakDate, averageJpy } = series;
+export function DailyChart({ series, homeCurrency }: { series: DailySeries; homeCurrency: string }) {
+  const { t } = useI18n();
+  const { points, maxHome, peakDate, averageHome } = series;
   if (points.length === 0) return null;
 
+  const fmt = (v: number) => formatWithCurrency(v, homeCurrency);
   const step = labelStep(points.length);
   // 日数が多いと棒が潰れるので間隔を詰める。横スクロールはさせない。
   const gap = points.length >= 15 ? 2 : 6;
-  const scale = Math.max(1, maxJpy);
+  const scale = Math.max(1, maxHome);
 
   return (
     <div className="daily">
       <div className="daily-bars" style={{ gap: `${gap}px`, height: `${BAR_HEIGHT}px` }}>
-        {averageJpy > 0 && (
-          <div className="daily-avg" style={{ bottom: `${(averageJpy / scale) * BAR_HEIGHT}px` }}>
-            <span>平均 {formatJpy(averageJpy)}</span>
+        {averageHome > 0 && (
+          <div className="daily-avg" style={{ bottom: `${(averageHome / scale) * BAR_HEIGHT}px` }}>
+            <span>{t.summary.average(fmt(averageHome))}</span>
           </div>
         )}
         {points.map((p) => (
@@ -44,11 +47,11 @@ export function DailyChart({ series }: { series: DailySeries }) {
             data-testid="day-col"
             key={p.date}
             role="img"
-            aria-label={`${formatDateLabel(p.date)} ${formatJpy(p.jpy)}`}
+            aria-label={`${formatDateLabel(p.date, t.weekdays)} ${fmt(p.home)}`}
           >
             <span
-              className={barClass(p.jpy, p.date === peakDate && maxJpy > 0)}
-              style={p.jpy === 0 ? undefined : { height: `${(p.jpy / scale) * BAR_HEIGHT}px` }}
+              className={barClass(p.home, p.date === peakDate && maxHome > 0)}
+              style={p.home === 0 ? undefined : { height: `${(p.home / scale) * BAR_HEIGHT}px` }}
             />
           </div>
         ))}
@@ -61,7 +64,7 @@ export function DailyChart({ series }: { series: DailySeries }) {
               <span data-testid="day-label">
                 {dayOfMonth(p.date)}
                 <br />
-                {WEEKDAYS[weekdayIndex(p.date)]}
+                {t.weekdays[weekdayIndex(p.date)]}
               </span>
             )}
           </span>
@@ -70,11 +73,11 @@ export function DailyChart({ series }: { series: DailySeries }) {
 
       <div className="daily-foot">
         <span data-testid="daily-average">
-          1日あたり平均 <b>{formatJpy(averageJpy)}</b>
+          {t.summary.dailyAverage} <b>{fmt(averageHome)}</b>
         </span>
-        {maxJpy > 0 && peakDate && (
+        {maxHome > 0 && peakDate && (
           <span data-testid="daily-peak">
-            最高 {formatDateLabel(peakDate)} <b>{formatJpy(maxJpy)}</b>
+            {t.summary.peak} {formatDateLabel(peakDate, t.weekdays)} <b>{fmt(maxHome)}</b>
           </span>
         )}
       </div>

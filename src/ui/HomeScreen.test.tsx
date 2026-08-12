@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { addExpense, deleteExpense, listExpenses } from '../data/expenseRepo';
 import { createTrip } from '../data/tripRepo';
 import type { Trip } from '../domain/types';
+import { renderWithLang } from '../test/renderWithLang';
 import { HomeScreen } from './HomeScreen';
 
 // deleteExpense は既定では実装をそのまま呼ぶ。失敗時のふるまいを検証するテストで
@@ -26,9 +27,10 @@ beforeEach(async () => {
   trip = await createTrip({
     name: '上海',
     currency: 'CNY',
+    homeCurrency: 'JPY',
     memberCount: 2,
-    personalBudgetJpy: 10000,
-    sharedBudgetJpy: 3000,
+    personalBudgetHome: 10000,
+    sharedBudgetHome: 3000,
   });
   await addExpense({
     tripId: trip.id,
@@ -58,39 +60,40 @@ beforeEach(async () => {
 
 describe('HomeScreen', () => {
   it('サマリーを表示する', async () => {
-    render(<HomeScreen trip={trip} />);
+    renderWithLang(<HomeScreen trip={trip} />);
 
-    expect(await screen.findByTestId('total-jpy')).toHaveTextContent('¥5,116');
-    expect(screen.getByTestId('personal-jpy')).toHaveTextContent('¥2,816');
-    expect(screen.getByTestId('shared-jpy')).toHaveTextContent('¥2,300');
+    expect(await screen.findByTestId('total-home')).toHaveTextContent('¥5,116');
+    expect(screen.getByTestId('personal-home')).toHaveTextContent('¥2,816');
+    expect(screen.getByTestId('shared-home')).toHaveTextContent('¥2,300');
     expect(screen.getByTestId('shared-per-person')).toHaveTextContent('¥1,150');
-    expect(screen.getByTestId('personal-remaining-jpy')).toHaveTextContent('¥7,184');
-    expect(screen.getByTestId('shared-remaining-jpy')).toHaveTextContent('¥1,850');
+    expect(screen.getByTestId('personal-remaining-home')).toHaveTextContent('¥7,184');
+    expect(screen.getByTestId('shared-remaining-home')).toHaveTextContent('¥1,850');
   });
 
   it('設定されている側の予算バーだけを出す', async () => {
     const personalOnly = await createTrip({
       name: 'NY',
       currency: 'USD',
-      personalBudgetJpy: 5000,
+      homeCurrency: 'JPY',
+      personalBudgetHome: 5000,
     });
-    render(<HomeScreen trip={personalOnly} />);
+    renderWithLang(<HomeScreen trip={personalOnly} />);
 
-    expect(await screen.findByTestId('personal-remaining-jpy')).toBeInTheDocument();
-    expect(screen.queryByTestId('shared-remaining-jpy')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('personal-remaining-home')).toBeInTheDocument();
+    expect(screen.queryByTestId('shared-remaining-home')).not.toBeInTheDocument();
   });
 
   it('予算が両方とも未設定ならバーを出さない', async () => {
-    const noBudget = await createTrip({ name: '香港', currency: 'HKD' });
-    render(<HomeScreen trip={noBudget} />);
+    const noBudget = await createTrip({ name: '香港', currency: 'HKD', homeCurrency: 'JPY' });
+    renderWithLang(<HomeScreen trip={noBudget} />);
 
     await screen.findByText('まだ支出がありません。右下の + から追加してください。');
-    expect(screen.queryByTestId('personal-remaining-jpy')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('shared-remaining-jpy')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('personal-remaining-home')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('shared-remaining-home')).not.toBeInTheDocument();
   });
 
   it('日付ごとに支出を並べる', async () => {
-    render(<HomeScreen trip={trip} />);
+    renderWithLang(<HomeScreen trip={trip} />);
 
     expect(await screen.findByText('9/12(土)')).toBeInTheDocument();
     expect(screen.getByText('9/11(金)')).toBeInTheDocument();
@@ -103,14 +106,14 @@ describe('HomeScreen', () => {
   });
 
   it('支出が無ければ案内を出す', async () => {
-    const empty = await createTrip({ name: '香港', currency: 'HKD' });
-    render(<HomeScreen trip={empty} />);
+    const empty = await createTrip({ name: '香港', currency: 'HKD', homeCurrency: 'JPY' });
+    renderWithLang(<HomeScreen trip={empty} />);
 
     expect(await screen.findByText('まだ支出がありません。右下の + から追加してください。')).toBeInTheDocument();
   });
 
   it('シートを開いたまま別の支出の行が操作されると、新しい支出のデータで再表示される', async () => {
-    render(<HomeScreen trip={trip} />);
+    renderWithLang(<HomeScreen trip={trip} />);
 
     // 小籠包(支出A)の編集シートを開く
     const rowA = (await screen.findByText('小籠包')).closest('button');
@@ -138,7 +141,7 @@ describe('HomeScreen', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.mocked(deleteExpense).mockRejectedValueOnce(new Error('一時的な削除失敗'));
     const user = userEvent.setup();
-    render(<HomeScreen trip={trip} />);
+    renderWithLang(<HomeScreen trip={trip} />);
 
     const deleteButtons = await screen.findAllByRole('button', { name: '削除' });
     await user.click(deleteButtons[0]);
@@ -150,12 +153,22 @@ describe('HomeScreen', () => {
   it('削除に成功すると完了メッセージを出す', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const user = userEvent.setup();
-    render(<HomeScreen trip={trip} />);
+    renderWithLang(<HomeScreen trip={trip} />);
 
     const deleteButtons = await screen.findAllByRole('button', { name: '削除' });
     await user.click(deleteButtons[0]);
 
     expect(await screen.findByText('削除しました')).toBeInTheDocument();
     await waitFor(async () => expect(await listExpenses(trip.id)).toHaveLength(1));
+  });
+
+  it('換算先通貨で合計を表示する', async () => {
+    renderWithLang(<HomeScreen trip={{ ...trip, homeCurrency: 'EUR', homeCurrencyDecimals: 2 }} />);
+    expect(await screen.findByTestId('total-home')).toHaveTextContent('€');
+  });
+
+  it('英語ならカードの見出しが英語になる', async () => {
+    renderWithLang(<HomeScreen trip={trip} />, 'en');
+    expect(await screen.findByText('Total')).toBeInTheDocument();
   });
 });

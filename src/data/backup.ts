@@ -1,18 +1,31 @@
 import { toIsoDate } from '../domain/date';
 import type { Expense, Trip } from '../domain/types';
 import { db } from './db';
-import { migrateTripBudget } from './migrateTrip';
+import { migrateTrip } from './migrateTrip';
 
 export type BackupPhoto = { id: string; type: string; dataBase64: string };
 
 export type BackupFile = {
   format: 'trip-wallet-backup';
-  version: 2;
+  version: 3;
   exportedAt: number;
   trips: Trip[];
   expenses: Expense[];
   photos: BackupPhoto[];
 };
+
+export type BackupErrorCode = 'invalid-json' | 'not-backup' | 'unsupported-version' | 'broken';
+
+/** 取り込みの失敗理由。文言は画面側で言語に合わせて組み立てる。 */
+export class BackupError extends Error {
+  constructor(
+    readonly code: BackupErrorCode,
+    readonly detail?: string,
+  ) {
+    super(code);
+    this.name = 'BackupError';
+  }
+}
 
 export type ImportResult = { trips: number; expenses: number; photos: number };
 
@@ -43,7 +56,7 @@ export async function exportBackup(): Promise<BackupFile> {
 
   return {
     format: 'trip-wallet-backup',
-    version: 2,
+    version: 3,
     exportedAt: Date.now(),
     trips,
     expenses,
@@ -61,10 +74,7 @@ export function serializeBackup(backup: BackupFile): string {
   return JSON.stringify(backup);
 }
 
-/**
- * 予算は v1 の budgetJpy と v2 の 2 フィールドのどちらの形でも受け入れる。
- * ここの目的は壊れた JSON を弾くことで、形式ごとの網羅は migrateTripBudget の責務。
- */
+/** 予算は v1〜v3 で名前が違う。どれも「数値または null、あるいは未設定」を許す。 */
 function isBudgetField(v: unknown): boolean {
   return v === undefined || v === null || typeof v === 'number';
 }
@@ -82,7 +92,12 @@ function isTrip(v: unknown): v is Trip {
     typeof t.memberCount === 'number' &&
     isBudgetField(t.budgetJpy) &&
     isBudgetField(t.personalBudgetJpy) &&
-    isBudgetField(t.sharedBudgetJpy)
+    isBudgetField(t.sharedBudgetJpy) &&
+    isBudgetField(t.personalBudgetHome) &&
+    isBudgetField(t.sharedBudgetHome) &&
+    // v1.0.4 以前のバックアップには換算先通貨が無い
+    (t.homeCurrency === undefined || typeof t.homeCurrency === 'string') &&
+    (t.homeCurrencyDecimals === undefined || typeof t.homeCurrencyDecimals === 'number')
   );
 }
 
@@ -109,38 +124,38 @@ function isBackupPhoto(v: unknown): v is BackupPhoto {
 }
 
 export function parseBackup(text: string): BackupFile {
-  let json: unknown;
+  let raw: unknown;
   try {
-    json = JSON.parse(text);
+    raw = JSON.parse(text);
   } catch {
-    throw new Error('JSON として読み込めませんでした');
+    throw new BackupError('invalid-json');
   }
 
-  const b = json as Partial<BackupFile> | null;
-  if (!b || b.format !== 'trip-wallet-backup') {
-    throw new Error('Trip Wallet のバックアップファイルではありません');
-  }
-  // 書き出しは v2 だが、v1.0.2 以前が書いた v1 も取り込めるようにする
-  const version = (b as { version?: unknown }).version;
-  if (version !== 1 && version !== 2) {
-    throw new Error(`対応していないバージョンです: ${String(version)}`);
-  }
-  if (!Array.isArray(b.trips) || !Array.isArray(b.expenses)) {
-    throw new Error('バックアップの中身が壊れています');
-  }
-  const photos = Array.isArray(b.photos) ? b.photos : [];
+  if (typeof raw !== 'object' || raw === null) throw new BackupError('not-backup');
+  const obj = raw as Record<string, unknown>;
+  if (obj.format !== 'trip-wallet-backup') throw new BackupError('not-backup');
 
-  if (!b.trips.every(isTrip) || !b.expenses.every(isExpense) || !photos.every(isBackupPhoto)) {
-    throw new Error('バックアップの中身が壊れています');
+  // 書き出しは v3 だが、v1.0.2 以前が書いた v1 と v1.0.4 までの v2 も取り込めるようにする
+  const version = obj.version;
+  if (version !== 1 && version !== 2 && version !== 3) {
+    throw new BackupError('unsupported-version', String(version));
+  }
+  if (!Array.isArray(obj.trips) || !Array.isArray(obj.expenses)) {
+    throw new BackupError('broken');
+  }
+  const photos = Array.isArray(obj.photos) ? obj.photos : [];
+
+  if (!obj.trips.every(isTrip) || !obj.expenses.every(isExpense) || !photos.every(isBackupPhoto)) {
+    throw new BackupError('broken');
   }
 
   return {
     format: 'trip-wallet-backup',
-    version: 2,
-    exportedAt: typeof b.exportedAt === 'number' ? b.exportedAt : 0,
-    trips: b.trips.map((t) => migrateTripBudget(t as unknown as Record<string, unknown>)),
-    expenses: b.expenses,
-    photos,
+    version: 3,
+    exportedAt: typeof obj.exportedAt === 'number' ? obj.exportedAt : 0,
+    trips: obj.trips.map((t) => migrateTrip(t as Record<string, unknown>)),
+    expenses: obj.expenses as Expense[],
+    photos: photos as BackupPhoto[],
   };
 }
 

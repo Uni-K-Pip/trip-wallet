@@ -11,6 +11,7 @@ import {
   countCachedRates,
 } from './rateCacheRepo';
 import type { ExpenseInput } from './expenseRepo';
+import type { RateCache } from '../domain/types';
 
 beforeEach(async () => {
   await db.delete();
@@ -35,44 +36,49 @@ function expenseInput(over: Partial<ExpenseInput> = {}): ExpenseInput {
 
 describe('tripRepo', () => {
   it('通貨から小数桁数を自動で決めて保存する', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     expect(trip.currencyDecimals).toBe(2);
     expect((await getTrip(trip.id))?.name).toBe('上海');
 
-    const seoul = await createTrip({ name: 'ソウル', currency: 'KRW' });
+    const seoul = await createTrip({ name: 'ソウル', currency: 'KRW', homeCurrency: 'JPY' });
     expect(seoul.currencyDecimals).toBe(0);
   });
 
   it('既定値は 1 人・予算なし・終了日なし', async () => {
-    const trip = await createTrip({ name: '上海', currency: 'CNY' });
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     expect(trip.memberCount).toBe(1);
-    expect(trip.personalBudgetJpy).toBeNull();
-    expect(trip.sharedBudgetJpy).toBeNull();
+    expect(trip.personalBudgetHome).toBeNull();
+    expect(trip.sharedBudgetHome).toBeNull();
     expect(trip.endDate).toBeNull();
   });
 
   it('新しい旅行から順に並ぶ', async () => {
-    const a = await createTrip({ name: '古い', currency: 'CNY' });
+    const a = await createTrip({ name: '古い', currency: 'CNY', homeCurrency: 'JPY' });
     await new Promise((r) => setTimeout(r, 2));
-    const b = await createTrip({ name: '新しい', currency: 'CNY' });
+    const b = await createTrip({ name: '新しい', currency: 'CNY', homeCurrency: 'JPY' });
     expect((await listTrips()).map((t) => t.id)).toEqual([b.id, a.id]);
   });
 
   it('通貨を変えると小数桁数も追随する', async () => {
-    const trip = await createTrip({ name: '旅', currency: 'CNY' });
+    const trip = await createTrip({ name: '旅', currency: 'CNY', homeCurrency: 'JPY' });
     await updateTrip(trip.id, { currency: 'KRW' });
     expect((await getTrip(trip.id))?.currencyDecimals).toBe(0);
   });
 
   it('人数は 1 未満にできない', async () => {
-    const trip = await createTrip({ name: '旅', currency: 'CNY', memberCount: 0 });
+    const trip = await createTrip({
+      name: '旅',
+      currency: 'CNY',
+      homeCurrency: 'JPY',
+      memberCount: 0,
+    });
     expect(trip.memberCount).toBe(1);
     await updateTrip(trip.id, { memberCount: -3 });
     expect((await getTrip(trip.id))?.memberCount).toBe(1);
   });
 
   it('旅行を消すと支出と写真も消える', async () => {
-    const trip = await createTrip({ name: '旅', currency: 'CNY' });
+    const trip = await createTrip({ name: '旅', currency: 'CNY', homeCurrency: 'JPY' });
     const photoId = await savePhoto(new Blob(['x'], { type: 'image/jpeg' }));
     await addExpense(expenseInput({ tripId: trip.id, photoId }));
     await deleteTrip(trip.id);
@@ -123,57 +129,54 @@ describe('expenseRepo', () => {
   });
 });
 
-describe('rateCacheRepo', () => {
-  it('キーは通貨と日付から決まる', () => {
-    expect(rateKey('CNY', '2026-09-12')).toBe('CNY:JPY:2026-09-12');
+function rate(over: Partial<RateCache> = {}): RateCache {
+  return {
+    key: rateKey('CNY', 'JPY', '2026-09-12'),
+    base: 'CNY',
+    quote: 'JPY',
+    date: '2026-09-12',
+    rate: 23.4,
+    effectiveDate: '2026-09-12',
+    fetchedAt: 0,
+    source: 'frankfurter',
+    ...over,
+  };
+}
+
+describe('レートキャッシュ', () => {
+  it('キーに換算先通貨を含める', () => {
+    expect(rateKey('CNY', 'USD', '2026-09-12')).toBe('CNY:USD:2026-09-12');
   });
 
   it('保存して読み戻せる', async () => {
-    await putCachedRate({
-      key: rateKey('CNY', '2026-09-12'),
-      base: 'CNY',
-      date: '2026-09-12',
-      rate: 23.465,
-      effectiveDate: '2026-09-11',
-      fetchedAt: Date.now(),
-      source: 'frankfurter',
-    });
-    expect((await getCachedRate('CNY', '2026-09-12'))?.rate).toBe(23.465);
+    await putCachedRate(rate({ rate: 23.465, effectiveDate: '2026-09-11' }));
+    expect((await getCachedRate('CNY', 'JPY', '2026-09-12'))?.rate).toBe(23.465);
     expect(await countCachedRates()).toBe(1);
   });
 
-  it('同じ通貨で最も新しい日付のものを返す', async () => {
-    for (const [date, rate] of [
-      ['2026-09-10', 23.0],
-      ['2026-09-12', 23.5],
-      ['2026-09-11', 23.2],
-    ] as const) {
-      await putCachedRate({
-        key: rateKey('CNY', date),
-        base: 'CNY',
-        date,
-        rate,
-        effectiveDate: date,
-        fetchedAt: 0,
-        source: 'frankfurter',
-      });
-    }
-    await putCachedRate({
-      key: rateKey('KRW', '2026-12-31'),
-      base: 'KRW',
-      date: '2026-12-31',
-      rate: 0.1,
-      effectiveDate: '2026-12-31',
-      fetchedAt: 0,
-      source: 'frankfurter',
-    });
+  it('同じ base でも quote が違えば別のレートとして扱う', async () => {
+    await putCachedRate(rate());
+    await putCachedRate(
+      rate({ key: rateKey('CNY', 'USD', '2026-09-12'), quote: 'USD', rate: 0.14 }),
+    );
 
-    const latest = await latestCachedRate('CNY');
+    expect((await getCachedRate('CNY', 'JPY', '2026-09-12'))?.rate).toBe(23.4);
+    expect((await getCachedRate('CNY', 'USD', '2026-09-12'))?.rate).toBe(0.14);
+  });
+
+  it('直近のキャッシュは同じ通貨ペアの中から選ぶ', async () => {
+    await putCachedRate(rate({ key: rateKey('CNY', 'JPY', '2026-09-10'), date: '2026-09-10', rate: 23.0 }));
+    await putCachedRate(rate({ key: rateKey('CNY', 'JPY', '2026-09-12'), date: '2026-09-12', rate: 23.4 }));
+    await putCachedRate(
+      rate({ key: rateKey('CNY', 'USD', '2026-09-20'), quote: 'USD', date: '2026-09-20', rate: 0.14 }),
+    );
+
+    const latest = await latestCachedRate('CNY', 'JPY');
     expect(latest?.date).toBe('2026-09-12');
   });
 
   it('キャッシュが無ければ undefined', async () => {
-    expect(await latestCachedRate('CNY')).toBeUndefined();
-    expect(await getCachedRate('CNY', '2026-09-12')).toBeUndefined();
+    expect(await latestCachedRate('THB', 'JPY')).toBeUndefined();
+    expect(await getCachedRate('THB', 'JPY', '2026-09-12')).toBeUndefined();
   });
 });

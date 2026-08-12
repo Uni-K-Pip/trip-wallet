@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { todayLocal } from '../domain/date';
+import { useI18n } from '../i18n/LangContext';
 import { HomeScreen } from '../ui/HomeScreen';
 import { SettingsScreen } from '../ui/SettingsScreen';
 import { SummaryScreen } from '../ui/SummaryScreen';
@@ -11,6 +12,7 @@ import { useActiveTrip } from './useActiveTrip';
 type Tab = 'home' | 'summary' | 'settings';
 
 export function App() {
+  const { t } = useI18n();
   const { trips, activeTrip, loading, selectTrip } = useActiveTrip();
   const [tab, setTab] = useState<Tab>('home');
   const { needRefresh, updateApp } = usePwaUpdate();
@@ -26,7 +28,7 @@ export function App() {
   if (loading) {
     return (
       <main className="screen">
-        <p className="empty">読み込み中…</p>
+        <p className="empty">{t.common.loading}</p>
       </main>
     );
   }
@@ -50,15 +52,15 @@ export function App() {
               </button>
             </h1>
           ) : (
-            <h1>{activeTrip?.name ?? 'Trip Wallet'}</h1>
+            <h1>{activeTrip?.name ?? t.appName}</h1>
           )}
         </header>
 
         {showExportReminder && activeTrip !== null && (
           <div className="banner">
-            <span>旅行が終わりました。設定からデータを書き出しておきましょう。</span>
+            <span>{t.app.exportReminder}</span>
             <button type="button" className="btn-primary" onClick={() => setTab('settings')}>
-              設定へ
+              {t.app.toSettings}
             </button>
             <button
               type="button"
@@ -68,7 +70,7 @@ export function App() {
                 setDismissed(activeTrip.id);
               }}
             >
-              閉じる
+              {t.common.close}
             </button>
           </div>
         )}
@@ -77,14 +79,14 @@ export function App() {
           (activeTrip !== null ? (
             <HomeScreen trip={activeTrip} />
           ) : (
-            <p className="empty">まず「設定」タブで旅行を作成してください。</p>
+            <p className="empty">{t.app.noTrip}</p>
           ))}
 
         {tab === 'summary' &&
           (activeTrip !== null ? (
             <SummaryScreen trip={activeTrip} />
           ) : (
-            <p className="empty">まず「設定」タブで旅行を作成してください。</p>
+            <p className="empty">{t.app.noTrip}</p>
           ))}
 
         {tab === 'settings' && (
@@ -106,7 +108,7 @@ export function App() {
 
       {needRefresh && (
         <button type="button" className="toast update" onClick={updateApp}>
-          新しいバージョンがあります。タップで更新
+          {t.app.update}
         </button>
       )}
 
@@ -116,21 +118,21 @@ export function App() {
           className={tab === 'home' ? 'tab active' : 'tab'}
           onClick={() => setTab('home')}
         >
-          🏠 ホーム
+          {`🏠 ${t.app.tabHome}`}
         </button>
         <button
           type="button"
           className={tab === 'summary' ? 'tab active' : 'tab'}
           onClick={() => setTab('summary')}
         >
-          📊 集計
+          {`📊 ${t.app.tabSummary}`}
         </button>
         <button
           type="button"
           className={tab === 'settings' ? 'tab active' : 'tab'}
           onClick={() => setTab('settings')}
         >
-          ⚙️ 設定
+          {`⚙️ ${t.app.tabSettings}`}
         </button>
       </nav>
     </>

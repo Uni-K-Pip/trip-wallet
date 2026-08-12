@@ -3,8 +3,7 @@ import {
   minorToMajor,
   formatMajor,
   parseMajorToMinor,
-  toJpy,
-  formatJpy,
+  toHomeMinor,
   formatWithCurrency,
 } from './money';
 
@@ -59,41 +58,48 @@ describe('parseMajorToMinor', () => {
   });
 });
 
-describe('toJpy', () => {
-  it('レートを掛けて円に丸める', () => {
+describe('toHomeMinor', () => {
+  it('小数 0 桁の換算先(円)はそのまま整数になる', () => {
     // 120.00 元 × 23.465 = 2815.8 → 2816
-    expect(toJpy(12000, 2, 23.465)).toBe(2816);
+    expect(toHomeMinor(12000, 2, 23.465, 0)).toBe(2816);
   });
 
-  it('1 円未満は 0 になる', () => {
-    expect(toJpy(1, 2, 23.465)).toBe(0);
+  it('小数 2 桁の換算先(ドル)はセントまで持つ', () => {
+    // 120.00 元 × 0.1405 = 16.86 ドル → 1686 セント
+    expect(toHomeMinor(12000, 2, 0.1405, 2)).toBe(1686);
   });
 
-  it('小数 0 桁の通貨も扱える', () => {
-    // 10000 ウォン × 0.1085 = 1085
-    expect(toJpy(10000, 0, 0.1085)).toBe(1085);
+  it('小数 0 桁どうしも扱える', () => {
+    // 10000 ウォン × 0.1085 = 1085 円
+    expect(toHomeMinor(10000, 0, 0.1085, 0)).toBe(1085);
   });
 
   it('金額 0 は 0', () => {
-    expect(toJpy(0, 2, 23.465)).toBe(0);
-  });
-});
-
-describe('formatJpy', () => {
-  it('通貨記号と 3 桁区切りを付ける', () => {
-    expect(formatJpy(2816)).toBe('¥2,816');
-    expect(formatJpy(0)).toBe('¥0');
-    expect(formatJpy(1234567)).toBe('¥1,234,567');
+    expect(toHomeMinor(0, 2, 23.465, 2)).toBe(0);
   });
 
-  it('負の値は記号の前に符号を置く', () => {
-    expect(formatJpy(-1200)).toBe('-¥1,200');
+  it('換算先の最小単位に満たなければ 0 になる', () => {
+    expect(toHomeMinor(1, 2, 23.465, 0)).toBe(0);
   });
 });
 
 describe('formatWithCurrency', () => {
-  it('通貨記号付きで表示する', () => {
-    expect(formatWithCurrency(12000, 'CNY')).toBe('120.00元');
+  it('記号を前に置く通貨', () => {
     expect(formatWithCurrency(15000, 'KRW')).toBe('₩15,000');
+    expect(formatWithCurrency(147242, 'USD')).toBe('$1,472.42');
+  });
+
+  it('記号を後ろに置く通貨', () => {
+    expect(formatWithCurrency(12000, 'CNY')).toBe('120.00元');
+    expect(formatWithCurrency(120000, 'SEK')).toBe('1,200.00kr');
+  });
+
+  it('負の値は記号より前に符号を置く', () => {
+    expect(formatWithCurrency(-1200, 'JPY')).toBe('-¥1,200');
+    expect(formatWithCurrency(-120000, 'CNY')).toBe('-1,200.00元');
+  });
+
+  it('未知の通貨はコードを前に置き小数 2 桁で出す', () => {
+    expect(formatWithCurrency(1234, 'XXX')).toBe('XXX12.34');
   });
 });

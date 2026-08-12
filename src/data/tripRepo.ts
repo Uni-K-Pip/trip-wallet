@@ -6,10 +6,11 @@ import { db, newId } from './db';
 export type TripInput = {
   name: string;
   currency: string;
+  homeCurrency: string;
   startDate?: string;
   endDate?: string | null;
-  personalBudgetJpy?: number | null;
-  sharedBudgetJpy?: number | null;
+  personalBudgetHome?: number | null;
+  sharedBudgetHome?: number | null;
   memberCount?: number;
 };
 
@@ -19,10 +20,12 @@ export async function createTrip(input: TripInput): Promise<Trip> {
     name: input.name,
     currency: input.currency,
     currencyDecimals: currencyDecimals(input.currency),
+    homeCurrency: input.homeCurrency,
+    homeCurrencyDecimals: currencyDecimals(input.homeCurrency),
     startDate: input.startDate ?? todayLocal(),
     endDate: input.endDate ?? null,
-    personalBudgetJpy: input.personalBudgetJpy ?? null,
-    sharedBudgetJpy: input.sharedBudgetJpy ?? null,
+    personalBudgetHome: input.personalBudgetHome ?? null,
+    sharedBudgetHome: input.sharedBudgetHome ?? null,
     memberCount: Math.max(1, input.memberCount ?? 1),
     createdAt: Date.now(),
   };
@@ -35,13 +38,17 @@ export async function updateTrip(id: string, patch: Partial<TripInput>): Promise
   if (patch.name !== undefined) changes.name = patch.name;
   if (patch.startDate !== undefined) changes.startDate = patch.startDate;
   if (patch.endDate !== undefined) changes.endDate = patch.endDate;
-  if (patch.personalBudgetJpy !== undefined) changes.personalBudgetJpy = patch.personalBudgetJpy;
-  if (patch.sharedBudgetJpy !== undefined) changes.sharedBudgetJpy = patch.sharedBudgetJpy;
+  if (patch.personalBudgetHome !== undefined) changes.personalBudgetHome = patch.personalBudgetHome;
+  if (patch.sharedBudgetHome !== undefined) changes.sharedBudgetHome = patch.sharedBudgetHome;
   if (patch.memberCount !== undefined) changes.memberCount = Math.max(1, patch.memberCount);
+  // 小数桁数は通貨から必ず導く。手で食い違わせない。
   if (patch.currency !== undefined) {
     changes.currency = patch.currency;
-    // 小数桁数は通貨から必ず導く。手で食い違わせない。
     changes.currencyDecimals = currencyDecimals(patch.currency);
+  }
+  if (patch.homeCurrency !== undefined) {
+    changes.homeCurrency = patch.homeCurrency;
+    changes.homeCurrencyDecimals = currencyDecimals(patch.homeCurrency);
   }
   await db.trips.update(id, changes);
 }

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import type { Expense, Trip } from './types';
 import {
-  expenseJpy,
-  myShareJpy,
+  expenseHome,
+  myShareHome,
   summarize,
   breakdownByCategory,
   dailySeries,
@@ -14,10 +14,12 @@ const trip: Trip = {
   name: '上海 2026-09',
   currency: 'CNY',
   currencyDecimals: 2,
+  homeCurrency: 'JPY',
+  homeCurrencyDecimals: 0,
   startDate: '2026-09-12',
   endDate: '2026-09-15',
-  personalBudgetJpy: 100000,
-  sharedBudgetJpy: 50000,
+  personalBudgetHome: 100000,
+  sharedBudgetHome: 50000,
   memberCount: 2,
   createdAt: 0,
 };
@@ -43,32 +45,32 @@ function expense(over: Partial<Expense> = {}): Expense {
   };
 }
 
-describe('expenseJpy', () => {
+describe('expenseHome', () => {
   it('支出に焼き付いたレートで換算する', () => {
-    expect(expenseJpy(expense(), trip)).toBe(2000);
+    expect(expenseHome(expense(), trip)).toBe(2000);
   });
 
   it('支出ごとにレートが違っても各自のレートを使う', () => {
-    expect(expenseJpy(expense({ rate: 25 }), trip)).toBe(2500);
+    expect(expenseHome(expense({ rate: 25 }), trip)).toBe(2500);
   });
 });
 
-describe('myShareJpy', () => {
+describe('myShareHome', () => {
   it('個別はそのままの額', () => {
-    expect(myShareJpy(expense(), trip)).toBe(2000);
+    expect(myShareHome(expense(), trip)).toBe(2000);
   });
 
   it('共有は人数で割る', () => {
-    expect(myShareJpy(expense({ scope: 'shared' }), trip)).toBe(1000);
+    expect(myShareHome(expense({ scope: 'shared' }), trip)).toBe(1000);
   });
 
   it('割り切れないときは 1 件ごとに四捨五入する', () => {
     // 2000 円 / 3 人 = 666.67 → 667 円
-    expect(myShareJpy(expense({ scope: 'shared' }), { ...trip, memberCount: 3 })).toBe(667);
+    expect(myShareHome(expense({ scope: 'shared' }), { ...trip, memberCount: 3 })).toBe(667);
   });
 
   it('人数が 0 でも 0 除算しない', () => {
-    expect(myShareJpy(expense({ scope: 'shared' }), { ...trip, memberCount: 0 })).toBe(2000);
+    expect(myShareHome(expense({ scope: 'shared' }), { ...trip, memberCount: 0 })).toBe(2000);
   });
 });
 
@@ -77,10 +79,10 @@ describe('summarize', () => {
     const s = summarize([], trip);
     expect(s.count).toBe(0);
     expect(s.totalMinor).toBe(0);
-    expect(s.totalJpy).toBe(0);
-    expect(s.myTotalJpy).toBe(0);
-    expect(s.personalRemainingJpy).toBe(100000);
-    expect(s.sharedRemainingJpy).toBe(50000);
+    expect(s.totalHome).toBe(0);
+    expect(s.myTotalHome).toBe(0);
+    expect(s.personalRemainingHome).toBe(100000);
+    expect(s.sharedRemainingHome).toBe(50000);
   });
 
   it('個別と共有を分けて集計し、共有は人数で割る', () => {
@@ -90,11 +92,11 @@ describe('summarize', () => {
     );
     expect(s.count).toBe(2);
     expect(s.totalMinor).toBe(30000);
-    expect(s.personalJpy).toBe(2000);
-    expect(s.sharedJpy).toBe(4000);
-    expect(s.sharedPerPersonJpy).toBe(2000);
-    expect(s.myTotalJpy).toBe(4000);
-    expect(s.totalJpy).toBe(6000);
+    expect(s.personalHome).toBe(2000);
+    expect(s.sharedHome).toBe(4000);
+    expect(s.sharedPerPersonHome).toBe(2000);
+    expect(s.myTotalHome).toBe(4000);
+    expect(s.totalHome).toBe(6000);
   });
 
   it('個別の残額は個別支出だけを引く', () => {
@@ -102,34 +104,34 @@ describe('summarize', () => {
       [expense({ amountMinor: 10000 }), expense({ amountMinor: 20000, scope: 'shared' })],
       trip,
     );
-    expect(s.personalBudgetJpy).toBe(100000);
-    expect(s.personalRemainingJpy).toBe(98000);
+    expect(s.personalBudgetHome).toBe(100000);
+    expect(s.personalRemainingHome).toBe(98000);
   });
 
   it('共有の残額は人数割り後の自己負担を引く', () => {
     // 共有 4000 円 / 2 人 = 自己負担 2000 円
     const s = summarize([expense({ amountMinor: 20000, scope: 'shared' })], trip);
-    expect(s.sharedBudgetJpy).toBe(50000);
-    expect(s.sharedRemainingJpy).toBe(48000);
+    expect(s.sharedBudgetHome).toBe(50000);
+    expect(s.sharedRemainingHome).toBe(48000);
   });
 
   it('予算未設定なら残額は null。片方だけ設定もできる', () => {
     const none = summarize([expense()], {
       ...trip,
-      personalBudgetJpy: null,
-      sharedBudgetJpy: null,
+      personalBudgetHome: null,
+      sharedBudgetHome: null,
     });
-    expect(none.personalRemainingJpy).toBeNull();
-    expect(none.sharedRemainingJpy).toBeNull();
+    expect(none.personalRemainingHome).toBeNull();
+    expect(none.sharedRemainingHome).toBeNull();
 
-    const personalOnly = summarize([expense()], { ...trip, sharedBudgetJpy: null });
-    expect(personalOnly.personalRemainingJpy).toBe(98000);
-    expect(personalOnly.sharedRemainingJpy).toBeNull();
+    const personalOnly = summarize([expense()], { ...trip, sharedBudgetHome: null });
+    expect(personalOnly.personalRemainingHome).toBe(98000);
+    expect(personalOnly.sharedRemainingHome).toBeNull();
   });
 
   it('人数が 0 でも 0 除算しない', () => {
     const s = summarize([expense({ scope: 'shared' })], { ...trip, memberCount: 0 });
-    expect(s.sharedPerPersonJpy).toBe(2000);
+    expect(s.sharedPerPersonHome).toBe(2000);
   });
 
   it('共有の自己負担は 1 件ずつ割ってから足す', () => {
@@ -139,8 +141,8 @@ describe('summarize', () => {
       ...trip,
       memberCount: 3,
     });
-    expect(s.sharedPerPersonJpy).toBe(1334);
-    expect(s.myTotalJpy).toBe(1334);
+    expect(s.sharedPerPersonHome).toBe(1334);
+    expect(s.myTotalHome).toBe(1334);
   });
 
   it('合計は行ごとに丸めた円の和にする(表示と一致させるため)', () => {
@@ -150,7 +152,21 @@ describe('summarize', () => {
       expense({ amountMinor: 3, rate: 23.465 }),
       expense({ amountMinor: 3, rate: 23.465 }),
     ];
-    expect(summarize(es, trip).totalJpy).toBe(2);
+    expect(summarize(es, trip).totalHome).toBe(2);
+  });
+
+  it('換算先が小数 2 桁ならセント単位で集計する', () => {
+    const t: Trip = {
+      ...trip,
+      currency: 'CNY',
+      currencyDecimals: 2,
+      homeCurrency: 'USD',
+      homeCurrencyDecimals: 2,
+    };
+    // 120.00 元 × 0.1405 = 16.86 ドル
+    const s = summarize([expense({ amountMinor: 12000, rate: 0.1405, scope: 'personal' })], t);
+    expect(s.totalHome).toBe(1686);
+    expect(s.personalHome).toBe(1686);
   });
 });
 
@@ -165,7 +181,7 @@ describe('breakdownByCategory', () => {
       'mine',
     );
     expect(rows.map((r) => r.category)).toEqual(['transport', 'food']);
-    expect(rows[0].jpy).toBe(4000);
+    expect(rows[0].home).toBe(4000);
     expect(rows[0].ratio).toBeCloseTo(2 / 3, 5);
   });
 
@@ -176,7 +192,7 @@ describe('breakdownByCategory', () => {
       'mine',
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0].jpy).toBe(4000);
+    expect(rows[0].home).toBe(4000);
   });
 
   it('支出が無ければ空配列', () => {
@@ -191,7 +207,7 @@ describe('breakdownByCategory', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].category).toBe('food');
-    expect(rows[0].jpy).toBe(2000);
+    expect(rows[0].home).toBe(2000);
   });
 
   it('共有は人数で割らない支払総額', () => {
@@ -202,7 +218,7 @@ describe('breakdownByCategory', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].category).toBe('transport');
-    expect(rows[0].jpy).toBe(2000);
+    expect(rows[0].home).toBe(2000);
   });
 
   it('自己負担は共有を人数で割って個別と混ぜる', () => {
@@ -212,8 +228,8 @@ describe('breakdownByCategory', () => {
       'mine',
     );
     expect(rows.map((r) => r.category)).toEqual(['food', 'transport']);
-    expect(rows[0].jpy).toBe(2000);
-    expect(rows[1].jpy).toBe(1000);
+    expect(rows[0].home).toBe(2000);
+    expect(rows[1].home).toBe(1000);
     expect(rows[0].ratio).toBeCloseTo(2 / 3, 5);
   });
 
@@ -235,7 +251,7 @@ describe('dailySeries', () => {
       '2026-09-14',
       '2026-09-15',
     ]);
-    expect(s.points.map((p) => p.jpy)).toEqual([2000, 0, 0, 2000]);
+    expect(s.points.map((p) => p.home)).toEqual([2000, 0, 0, 2000]);
   });
 
   it('範囲は旅行期間ではなく最初と最後の支出日', () => {
@@ -250,8 +266,8 @@ describe('dailySeries', () => {
       trip,
       'mine',
     );
-    expect(s.totalJpy).toBe(4000);
-    expect(s.averageJpy).toBe(1333); // 4000 / 3 日
+    expect(s.totalHome).toBe(4000);
+    expect(s.averageHome).toBe(1333); // 4000 / 3 日
   });
 
   it('最高額の日を返す。同額なら先の日', () => {
@@ -264,7 +280,7 @@ describe('dailySeries', () => {
       trip,
       'mine',
     );
-    expect(s.maxJpy).toBe(4000);
+    expect(s.maxHome).toBe(4000);
     expect(s.peakDate).toBe('2026-09-13');
   });
 
@@ -274,16 +290,16 @@ describe('dailySeries', () => {
       trip,
       'shared',
     );
-    expect(s.points).toEqual([{ date: '2026-09-13', jpy: 2000 }]);
+    expect(s.points).toEqual([{ date: '2026-09-13', home: 2000 }]);
   });
 
   it('選んだスコープに該当が無ければ空', () => {
     expect(dailySeries([expense()], trip, 'shared')).toEqual({
       points: [],
-      totalJpy: 0,
-      maxJpy: 0,
+      totalHome: 0,
+      maxHome: 0,
       peakDate: null,
-      averageJpy: 0,
+      averageHome: 0,
     });
   });
 });
@@ -296,6 +312,6 @@ describe('groupByDate', () => {
     const groups = groupByDate([older, other, newer], trip);
     expect(groups.map((g) => g.date)).toEqual(['2026-09-13', '2026-09-12']);
     expect(groups[1].expenses.map((e) => e.id)).toEqual(['new', 'old']);
-    expect(groups[1].jpy).toBe(4000);
+    expect(groups[1].home).toBe(4000);
   });
 });
