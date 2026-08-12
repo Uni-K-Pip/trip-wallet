@@ -14,10 +14,10 @@ export default defineConfig(({ mode }) => ({
       registerType: 'prompt',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Trip Wallet — 旅行支出メモ',
+        name: 'Trip Wallet',
         short_name: 'Trip Wallet',
-        description: '外貨の支出をその日のレートで円換算して記録する',
-        lang: 'ja',
+        description: 'Track travel expenses in foreign currencies, converted at the rate of the day.',
+        lang: 'en',
         start_url: BASE,
         scope: BASE,
         display: 'standalone',

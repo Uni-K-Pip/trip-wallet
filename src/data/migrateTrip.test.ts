@@ -51,6 +51,12 @@ describe('migrateTrip', () => {
     expect(t.homeCurrencyDecimals).toBe(0);
   });
 
+  it('換算先通貨だけあって桁数が無ければ通貨から導く', () => {
+    const t = migrateTrip({ ...v2Trip, homeCurrency: 'USD' });
+    expect(t.homeCurrency).toBe('USD');
+    expect(t.homeCurrencyDecimals).toBe(2);
+  });
+
   it('v3 の旅行はそのまま返す', () => {
     const t = migrateTrip({
       ...v2Trip,

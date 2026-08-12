@@ -5,10 +5,10 @@ import { countExpenses } from '../data/expenseRepo';
 import { createTrip, updateTrip } from '../data/tripRepo';
 import { CURRENCIES, currencyDecimals, currencyName } from '../domain/currency';
 import { todayLocal } from '../domain/date';
-import { defaultHomeCurrency } from '../i18n';
-import { useI18n } from '../i18n/LangContext';
 import { formatMajor, parseMajorToMinor } from '../domain/money';
 import type { Trip } from '../domain/types';
+import { defaultHomeCurrency } from '../i18n';
+import { useI18n } from '../i18n/LangContext';
 
 type Props = {
   trip?: Trip;
@@ -137,7 +137,7 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
       <label htmlFor="trip-personal-budget">{t.trip.personalBudget(homeCurrency)}</label>
       <input
         id="trip-personal-budget"
-        inputMode="numeric"
+        inputMode={homeDecimals > 0 ? 'decimal' : 'numeric'}
         value={personalBudget}
         onChange={(e) => setPersonalBudget(e.target.value)}
         placeholder={t.common.unset}
@@ -146,7 +146,7 @@ export function TripForm({ trip, onDone, onCancel }: Props) {
       <label htmlFor="trip-shared-budget">{t.trip.sharedBudget(homeCurrency)}</label>
       <input
         id="trip-shared-budget"
-        inputMode="numeric"
+        inputMode={homeDecimals > 0 ? 'decimal' : 'numeric'}
         value={sharedBudget}
         onChange={(e) => setSharedBudget(e.target.value)}
         placeholder={t.common.unset}

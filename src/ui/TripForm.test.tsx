@@ -156,6 +156,19 @@ describe('TripForm', () => {
     expect(trips[0].personalBudgetHome).toBe(30000);
   });
 
+  it('換算先通貨に応じて予算欄の inputmode が変わる', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<TripForm onDone={() => {}} onCancel={() => {}} />);
+
+    // 既定は円(小数 0 桁)なので numeric のまま
+    expect(screen.getByLabelText('個別予算(JPY)')).toHaveAttribute('inputmode', 'numeric');
+
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'USD');
+
+    // ドル(小数 2 桁)にするとセントを入力できるよう decimal になる
+    expect(screen.getByLabelText('個別予算(USD)')).toHaveAttribute('inputmode', 'decimal');
+  });
+
   it('支出があると換算先通貨も変えられない', async () => {
     const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     await addExpense({
