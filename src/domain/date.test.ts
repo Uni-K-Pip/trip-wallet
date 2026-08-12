@@ -10,8 +10,14 @@ import {
   weekdayIndex,
 } from './date';
 
-const JA_WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
-const EN_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const JA_DICT = {
+  weekdays: ['日', '月', '火', '水', '木', '金', '土'],
+  dateLabel: (m: number, d: number, w: string) => `${m}/${d}(${w})`,
+};
+const EN_DICT = {
+  weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  dateLabel: (m: number, d: number, w: string) => `${w}, ${m}/${d}`,
+};
 
 describe('todayLocal', () => {
   it('UTC ではなく端末ローカルの日付を返す', () => {
@@ -40,18 +46,18 @@ describe('toIsoDate / parseIsoDate', () => {
 
 describe('formatDateLabel', () => {
   it('曜日つきの短い表記にする', () => {
-    expect(formatDateLabel('2026-09-12', JA_WEEKDAYS)).toBe('9/12(土)');
+    expect(formatDateLabel('2026-09-12', JA_DICT)).toBe('9/12(土)');
   });
 
   it('1 桁の月日をそのまま表示する', () => {
-    expect(formatDateLabel('2026-01-05', JA_WEEKDAYS)).toBe('1/5(月)');
+    expect(formatDateLabel('2026-01-05', JA_DICT)).toBe('1/5(月)');
   });
 });
 
-describe('formatDateLabel の曜日名', () => {
-  it('渡した配列から曜日名を取る', () => {
-    expect(formatDateLabel('2026-09-12', JA_WEEKDAYS)).toBe('9/12(土)');
-    expect(formatDateLabel('2026-09-12', EN_WEEKDAYS)).toBe('9/12(Sat)');
+describe('formatDateLabel の言語別書式', () => {
+  it('曜日名も並びも辞書が決める', () => {
+    expect(formatDateLabel('2026-09-12', JA_DICT)).toBe('9/12(土)');
+    expect(formatDateLabel('2026-09-12', EN_DICT)).toBe('Sat, 9/12');
   });
 });
 

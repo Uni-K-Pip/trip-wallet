@@ -4,6 +4,7 @@ import type { Category, Payment, Scope } from '../domain/types';
 export const ja = {
   appName: 'Trip Wallet',
   weekdays: ['日', '月', '火', '水', '木', '金', '土'],
+  dateLabel: (m: number, d: number, w: string) => `${m}/${d}(${w})`,
   common: {
     loading: '読み込み中…',
     cancel: 'キャンセル',
