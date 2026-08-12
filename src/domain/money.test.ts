@@ -4,7 +4,6 @@ import {
   formatMajor,
   parseMajorToMinor,
   toHomeMinor,
-  formatJpy,
   formatWithCurrency,
 } from './money';
 
@@ -56,18 +55,6 @@ describe('parseMajorToMinor', () => {
   it('浮動小数の誤差を持ち込まない', () => {
     expect(parseMajorToMinor('0.29', 2)).toBe(29);
     expect(parseMajorToMinor('1.005', 2)).toBe(101);
-  });
-});
-
-describe('formatJpy', () => {
-  it('通貨記号と 3 桁区切りを付ける', () => {
-    expect(formatJpy(2816)).toBe('¥2,816');
-    expect(formatJpy(0)).toBe('¥0');
-    expect(formatJpy(1234567)).toBe('¥1,234,567');
-  });
-
-  it('負の値は記号の前に符号を置く', () => {
-    expect(formatJpy(-1200)).toBe('-¥1,200');
   });
 });
 
