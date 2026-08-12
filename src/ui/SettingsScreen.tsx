@@ -31,7 +31,8 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
   const { t, lang, setLang } = useI18n();
   const [editing, setEditing] = useState<Trip | 'new' | null>(null);
   const [message, setMessage] = useState('');
-  const [homeCurrency, setHomeCurrency] = useState(() => loadHomeCurrency() ?? defaultHomeCurrency(lang));
+  const [saved, setSaved] = useState(loadHomeCurrency);
+  const homeCurrency = saved ?? defaultHomeCurrency(lang);
   const rateCount = useLiveQuery(() => countCachedRates(), [], 0);
 
   /** 設定されている側だけを ` / 個別 ¥50,000 / 共有 ¥30,000` の形で返す。両方未設定なら空文字。 */
@@ -110,7 +111,7 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
             <select
               value={homeCurrency}
               onChange={(e) => {
-                setHomeCurrency(e.target.value);
+                setSaved(e.target.value);
                 saveHomeCurrency(e.target.value);
               }}
             >

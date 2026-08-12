@@ -1,3 +1,4 @@
+import { currencyDecimals } from '../domain/currency';
 import type { Trip } from '../domain/types';
 
 /**
@@ -20,7 +21,7 @@ export function migrateTrip(trip: Record<string, unknown>): Trip {
   }
 
   t.homeCurrency ??= 'JPY';
-  t.homeCurrencyDecimals ??= 0;
+  t.homeCurrencyDecimals ??= currencyDecimals(t.homeCurrency as string);
 
   delete t.budgetJpy;
   delete t.personalBudgetJpy;

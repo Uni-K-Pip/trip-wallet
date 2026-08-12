@@ -118,6 +118,12 @@ describe('SettingsScreen の表示設定', () => {
     expect(localStorage.getItem('trip-wallet:home-currency')).toBe('EUR');
   });
 
+  it('換算先が未保存のとき、言語の既定通貨が初期値になる', async () => {
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />, 'en');
+
+    expect(screen.getByLabelText('Convert to')).toHaveValue('USD');
+  });
+
   it('取り込みエラーは選んでいる言語で出る', async () => {
     const user = userEvent.setup();
     renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />, 'en');
