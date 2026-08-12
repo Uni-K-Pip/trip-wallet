@@ -276,7 +276,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           {symbol}
         </span>
         {!sameCurrency && (
-          <span className="amount-jpy" data-testid="home-preview">
+          <span className="amount-home" data-testid="home-preview">
             {home === null ? t.expense.noRate : formatWithCurrency(home, trip.homeCurrency)}
           </span>
         )}
