@@ -102,4 +102,23 @@ describe('DailyChart', () => {
     renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />, 'en');
     expect(screen.getAllByTestId('day-label')[0]).toHaveTextContent('Sat');
   });
+
+  it('換算先が EUR なら記号つき小数 2 桁で出す', () => {
+    const euro: DailySeries = {
+      points: [
+        { date: '2026-09-12', home: 123456 },
+        { date: '2026-09-13', home: 0 },
+      ],
+      totalHome: 123456,
+      maxHome: 123456,
+      peakDate: '2026-09-12',
+      averageHome: 61728,
+    };
+
+    renderWithLang(<DailyChart series={euro} homeCurrency="EUR" />);
+
+    expect(screen.getAllByTestId('day-col')[0]).toHaveAttribute('aria-label', '9/12(土) €1,234.56');
+    expect(screen.getByTestId('daily-average')).toHaveTextContent('1日あたり平均 €617.28');
+    expect(screen.getByTestId('daily-peak')).toHaveTextContent('最高 9/12(土) €1,234.56');
+  });
 });

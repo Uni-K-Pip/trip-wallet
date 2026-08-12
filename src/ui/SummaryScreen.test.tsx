@@ -147,4 +147,27 @@ describe('SummaryScreen', () => {
     renderWithLang(<SummaryScreen trip={trip} />, 'en');
     expect(await screen.findByRole('button', { name: 'My share' })).toBeInTheDocument();
   });
+
+  it('換算先が EUR の旅行は記号つき小数 2 桁で集計する', async () => {
+    const paris = await createTrip({ name: 'Paris', currency: 'USD', homeCurrency: 'EUR' });
+    await addExpense({
+      tripId: paris.id,
+      date: '2026-09-12',
+      amountMinor: 10000, // 100.00 ドル × 0.85 = 85.00 ユーロ
+      scope: 'personal',
+      category: 'food',
+      payment: 'card',
+      memo: 'Bistro',
+      rate: 0.85,
+      rateSource: 'api',
+      photoId: null,
+    });
+
+    renderWithLang(<SummaryScreen trip={paris} />);
+
+    expect(await screen.findByTestId('summary-total')).toHaveTextContent('€85.00');
+    expect(screen.getByTestId('summary-personal')).toHaveTextContent('€85.00');
+    const cols = await screen.findAllByTestId('day-col');
+    expect(cols[0]).toHaveAttribute('aria-label', '9/12(土) €85.00');
+  });
 });
