@@ -32,8 +32,8 @@ describe('TripForm', () => {
     await user.selectOptions(screen.getByLabelText('通貨'), 'CNY');
     await user.clear(screen.getByLabelText('人数'));
     await user.type(screen.getByLabelText('人数'), '2');
-    await user.type(screen.getByLabelText('個別予算(円)'), '100000');
-    await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '30000');
+    await user.type(screen.getByLabelText('個別予算(JPY)'), '100000');
+    await user.type(screen.getByLabelText('共有予算(JPY・自分の負担分)'), '30000');
     await user.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
@@ -53,8 +53,8 @@ describe('TripForm', () => {
     renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
 
     await user.type(screen.getByLabelText('旅行名'), 'NY 2026-09');
-    await user.type(screen.getByLabelText('個別予算(円)'), 'abc');
-    await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '1.2.3');
+    await user.type(screen.getByLabelText('個別予算(JPY)'), 'abc');
+    await user.type(screen.getByLabelText('共有予算(JPY・自分の負担分)'), '1.2.3');
     await user.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
@@ -70,7 +70,7 @@ describe('TripForm', () => {
     renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
 
     await user.type(screen.getByLabelText('旅行名'), 'NY 2026-09');
-    await user.type(screen.getByLabelText('共有予算(円・自分の負担分)'), '30000');
+    await user.type(screen.getByLabelText('共有予算(JPY・自分の負担分)'), '30000');
     await user.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalled());
@@ -135,5 +135,44 @@ describe('TripForm', () => {
     // useLiveQuery の解決を待ってから確認する
     await waitFor(() => expect(screen.getByLabelText('通貨')).not.toBeDisabled());
     expect(screen.queryByText('支出があるため通貨は変更できません。')).not.toBeInTheDocument();
+  });
+
+  it('換算先通貨を選んで保存できる', async () => {
+    const user = userEvent.setup();
+    const onDone = vi.fn();
+    renderWithLang(<TripForm onDone={onDone} onCancel={() => {}} />);
+
+    await user.type(screen.getByLabelText('旅行名'), 'Seoul');
+    await user.selectOptions(screen.getByLabelText('通貨'), 'KRW');
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'USD');
+    await user.type(screen.getByLabelText('個別予算(USD)'), '300');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    const trips = await listTrips();
+    expect(trips[0].homeCurrency).toBe('USD');
+    expect(trips[0].homeCurrencyDecimals).toBe(2);
+    // 換算先がドルなので予算はセント単位で入る
+    expect(trips[0].personalBudgetHome).toBe(30000);
+  });
+
+  it('支出があると換算先通貨も変えられない', async () => {
+    const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
+    await addExpense({
+      tripId: trip.id,
+      date: '2026-09-12',
+      amountMinor: 12000,
+      scope: 'personal',
+      category: 'food',
+      payment: 'cash',
+      memo: '小籠包',
+      rate: 23.465,
+      rateSource: 'api',
+      photoId: null,
+    });
+    renderWithLang(<TripForm trip={trip} onDone={() => {}} onCancel={() => {}} />);
+
+    // useLiveQuery は初回レンダーで既定値 0 を返すため、disabled になるまで待つ
+    await waitFor(() => expect(screen.getByLabelText('換算先通貨')).toBeDisabled());
   });
 });
