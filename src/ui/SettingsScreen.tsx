@@ -94,32 +94,34 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
     <div className="settings">
       <section>
         <h3>{t.settings.display}</h3>
-        <label>
-          {t.settings.language}
-          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
-            {LANGS.map((l) => (
-              <option key={l} value={l}>
-                {LANG_LABELS[l]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.settings.homeCurrency}
-          <select
-            value={homeCurrency}
-            onChange={(e) => {
-              setHomeCurrency(e.target.value);
-              saveHomeCurrency(e.target.value);
-            }}
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.flag} {c.code} — {currencyName(c.code, lang)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="form">
+          <label>
+            {t.settings.language}
+            <select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
+              {LANGS.map((l) => (
+                <option key={l} value={l}>
+                  {LANG_LABELS[l]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t.settings.homeCurrency}
+            <select
+              value={homeCurrency}
+              onChange={(e) => {
+                setHomeCurrency(e.target.value);
+                saveHomeCurrency(e.target.value);
+              }}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.code} — {currencyName(c.code, lang)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <p className="hint">{t.settings.homeCurrencyHint}</p>
       </section>
 
