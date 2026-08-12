@@ -118,10 +118,16 @@ describe('SettingsScreen の表示設定', () => {
     expect(localStorage.getItem('trip-wallet:home-currency')).toBe('EUR');
   });
 
-  it('換算先が未保存のとき、言語の既定通貨が初期値になる', async () => {
-    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />, 'en');
+  it('換算先が未保存なら、言語を切り替えたときに既定通貨も追随する', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+    expect(screen.getByLabelText('換算先通貨')).toHaveValue('JPY');
 
-    expect(screen.getByLabelText('Convert to')).toHaveValue('USD');
+    await user.selectOptions(screen.getByLabelText('言語'), 'en');
+
+    expect(await screen.findByLabelText('Convert to')).toHaveValue('USD');
+    // 追随するのは未保存のときだけ。保存済みの選択を言語で上書きしない
+    expect(localStorage.getItem('trip-wallet:home-currency')).toBeNull();
   });
 
   it('取り込みエラーは選んでいる言語で出る', async () => {
