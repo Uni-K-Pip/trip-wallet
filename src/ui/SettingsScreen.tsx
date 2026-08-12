@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type ChangeEvent } from 'react';
+import { loadHomeCurrency, saveHomeCurrency } from '../app/settings';
 import {
   BackupError,
   backupFileName,
@@ -10,11 +11,13 @@ import {
 } from '../data/backup';
 import { countCachedRates } from '../data/rateCacheRepo';
 import { deleteTrip } from '../data/tripRepo';
+import { CURRENCIES, currencyName } from '../domain/currency';
 import { formatDateLabel } from '../domain/date';
-import { formatJpy } from '../domain/money';
+import { formatWithCurrency } from '../domain/money';
 import type { Trip } from '../domain/types';
-// Task 17 で useI18n の t に差し替える
-import { ja } from '../i18n/ja';
+import { LANGS, LANG_LABELS, defaultHomeCurrency } from '../i18n';
+import type { Lang } from '../i18n';
+import { useI18n } from '../i18n/LangContext';
 import { Sheet } from './Sheet';
 import { TripForm } from './TripForm';
 
@@ -24,33 +27,30 @@ type Props = {
   onSelectTrip: (id: string) => void;
 };
 
-/** 設定されている側だけを ` / 個別 ¥50,000 / 共有 ¥30,000` の形で返す。両方未設定なら空文字。 */
-function budgetLabel(trip: Trip): string {
-  const parts: string[] = [];
-  if (trip.personalBudgetHome !== null) parts.push(`個別 ${formatJpy(trip.personalBudgetHome)}`);
-  if (trip.sharedBudgetHome !== null) parts.push(`共有 ${formatJpy(trip.sharedBudgetHome)}`);
-  return parts.length === 0 ? '' : ` / ${parts.join(' / ')}`;
-}
-
-// Task 17 で t.backup.error に置き換える
-function importErrorMessage(err: unknown): string {
-  if (!(err instanceof BackupError)) return '取り込みに失敗しました';
-  switch (err.code) {
-    case 'invalid-json':
-      return 'JSON として読み込めませんでした';
-    case 'not-backup':
-      return 'Trip Wallet のバックアップファイルではありません';
-    case 'unsupported-version':
-      return `対応していないバージョンです: ${err.detail ?? ''}`;
-    case 'broken':
-      return 'バックアップの中身が壊れています';
-  }
-}
-
 export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
+  const { t, lang, setLang } = useI18n();
   const [editing, setEditing] = useState<Trip | 'new' | null>(null);
   const [message, setMessage] = useState('');
+  const [homeCurrency, setHomeCurrency] = useState(() => loadHomeCurrency() ?? defaultHomeCurrency(lang));
   const rateCount = useLiveQuery(() => countCachedRates(), [], 0);
+
+  /** 設定されている側だけを ` / 個別 ¥50,000 / 共有 ¥30,000` の形で返す。両方未設定なら空文字。 */
+  const budgetLabel = (trip: Trip): string => {
+    const parts: string[] = [];
+    if (trip.personalBudgetHome !== null) {
+      parts.push(t.settings.budgetPersonal(formatWithCurrency(trip.personalBudgetHome, trip.homeCurrency)));
+    }
+    if (trip.sharedBudgetHome !== null) {
+      parts.push(t.settings.budgetShared(formatWithCurrency(trip.sharedBudgetHome, trip.homeCurrency)));
+    }
+    return parts.join('');
+  };
+
+  const importErrorMessage = (err: unknown): string => {
+    if (!(err instanceof BackupError)) return t.backup.error.unknown;
+    if (err.code === 'unsupported-version') return t.backup.error['unsupported-version'](err.detail ?? '');
+    return t.backup.error[err.code];
+  };
 
   async function handleExport() {
     try {
@@ -65,9 +65,9 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
       // revokeObjectURL を click() の直後に呼ぶと、ブラウザによってはダウンロード
       // 開始前に URL が無効化されてしまうことがあるため、次のタスクまで遅らせる
       setTimeout(() => URL.revokeObjectURL(url), 0);
-      setMessage('バックアップを書き出しました');
+      setMessage(t.settings.exported);
     } catch {
-      setMessage('書き出せませんでした');
+      setMessage(t.settings.exportFailed);
     }
   }
 
@@ -78,29 +78,60 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
 
     try {
       const result = await importBackup(parseBackup(await file.text()));
-      setMessage(`旅行 ${result.trips} 件・支出 ${result.expenses} 件を取り込みました`);
+      setMessage(t.settings.imported(result.trips, result.expenses));
     } catch (err) {
       setMessage(importErrorMessage(err));
     }
   }
 
   async function handleDelete(trip: Trip) {
-    if (!confirm(`「${trip.name}」と、その支出をすべて削除します。よろしいですか?`)) return;
+    if (!confirm(t.settings.confirmDelete(trip.name))) return;
     await deleteTrip(trip.id);
-    setMessage(`「${trip.name}」を削除しました`);
+    setMessage(t.settings.deleted(trip.name));
   }
 
   return (
     <div className="settings">
       <section>
+        <h3>{t.settings.display}</h3>
+        <label>
+          {t.settings.language}
+          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
+            {LANGS.map((l) => (
+              <option key={l} value={l}>
+                {LANG_LABELS[l]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {t.settings.homeCurrency}
+          <select
+            value={homeCurrency}
+            onChange={(e) => {
+              setHomeCurrency(e.target.value);
+              saveHomeCurrency(e.target.value);
+            }}
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.flag} {c.code} — {currencyName(c.code, lang)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="hint">{t.settings.homeCurrencyHint}</p>
+      </section>
+
+      <section>
         <div className="section-head">
-          <h3>旅行</h3>
+          <h3>{t.settings.trips}</h3>
           <button type="button" className="btn-primary" onClick={() => setEditing('new')}>
-            追加
+            {t.common.add}
           </button>
         </div>
 
-        {trips.length === 0 && <p className="empty">旅行がまだありません。「追加」から作成してください。</p>}
+        {trips.length === 0 && <p className="empty">{t.settings.tripsEmpty}</p>}
 
         <ul className="trip-list">
           {trips.map((trip) => (
@@ -108,16 +139,17 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
               <button type="button" className="trip-main" onClick={() => onSelectTrip(trip.id)}>
                 <span className="trip-name">{trip.name}</span>
                 <span className="trip-meta">
-                  {trip.currency} / {formatDateLabel(trip.startDate, ja.weekdays)}
-                  {trip.endDate ? `〜${formatDateLabel(trip.endDate, ja.weekdays)}` : ''} / {trip.memberCount}人
+                  {trip.currency} / {formatDateLabel(trip.startDate, t.weekdays)}
+                  {trip.endDate ? `〜${formatDateLabel(trip.endDate, t.weekdays)}` : ''} /{' '}
+                  {t.common.people(trip.memberCount)}
                   {budgetLabel(trip)}
                 </span>
               </button>
               <button type="button" className="btn-ghost" onClick={() => setEditing(trip)}>
-                編集
+                {t.common.edit}
               </button>
               <button type="button" className="btn-danger" onClick={() => handleDelete(trip)}>
-                削除
+                {t.common.delete}
               </button>
             </li>
           ))}
@@ -125,32 +157,30 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
       </section>
 
       <section>
-        <h3>データ</h3>
-        <p className="hint">
-          端末内にだけ保存されます。ブラウザのデータを消すと失われるので、旅行のあとは書き出しておいてください。
-        </p>
+        <h3>{t.settings.data}</h3>
+        <p className="hint">{t.settings.dataHint}</p>
         <div className="form-actions">
           <button type="button" className="btn-primary" onClick={handleExport}>
-            バックアップを書き出す
+            {t.settings.export}
           </button>
           <label className="btn-ghost file-label">
-            取り込む
+            {t.settings.import}
             <input type="file" accept="application/json" onChange={handleImport} />
           </label>
         </div>
-        <p className="hint">取り込みは追加(マージ)です。同じ記録があればファイル側で上書きします。</p>
+        <p className="hint">{t.settings.importHint}</p>
       </section>
 
       <section>
-        <h3>レートキャッシュ</h3>
-        <p className="hint">保存済み {rateCount ?? 0} 件。オフライン時はここから直近のレートを使います。</p>
+        <h3>{t.settings.rateCache}</h3>
+        <p className="hint">{t.settings.rateCacheHint(rateCount ?? 0)}</p>
       </section>
 
       {message !== '' && <p className="toast">{message}</p>}
 
       {editing !== null && (
         <Sheet
-          title={editing === 'new' ? '旅行を追加' : '旅行を編集'}
+          title={editing === 'new' ? t.settings.tripAdd : t.settings.tripEdit}
           onClose={() => setEditing(null)}
         >
           <TripForm

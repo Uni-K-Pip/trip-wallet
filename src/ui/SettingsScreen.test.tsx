@@ -20,6 +20,7 @@ vi.mock('../data/backup', async (importOriginal) => {
 beforeEach(async () => {
   await db.delete();
   await db.open();
+  localStorage.clear();
   vi.mocked(exportBackup).mockReset();
   // jsdom は URL.createObjectURL / revokeObjectURL を実装していない
   window.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
@@ -94,5 +95,36 @@ describe('SettingsScreen の旅行一覧', () => {
 
     expect(screen.getByText(/\/ 共有 ¥30,000/)).toBeInTheDocument();
     expect(screen.queryByText(/個別 ¥/)).not.toBeInTheDocument();
+  });
+});
+
+describe('SettingsScreen の表示設定', () => {
+  it('言語を切り替えると画面の文言が変わる', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText('言語'), 'en');
+
+    expect(await screen.findByLabelText('Language')).toBeInTheDocument();
+    expect(localStorage.getItem('trip-wallet:lang')).toBe('en');
+  });
+
+  it('換算先通貨の既定値を保存する', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'EUR');
+
+    expect(localStorage.getItem('trip-wallet:home-currency')).toBe('EUR');
+  });
+
+  it('取り込みエラーは選んでいる言語で出る', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />, 'en');
+
+    const file = new File(['not json'], 'broken.json', { type: 'application/json' });
+    await user.upload(screen.getByLabelText('Import'), file);
+
+    expect(await screen.findByText('Could not read the file as JSON')).toBeInTheDocument();
   });
 });

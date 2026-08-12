@@ -42,12 +42,6 @@ export function toHomeMinor(
   return Math.round(minorToMajor(amountMinor, decimals) * rate * 10 ** homeDecimals);
 }
 
-export function formatJpy(jpy: number): string {
-  const rounded = Math.round(jpy);
-  const sign = rounded < 0 ? '-' : '';
-  return `${sign}¥${group(Math.abs(rounded))}`;
-}
-
 /** 通貨記号を添えた表示。後置記号の通貨は末尾に付け、負号は必ず先頭に置く。 */
 export function formatWithCurrency(amountMinor: number, currency: string): string {
   const info = findCurrency(currency);
