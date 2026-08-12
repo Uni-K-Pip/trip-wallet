@@ -24,10 +24,6 @@ export async function deleteExpense(id: string): Promise<void> {
   });
 }
 
-export function getExpense(id: string): Promise<Expense | undefined> {
-  return db.expenses.get(id);
-}
-
 /** 日付の新しい順。同じ日なら登録の新しい順。 */
 export async function listExpenses(tripId: string): Promise<Expense[]> {
   const rows = await db.expenses.where('tripId').equals(tripId).toArray();
