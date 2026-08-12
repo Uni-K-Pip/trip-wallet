@@ -47,7 +47,7 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
             data-testid="day-col"
             key={p.date}
             role="img"
-            aria-label={`${formatDateLabel(p.date, t.weekdays)} ${fmt(p.home)}`}
+            aria-label={`${formatDateLabel(p.date, t)} ${fmt(p.home)}`}
           >
             <span
               className={barClass(p.home, p.date === peakDate && maxHome > 0)}
@@ -77,7 +77,7 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
         </span>
         {maxHome > 0 && peakDate && (
           <span data-testid="daily-peak">
-            {t.summary.peak} {formatDateLabel(peakDate, t.weekdays)} <b>{fmt(maxHome)}</b>
+            {t.summary.peak} {formatDateLabel(peakDate, t)} <b>{fmt(maxHome)}</b>
           </span>
         )}
       </div>

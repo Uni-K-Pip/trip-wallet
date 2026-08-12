@@ -3,6 +3,7 @@ import type { Dictionary } from './dictionaries';
 export const zh: Dictionary = {
   appName: 'Trip Wallet',
   weekdays: ['日', '一', '二', '三', '四', '五', '六'],
+  dateLabel: (m, d, w) => `${m}/${d}(${w})`,
   common: {
     loading: '加载中…',
     cancel: '取消',

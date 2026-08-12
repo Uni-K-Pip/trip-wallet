@@ -142,8 +142,8 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
               <button type="button" className="trip-main" onClick={() => onSelectTrip(trip.id)}>
                 <span className="trip-name">{trip.name}</span>
                 <span className="trip-meta">
-                  {trip.currency} / {formatDateLabel(trip.startDate, t.weekdays)}
-                  {trip.endDate ? `〜${formatDateLabel(trip.endDate, t.weekdays)}` : ''} /{' '}
+                  {trip.currency} / {formatDateLabel(trip.startDate, t)}
+                  {trip.endDate ? `〜${formatDateLabel(trip.endDate, t)}` : ''} /{' '}
                   {t.common.people(trip.memberCount)}
                   {budgetLabel(trip)}
                 </span>
