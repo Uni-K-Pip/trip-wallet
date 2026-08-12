@@ -43,6 +43,22 @@ export const zh: Dictionary = {
     deleted: '已删除',
     deleteFailed: '删除失败',
   },
+  view: {
+    personal: '个人',
+    shared: '共同',
+    mine: '我的分摊',
+  },
+  summary: {
+    empty: '还没有可统计的支出。',
+    viewEmpty: (view) => `还没有${view}支出。`,
+    myTotal: '我的分摊合计:',
+    myTotalNote: '(个人 + 共同按人数分摊)',
+    byCategory: '分类占比',
+    daily: '每日趋势',
+    average: (v) => `平均 ${v}`,
+    dailyAverage: '日均',
+    peak: '最高',
+  },
   category: {
     food: '餐饮',
     transport: '交通',

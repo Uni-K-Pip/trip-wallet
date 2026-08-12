@@ -142,4 +142,9 @@ describe('SummaryScreen', () => {
 
     expect(await screen.findByText('集計する支出がまだありません。')).toBeInTheDocument();
   });
+
+  it('英語なら切り替えボタンが英語になる', async () => {
+    renderWithLang(<SummaryScreen trip={trip} />, 'en');
+    expect(await screen.findByRole('button', { name: 'My share' })).toBeInTheDocument();
+  });
 });

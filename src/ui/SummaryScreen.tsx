@@ -1,24 +1,18 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { listExpenses } from '../data/expenseRepo';
-import { formatJpy, formatWithCurrency } from '../domain/money';
+import { formatWithCurrency } from '../domain/money';
 import { breakdownByCategory, dailySeries, summarize } from '../domain/summary';
 import type { ViewScope } from '../domain/summary';
 import type { Trip } from '../domain/types';
+import { useI18n } from '../i18n/LangContext';
 import { CategoryChart } from './CategoryChart';
 import { DailyChart } from './DailyChart';
 
-const VIEWS: { value: ViewScope; label: string }[] = [
-  { value: 'personal', label: '個別' },
-  { value: 'shared', label: '共有' },
-  { value: 'mine', label: '自己負担' },
-];
-
-function viewLabel(v: ViewScope): string {
-  return VIEWS.find((x) => x.value === v)?.label ?? '自己負担';
-}
+const VIEWS: ViewScope[] = ['personal', 'shared', 'mine'];
 
 export function SummaryScreen({ trip }: { trip: Trip }) {
+  const { t } = useI18n();
   const expenses = useLiveQuery(() => listExpenses(trip.id), [trip.id]);
   // 切り替えはセッション内だけ保持する。保存する値を増やさないため、開き直すと自己負担に戻る。
   const [view, setView] = useState<ViewScope>('mine');
@@ -29,11 +23,12 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
   if (expenses === undefined) {
     return (
       <div className="summary">
-        <p className="empty">読み込み中…</p>
+        <p className="empty">{t.common.loading}</p>
       </div>
     );
   }
 
+  const fmt = (v: number) => formatWithCurrency(v, trip.homeCurrency);
   const list = expenses;
   const summary = summarize(list, trip);
   const categories = breakdownByCategory(list, trip, view);
@@ -41,37 +36,37 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
   const viewTotalHome = categories.reduce((sum, c) => sum + c.home, 0);
 
   if (list.length === 0) {
-    return <p className="empty">集計する支出がまだありません。</p>;
+    return <p className="empty">{t.summary.empty}</p>;
   }
 
   return (
     <div className="summary">
       <section>
-        <h3>合計</h3>
+        <h3>{t.home.total}</h3>
         <div className="card">
           <span className="card-jpy" data-testid="summary-total">
-            {formatJpy(summary.totalHome)}
+            {fmt(summary.totalHome)}
           </span>
           <span className="card-foreign">
-            {formatWithCurrency(summary.totalMinor, trip.currency)} / {summary.count}件
+            {formatWithCurrency(summary.totalMinor, trip.currency)} / {t.common.items(summary.count)}
           </span>
           <div className="card-split">
             <div>
-              <span className="card-label">個別</span>
-              <span data-testid="summary-personal">{formatJpy(summary.personalHome)}</span>
+              <span className="card-label">{t.scope.personal}</span>
+              <span data-testid="summary-personal">{fmt(summary.personalHome)}</span>
             </div>
             <div>
-              <span className="card-label">共有</span>
-              <span data-testid="summary-shared">{formatJpy(summary.sharedHome)}</span>
+              <span className="card-label">{t.scope.shared}</span>
+              <span data-testid="summary-shared">{fmt(summary.sharedHome)}</span>
               <span className="card-sub" data-testid="summary-share-note">
-                自分の負担 {formatJpy(summary.sharedPerPersonHome)}({trip.memberCount}人)
+                {t.home.myShare(fmt(summary.sharedPerPersonHome), trip.memberCount)}
               </span>
             </div>
           </div>
           <p className="card-sub">
-            自分の負担合計:{' '}
-            <strong data-testid="summary-mine">{formatJpy(summary.myTotalHome)}</strong>
-            (個別 + 共有の人数割り)
+            {t.summary.myTotal}{' '}
+            <strong data-testid="summary-mine">{fmt(summary.myTotalHome)}</strong>
+            {t.summary.myTotalNote}
           </p>
         </div>
       </section>
@@ -79,36 +74,36 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
       <div className="segment">
         {VIEWS.map((v) => (
           <button
-            key={v.value}
+            key={v}
             type="button"
-            className={v.value === view ? 'seg active' : 'seg'}
-            onClick={() => setView(v.value)}
+            className={v === view ? 'seg active' : 'seg'}
+            onClick={() => setView(v)}
           >
-            {v.label}
+            {t.view[v]}
           </button>
         ))}
       </div>
 
       {categories.length === 0 ? (
-        <p className="empty">{viewLabel(view)}の支出はまだありません。</p>
+        <p className="empty">{t.summary.viewEmpty(t.view[view])}</p>
       ) : (
         <>
           <section>
             <h3 className="chart-head">
-              <span>カテゴリ別</span>
+              <span>{t.summary.byCategory}</span>
               <em data-testid="category-head-note">
-                {viewLabel(view)} {formatJpy(viewTotalHome)}
+                {t.view[view]} {fmt(viewTotalHome)}
               </em>
             </h3>
-            <CategoryChart rows={categories} />
+            <CategoryChart rows={categories} homeCurrency={trip.homeCurrency} />
           </section>
 
           <section>
             <h3 className="chart-head">
-              <span>日別推移</span>
-              <em data-testid="daily-head-note">{viewLabel(view)}</em>
+              <span>{t.summary.daily}</span>
+              <em data-testid="daily-head-note">{t.view[view]}</em>
             </h3>
-            <DailyChart series={days} />
+            <DailyChart series={days} homeCurrency={trip.homeCurrency} />
           </section>
         </>
       )}

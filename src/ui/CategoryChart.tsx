@@ -1,11 +1,17 @@
 import { categoryColor, categoryIcon } from '../domain/categories';
-import { formatJpy } from '../domain/money';
+import { formatWithCurrency } from '../domain/money';
 import type { CategoryBreakdown } from '../domain/summary';
-// Task 14 で useI18n の t に差し替える
-import { ja } from '../i18n/ja';
+import { useI18n } from '../i18n/LangContext';
 
 /** 構成比の帯と、同じ色・同じ順の内訳リスト。色が凡例の役割を兼ねる。 */
-export function CategoryChart({ rows }: { rows: CategoryBreakdown[] }) {
+export function CategoryChart({
+  rows,
+  homeCurrency,
+}: {
+  rows: CategoryBreakdown[];
+  homeCurrency: string;
+}) {
+  const { t } = useI18n();
   if (rows.length === 0) return null;
 
   return (
@@ -29,9 +35,9 @@ export function CategoryChart({ rows }: { rows: CategoryBreakdown[] }) {
               style={{ backgroundColor: categoryColor(r.category) }}
             />
             <span className="legend-name">
-              {categoryIcon(r.category)} {ja.category[r.category]}
+              {categoryIcon(r.category)} {t.category[r.category]}
             </span>
-            <span className="legend-jpy">{formatJpy(r.home)}</span>
+            <span className="legend-jpy">{formatWithCurrency(r.home, homeCurrency)}</span>
             <span className="legend-pct">{Math.round(r.ratio * 100)}%</span>
           </li>
         ))}
