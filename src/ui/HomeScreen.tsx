@@ -102,10 +102,10 @@ export function HomeScreen({ trip }: { trip: Trip }) {
       <div className="card">
         <div className="card-total">
           <span className="card-label">{t.home.total}</span>
-          <span className="card-jpy" data-testid="total-home">
+          <span className="card-home" data-testid="total-home">
             {formatWithCurrency(summary.totalHome, trip.homeCurrency)}
           </span>
-          <span className="card-foreign">
+          <span className="card-local">
             {formatWithCurrency(summary.totalMinor, trip.currency)} / {t.common.items(summary.count)}
           </span>
         </div>

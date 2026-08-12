@@ -44,10 +44,10 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
       <section>
         <h3>{t.home.total}</h3>
         <div className="card">
-          <span className="card-jpy" data-testid="summary-total">
+          <span className="card-home" data-testid="summary-total">
             {fmt(summary.totalHome)}
           </span>
-          <span className="card-foreign">
+          <span className="card-local">
             {formatWithCurrency(summary.totalMinor, trip.currency)} / {t.common.items(summary.count)}
           </span>
           <div className="card-split">

@@ -37,7 +37,7 @@ export function CategoryChart({
             <span className="legend-name">
               {categoryIcon(r.category)} {t.category[r.category]}
             </span>
-            <span className="legend-jpy">{formatWithCurrency(r.home, homeCurrency)}</span>
+            <span className="legend-home">{formatWithCurrency(r.home, homeCurrency)}</span>
             <span className="legend-pct">{Math.round(r.ratio * 100)}%</span>
           </li>
         ))}
