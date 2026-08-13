@@ -17,10 +17,16 @@ export function parseIsoDate(isoDate: string): Date {
   return new Date(y, m - 1, d);
 }
 
-/** "2026-09-12" → "9/12(土)"。曜日名は辞書から渡す。 */
-export function formatDateLabel(isoDate: string, weekdays: readonly string[]): string {
+/** 日付ラベルの組み立てに要る辞書の一部。date.ts は i18n を import せず構造的型で受ける。 */
+export type DateLabelDict = {
+  weekdays: readonly string[];
+  dateLabel: (month: number, day: number, weekday: string) => string;
+};
+
+/** "2026-09-12" → ja なら "9/12(土)"、en なら "Sat, 9/12"。曜日名も並びも辞書が決める。 */
+export function formatDateLabel(isoDate: string, dict: DateLabelDict): string {
   const d = parseIsoDate(isoDate);
-  return `${d.getMonth() + 1}/${d.getDate()}(${weekdays[d.getDay()]})`;
+  return dict.dateLabel(d.getMonth() + 1, d.getDate(), dict.weekdays[d.getDay()]);
 }
 
 export function addDays(isoDate: string, days: number): string {

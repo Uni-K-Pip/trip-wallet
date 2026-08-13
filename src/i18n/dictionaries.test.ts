@@ -27,4 +27,14 @@ describe('DICTIONARIES', () => {
     expect(DICTIONARIES.en.common.people(1)).toBe('1 person');
     expect(DICTIONARIES.en.common.people(3)).toBe('3 people');
   });
+
+  it('日付書式は全言語にあり、英語だけ曜日が先頭に来る', () => {
+    for (const lang of LANGS) {
+      expect(typeof DICTIONARIES[lang].dateLabel).toBe('function');
+    }
+    expect(DICTIONARIES.ja.dateLabel(9, 12, '土')).toBe('9/12(土)');
+    expect(DICTIONARIES.ko.dateLabel(9, 12, '토')).toBe('9/12(토)');
+    expect(DICTIONARIES.zh.dateLabel(9, 12, '六')).toBe('9/12(六)');
+    expect(DICTIONARIES.en.dateLabel(9, 12, 'Sat')).toBe('Sat, 9/12');
+  });
 });

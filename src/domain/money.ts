@@ -32,6 +32,7 @@ export function parseMajorToMinor(input: string, decimals: number): number {
 /**
  * 外貨の最小単位を換算先通貨の最小単位にする。換算はこの関数だけを通す。
  * 桁数は旅行に保存した値を使う(通貨マスタを後から変えても過去の数字が動かないため)。
+ * 小数の丸め誤差(1.005 → 100.49999…)は parseMajorToMinor と同じく文字列経由で潰す。
  */
 export function toHomeMinor(
   amountMinor: number,
@@ -39,7 +40,9 @@ export function toHomeMinor(
   rate: number,
   homeDecimals: number,
 ): number {
-  return Math.round(minorToMajor(amountMinor, decimals) * rate * 10 ** homeDecimals);
+  return Math.round(
+    Number((minorToMajor(amountMinor, decimals) * rate * 10 ** homeDecimals).toFixed(4)),
+  );
 }
 
 /** 通貨記号を添えた表示。後置記号の通貨は末尾に付け、負号は必ず先頭に置く。 */

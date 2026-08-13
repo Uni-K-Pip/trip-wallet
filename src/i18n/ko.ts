@@ -3,6 +3,7 @@ import type { Dictionary } from './dictionaries';
 export const ko: Dictionary = {
   appName: 'Trip Wallet',
   weekdays: ['일', '월', '화', '수', '목', '금', '토'],
+  dateLabel: (m, d, w) => `${m}/${d}(${w})`,
   common: {
     loading: '불러오는 중…',
     cancel: '취소',

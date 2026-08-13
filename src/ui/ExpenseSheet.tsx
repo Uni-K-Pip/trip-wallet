@@ -128,8 +128,8 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
               rate: r.rate,
               source: r.source,
               note: r.stale
-                ? t.expense.noteStale(formatDateLabel(r.effectiveDate, t.weekdays))
-                : t.expense.noteOn(formatDateLabel(r.effectiveDate, t.weekdays)),
+                ? t.expense.noteStale(formatDateLabel(r.effectiveDate, t))
+                : t.expense.noteOn(formatDateLabel(r.effectiveDate, t)),
               stale: r.stale,
             },
       );
@@ -276,7 +276,7 @@ export function ExpenseSheet({ trip, expense, onClose }: Props) {
           {symbol}
         </span>
         {!sameCurrency && (
-          <span className="amount-jpy" data-testid="home-preview">
+          <span className="amount-home" data-testid="home-preview">
             {home === null ? t.expense.noRate : formatWithCurrency(home, trip.homeCurrency)}
           </span>
         )}
