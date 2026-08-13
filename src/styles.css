@@ -243,7 +243,7 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-.amount-jpy {
+.amount-home {
   font-size: 18px;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
@@ -382,13 +382,13 @@ h3 {
   display: block;
 }
 
-.card-jpy {
+.card-home {
   font-size: 30px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.card-foreign,
+.card-local,
 .card-sub {
   font-size: 12px;
   color: var(--text-dim);
@@ -546,9 +546,7 @@ h3 {
   font-weight: 600;
 }
 
-.summary .card-jpy {
-  display: block;
-}
+.summary .card-home { display: block; }
 
 .banner {
   display: flex;
@@ -668,7 +666,7 @@ h3 {
   flex: 1;
 }
 
-.legend-jpy {
+.legend-home {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }

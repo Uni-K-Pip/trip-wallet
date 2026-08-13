@@ -3,6 +3,7 @@ import type { Dictionary } from './dictionaries';
 export const en: Dictionary = {
   appName: 'Trip Wallet',
   weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  dateLabel: (m, d, w) => `${w}, ${m}/${d}`,
   common: {
     loading: 'Loading…',
     cancel: 'Cancel',

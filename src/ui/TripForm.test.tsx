@@ -169,6 +169,39 @@ describe('TripForm', () => {
     expect(screen.getByLabelText('個別予算(USD)')).toHaveAttribute('inputmode', 'decimal');
   });
 
+  it('換算先を小数 2 桁から 0 桁へ切り替えると予算欄が四捨五入される', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<TripForm onDone={() => {}} onCancel={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'EUR');
+    await user.type(screen.getByLabelText('個別予算(EUR)'), '500.55');
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'JPY');
+
+    expect(screen.getByLabelText('個別予算(JPY)')).toHaveValue('501');
+  });
+
+  it('換算先を小数 0 桁から 2 桁へ切り替えると小数部が付く', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<TripForm onDone={() => {}} onCancel={() => {}} />);
+
+    await user.type(screen.getByLabelText('個別予算(JPY)'), '50000');
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'EUR');
+
+    // カンマは付けない(初期値の作り方と揃える)
+    expect(screen.getByLabelText('個別予算(EUR)')).toHaveValue('50000.00');
+  });
+
+  it('空欄と数値として読めない入力はそのまま残す', async () => {
+    const user = userEvent.setup();
+    renderWithLang(<TripForm onDone={() => {}} onCancel={() => {}} />);
+
+    await user.type(screen.getByLabelText('共有予算(JPY・自分の負担分)'), 'abc');
+    await user.selectOptions(screen.getByLabelText('換算先通貨'), 'EUR');
+
+    expect(screen.getByLabelText('個別予算(EUR)')).toHaveValue('');
+    expect(screen.getByLabelText('共有予算(EUR・自分の負担分)')).toHaveValue('abc');
+  });
+
   it('支出があると換算先通貨も変えられない', async () => {
     const trip = await createTrip({ name: '上海', currency: 'CNY', homeCurrency: 'JPY' });
     await addExpense({
