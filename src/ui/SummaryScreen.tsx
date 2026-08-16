@@ -72,6 +72,13 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
       </section>
 
       <div className="segment">
+        {/* アクティブなボタンを塗る代わりに、背後のインジケーターを横にスライドさせる。
+            VIEWS は常に 3 要素なので幅 1/3 固定で位置を出せる。 */}
+        <span
+          className="seg-indicator"
+          data-testid="seg-indicator"
+          style={{ transform: `translateX(${VIEWS.indexOf(view) * 100}%)` }}
+        />
         {VIEWS.map((v) => (
           <button
             key={v}

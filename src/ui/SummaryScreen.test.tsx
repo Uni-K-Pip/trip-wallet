@@ -113,6 +113,18 @@ describe('SummaryScreen', () => {
     expect(screen.getByTestId('summary-mine')).toHaveTextContent('¥3,966');
   });
 
+  it('セグメントのインジケーターが選択位置へスライドする', async () => {
+    renderWithLang(<SummaryScreen trip={trip} />);
+    // 初期表示は自己負担(VIEWS の 3 番目)
+    expect(await screen.findByTestId('seg-indicator')).toHaveStyle({
+      transform: 'translateX(200%)',
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: '個別' }));
+
+    expect(screen.getByTestId('seg-indicator')).toHaveStyle({ transform: 'translateX(0%)' });
+  });
+
   it('選んだスコープに支出が無ければその旨を出す', async () => {
     const solo = await createTrip({ name: '香港', currency: 'HKD', homeCurrency: 'JPY' });
     await addExpense({
