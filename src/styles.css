@@ -905,6 +905,90 @@ h3 {
   animation-delay: 490ms;
 }
 
+@keyframes grow-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes grow-right {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.daily-bar {
+  transform-origin: bottom;
+  animation: grow-up var(--dur-slow) var(--ease-swift) both;
+}
+
+.stack-bar {
+  transform-origin: left;
+  animation: grow-right var(--dur-slow) var(--ease-swift) both;
+}
+
+.budget-fill {
+  transform-origin: left;
+  animation: grow-right var(--dur-slow) var(--ease-swift) both;
+  /* マウント後に予算や支出が変わったときは幅の変化そのものを補間する */
+  transition: width var(--dur-slow) var(--ease-swift);
+}
+
+/* 日別グラフの平均線はフェードだけ。位置が動くと目盛りに見えてしまうため。 */
+.daily-avg {
+  animation: fade-in var(--dur-base) var(--ease-swift) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 常時動く演出はこれだけ。3.6s とゆっくりにしてうるさくならないようにする。 */
+@keyframes fab-breathe {
+  0%,
+  100% {
+    box-shadow: 0 6px 20px rgba(129, 140, 248, 0.32);
+  }
+  50% {
+    box-shadow: 0 6px 28px rgba(168, 85, 247, 0.55);
+  }
+}
+
+.fab {
+  animation: fab-breathe 3.6s ease-in-out infinite;
+  transition: transform var(--dur-fast) var(--ease-swift);
+}
+
+.btn-primary,
+.btn-ghost,
+.btn-danger,
+.seg,
+.tab,
+.ex-main {
+  transition: transform var(--dur-fast) var(--ease-swift);
+}
+
+.fab:active,
+.btn-primary:active,
+.btn-ghost:active,
+.btn-danger:active,
+.seg:active,
+.tab:active,
+.ex-main:active {
+  transform: scale(0.96);
+}
+
 /* OS の「視差効果を減らす」が有効なら、全てのアニメーションと遷移を無効化する。
    0 ではなく 0.01ms にするのは、animationend / transitionend を待つコードが
    止まらないようにするため(標準的な指定)。 */
