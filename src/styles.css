@@ -848,3 +848,75 @@ h3 {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* ---- マイクロアニメーション ---- */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-panel {
+  animation: rise-in var(--dur-base) var(--ease-swift) both;
+}
+
+.ex-row,
+.legend-row {
+  animation: rise-in var(--dur-base) var(--ease-swift) both;
+}
+
+/* 行ごとに 70ms ずつずらす。9 行目以降は同時に出す(長いリストで待たされないため)。 */
+.ex-row:nth-child(1),
+.legend-row:nth-child(1) {
+  animation-delay: 0ms;
+}
+.ex-row:nth-child(2),
+.legend-row:nth-child(2) {
+  animation-delay: 70ms;
+}
+.ex-row:nth-child(3),
+.legend-row:nth-child(3) {
+  animation-delay: 140ms;
+}
+.ex-row:nth-child(4),
+.legend-row:nth-child(4) {
+  animation-delay: 210ms;
+}
+.ex-row:nth-child(5),
+.legend-row:nth-child(5) {
+  animation-delay: 280ms;
+}
+.ex-row:nth-child(6),
+.legend-row:nth-child(6) {
+  animation-delay: 350ms;
+}
+.ex-row:nth-child(7),
+.legend-row:nth-child(7) {
+  animation-delay: 420ms;
+}
+.ex-row:nth-child(n + 8),
+.legend-row:nth-child(n + 8) {
+  animation-delay: 490ms;
+}
+
+/* OS の「視差効果を減らす」が有効なら、全てのアニメーションと遷移を無効化する。
+   0 ではなく 0.01ms にするのは、animationend / transitionend を待つコードが
+   止まらないようにするため(標準的な指定)。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -75,23 +75,26 @@ export function App() {
           </div>
         )}
 
-        {tab === 'home' &&
-          (activeTrip !== null ? (
-            <HomeScreen trip={activeTrip} />
-          ) : (
-            <p className="empty">{t.app.noTrip}</p>
-          ))}
+        {/* key={tab} でタブ切替のたびに再マウントし、入場アニメーションを再生させる */}
+        <div className="tab-panel" key={tab}>
+          {tab === 'home' &&
+            (activeTrip !== null ? (
+              <HomeScreen trip={activeTrip} />
+            ) : (
+              <p className="empty">{t.app.noTrip}</p>
+            ))}
 
-        {tab === 'summary' &&
-          (activeTrip !== null ? (
-            <SummaryScreen trip={activeTrip} />
-          ) : (
-            <p className="empty">{t.app.noTrip}</p>
-          ))}
+          {tab === 'summary' &&
+            (activeTrip !== null ? (
+              <SummaryScreen trip={activeTrip} />
+            ) : (
+              <p className="empty">{t.app.noTrip}</p>
+            ))}
 
-        {tab === 'settings' && (
-          <SettingsScreen trips={trips} activeTrip={activeTrip} onSelectTrip={selectTrip} />
-        )}
+          {tab === 'settings' && (
+            <SettingsScreen trips={trips} activeTrip={activeTrip} onSelectTrip={selectTrip} />
+          )}
+        </div>
       </main>
 
       {picking && activeTrip !== null && (
