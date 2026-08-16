@@ -12,3 +12,22 @@ globalThis.File = NodeFile;
 // テストの既定言語を日本語に固定する。CI と手元で navigator.languages が違うと
 // 画面の文言アサーションが環境依存になるため。
 Object.defineProperty(navigator, 'languages', { value: ['ja-JP', 'ja'], configurable: true });
+
+// jsdom には matchMedia が無い。テストの既定は「視差効果を減らす」= 有効にして、
+// カウントアップなどの JS アニメーションを即座に最終値へ飛ばす。こうしないと
+// 画面テストの金額アサーションがアニメーション途中の値を拾って不安定になる。
+// アニメーションする側の挙動は useCountUp.test.ts がこのモックを上書きして検証する。
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  configurable: true,
+  value: (query: string) => ({
+    matches: query.includes('prefers-reduced-motion'),
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }),
+});
