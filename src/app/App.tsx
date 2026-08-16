@@ -58,10 +58,14 @@ export function App() {
 
         {showExportReminder && activeTrip !== null && (
           <div className="banner">
-            <span>{t.app.exportReminder}</span>
-            <button type="button" className="btn-primary" onClick={() => setTab('settings')}>
-              {t.app.toSettings}
-            </button>
+            {/* 設定タブを開いているときに「設定へ」と言っても意味がないので、
+                文言を書き分けてボタンを出さない。 */}
+            <span>{tab === 'settings' ? t.app.exportReminderSettings : t.app.exportReminder}</span>
+            {tab !== 'settings' && (
+              <button type="button" className="btn-primary" onClick={() => setTab('settings')}>
+                {t.app.toSettings}
+              </button>
+            )}
             <button
               type="button"
               className="btn-ghost"

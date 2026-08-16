@@ -22,6 +22,8 @@ export const ja = {
   app: {
     noTrip: 'まず「設定」タブで旅行を作成してください。',
     exportReminder: '旅行が終わりました。設定からデータを書き出しておきましょう。',
+    exportReminderSettings:
+      '旅行が終わりました。下の「バックアップを書き出す」からデータを書き出しておきましょう。',
     toSettings: '設定へ',
     update: '新しいバージョンがあります。タップで更新',
     tabHome: 'ホーム',

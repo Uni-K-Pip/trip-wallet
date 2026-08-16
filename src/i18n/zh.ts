@@ -21,6 +21,7 @@ export const zh: Dictionary = {
   app: {
     noTrip: '请先在「设置」标签中创建行程。',
     exportReminder: '行程已结束。请在设置中导出数据。',
+    exportReminderSettings: '行程已结束。请用下方的「导出备份」导出数据。',
     toSettings: '前往设置',
     update: '有新版本，点击更新',
     tabHome: '首页',

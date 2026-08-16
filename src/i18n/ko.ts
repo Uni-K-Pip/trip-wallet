@@ -21,6 +21,8 @@ export const ko: Dictionary = {
   app: {
     noTrip: '먼저 「설정」 탭에서 여행을 만들어 주세요.',
     exportReminder: '여행이 끝났습니다. 설정에서 데이터를 내보내 두세요.',
+    exportReminderSettings:
+      '여행이 끝났습니다. 아래의 「백업 내보내기」로 데이터를 내보내 두세요.',
     toSettings: '설정으로',
     update: '새 버전이 있습니다. 탭하여 업데이트',
     tabHome: '홈',
