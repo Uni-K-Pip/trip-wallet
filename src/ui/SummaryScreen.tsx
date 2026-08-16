@@ -43,7 +43,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
     <div className="summary">
       <section>
         <h3>{t.home.total}</h3>
-        <div className="card">
+        <div className="card glass">
           <span className="card-home" data-testid="summary-total">
             {fmt(summary.totalHome)}
           </span>
