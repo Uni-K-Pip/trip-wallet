@@ -21,6 +21,8 @@ export const en: Dictionary = {
   app: {
     noTrip: 'Create a trip from the Settings tab first.',
     exportReminder: 'Your trip has ended. Export your data from Settings.',
+    exportReminderSettings:
+      'Your trip has ended. Export your data with "Export a backup" below.',
     toSettings: 'Settings',
     update: 'A new version is available. Tap to update',
     tabHome: 'Home',

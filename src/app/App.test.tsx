@@ -99,3 +99,42 @@ describe('App の多言語表示', () => {
     expect(screen.getByRole('button', { name: /Settings/ })).toBeInTheDocument();
   });
 });
+
+describe('App のエクスポート促しバナー', () => {
+  async function seedEndedTrip(): Promise<void> {
+    const trip = await createTrip({
+      name: '上海 2026-08',
+      currency: 'CNY',
+      homeCurrency: 'JPY',
+      startDate: '2026-08-01',
+      endDate: '2026-08-05',
+    });
+    localStorage.setItem('trip-wallet:active-trip', trip.id);
+  }
+
+  it('ホームタブでは設定へ誘導する', async () => {
+    await seedEndedTrip();
+    renderWithLang(<App />);
+
+    expect(
+      await screen.findByText('旅行が終わりました。設定からデータを書き出しておきましょう。'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '設定へ' })).toBeInTheDocument();
+  });
+
+  it('設定タブでは文言を変えて「設定へ」を出さない', async () => {
+    await seedEndedTrip();
+    const user = userEvent.setup();
+    renderWithLang(<App />);
+    await screen.findByText('旅行が終わりました。設定からデータを書き出しておきましょう。');
+
+    await user.click(screen.getByRole('button', { name: '⚙️ 設定' }));
+
+    expect(
+      screen.getByText(
+        '旅行が終わりました。下の「バックアップを書き出す」からデータを書き出しておきましょう。',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '設定へ' })).not.toBeInTheDocument();
+  });
+});
