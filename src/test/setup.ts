@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import { Blob as NodeBlob, File as NodeFile } from 'node:buffer';
 // IndexedDB を jsdom に生やす。data 層のテストで使う。
 import 'fake-indexeddb/auto';
+import { stubMatchMedia } from './matchMedia';
 
 // jsdom の Blob は Node の structuredClone で複製できず、IndexedDB へ保存した時点で
 // 中身が失われる。実ブラウザでは起きない jsdom 固有の問題なので、テスト環境だけ
@@ -17,17 +18,4 @@ Object.defineProperty(navigator, 'languages', { value: ['ja-JP', 'ja'], configur
 // カウントアップなどの JS アニメーションを即座に最終値へ飛ばす。こうしないと
 // 画面テストの金額アサーションがアニメーション途中の値を拾って不安定になる。
 // アニメーションする側の挙動は useCountUp.test.ts がこのモックを上書きして検証する。
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  configurable: true,
-  value: (query: string) => ({
-    matches: query.includes('prefers-reduced-motion'),
-    media: query,
-    onchange: null,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    addListener: () => {},
-    removeListener: () => {},
-    dispatchEvent: () => false,
-  }),
-});
+stubMatchMedia(true);
