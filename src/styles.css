@@ -862,8 +862,10 @@ h3 {
   }
 }
 
+/* fixed 配置の子孫(FAB・シート)の基準を奪わないよう、パネル自体は transform を使わずフェードだけにする。
+   8px の立ち上がりは行側(.ex-row / .legend-row)が担う。 */
 .tab-panel {
-  animation: rise-in var(--dur-base) var(--ease-swift) both;
+  animation: fade-in var(--dur-base) var(--ease-swift) both;
 }
 
 .ex-row,
