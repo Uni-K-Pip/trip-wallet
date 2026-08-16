@@ -105,7 +105,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
                 {t.view[view]} {fmt(viewTotalHome)}
               </em>
             </h3>
-            <CategoryChart rows={categories} homeCurrency={trip.homeCurrency} />
+            <CategoryChart key={view} rows={categories} homeCurrency={trip.homeCurrency} />
           </section>
 
           <section>
@@ -113,7 +113,7 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
               <span>{t.summary.daily}</span>
               <em data-testid="daily-head-note">{t.view[view]}</em>
             </h3>
-            <DailyChart series={days} homeCurrency={trip.homeCurrency} />
+            <DailyChart key={view} series={days} homeCurrency={trip.homeCurrency} />
           </section>
         </>
       )}
