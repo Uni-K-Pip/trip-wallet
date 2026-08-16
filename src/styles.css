@@ -792,6 +792,11 @@ h3 {
   padding: 0 3px;
 }
 
+/* 平均線が上端に近いときはラベルを線の下に回す(見出しとの重なりを避ける) */
+.daily-avg--below span {
+  top: 2px;
+}
+
 .daily-axis {
   display: flex;
   margin-top: 5px;
