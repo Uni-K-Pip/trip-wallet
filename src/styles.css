@@ -354,8 +354,15 @@ h3 {
 }
 
 .seg.active {
+  background: var(--grad-accent);
   color: var(--on-accent);
   font-weight: 600;
+}
+
+/* スライドインジケーターがある .segment(SummaryScreen)では、
+   塗りは .seg-indicator が担うので .seg.active 自身の背景は消す */
+.seg-indicator ~ .seg.active {
+  background: none;
 }
 
 .category-grid {
