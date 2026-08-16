@@ -7,6 +7,7 @@ import type { ViewScope } from '../domain/summary';
 import type { Trip } from '../domain/types';
 import { useI18n } from '../i18n/LangContext';
 import { CategoryChart } from './CategoryChart';
+import { CountUpAmount } from './CountUpAmount';
 import { DailyChart } from './DailyChart';
 
 const VIEWS: ViewScope[] = ['personal', 'shared', 'mine'];
@@ -44,9 +45,11 @@ export function SummaryScreen({ trip }: { trip: Trip }) {
       <section>
         <h3>{t.home.total}</h3>
         <div className="card glass">
-          <span className="card-home" data-testid="summary-total">
-            {fmt(summary.totalHome)}
-          </span>
+          <CountUpAmount
+            value={summary.totalHome}
+            currency={trip.homeCurrency}
+            testId="summary-total"
+          />
           <span className="card-local">
             {formatWithCurrency(summary.totalMinor, trip.currency)} / {t.common.items(summary.count)}
           </span>
