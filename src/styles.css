@@ -110,13 +110,14 @@ h3 {
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: #062033;
+  background: var(--grad-accent);
+  color: var(--on-accent);
   font-weight: 600;
 }
 
 .btn-ghost {
   background: var(--surface-2);
+  border: 1px solid rgba(165, 180, 252, 0.1);
 }
 
 .btn-danger {
@@ -210,7 +211,7 @@ h3 {
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(12, 10, 29, 0.6);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -218,7 +219,11 @@ h3 {
 }
 
 .sheet {
-  background: var(--bg);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-bottom: none;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   width: 100%;
   max-width: 640px;
   max-height: 92vh;
@@ -333,8 +338,8 @@ h3 {
 }
 
 .seg.active {
-  background: var(--accent);
-  color: #062033;
+  background: var(--grad-accent);
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -385,9 +390,21 @@ h3 {
 
 .card {
   background: var(--surface);
+  border: 1px solid rgba(165, 180, 252, 0.08);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius);
   padding: 14px;
   margin-bottom: 16px;
+}
+
+/* 常時見えている少数の面だけすりガラスにする。スクロールで量産される行には使わない。 */
+.card.glass {
+  background:
+    linear-gradient(150deg, rgba(129, 140, 248, 0.18), rgba(168, 85, 247, 0.06)),
+    var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .card-total {
@@ -447,11 +464,11 @@ h3 {
 
 .budget-fill {
   height: 100%;
-  background: var(--ok);
+  background: var(--grad-accent);
 }
 
 .budget-fill.over {
-  background: var(--danger);
+  background: linear-gradient(150deg, #f87171, #fb7185);
 }
 
 .day {
@@ -475,7 +492,9 @@ h3 {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--surface);
+  background: rgba(30, 27, 58, 0.72);
+  border: 1px solid rgba(165, 180, 252, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   border-radius: var(--radius);
   padding: 8px 10px;
   margin-bottom: 6px;
@@ -519,8 +538,8 @@ h3 {
 }
 
 .badge.shared {
-  background: var(--accent);
-  color: #062033;
+  background: var(--grad-accent);
+  color: var(--on-accent);
 }
 
 .thumb {
@@ -537,8 +556,8 @@ h3 {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #062033;
+  background: var(--grad-accent);
+  color: var(--on-accent);
   font-size: 28px;
   z-index: 10;
 }
@@ -549,7 +568,10 @@ h3 {
   right: 0;
   bottom: 0;
   display: flex;
-  background: var(--surface);
+  background: var(--glass);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 15;
 }
@@ -573,8 +595,10 @@ h3 {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  background: var(--surface-2);
+  background: rgba(49, 46, 80, 0.72);
+  border: 1px solid var(--glass-border);
   border-left: 4px solid var(--accent);
+  box-shadow: var(--shadow-card);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 13px;
@@ -586,8 +610,8 @@ h3 {
 }
 
 .toast.update {
-  background: var(--accent);
-  color: #062033;
+  background: var(--grad-accent);
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -716,12 +740,12 @@ h3 {
 
 .daily-bar {
   display: block;
-  background: var(--accent);
+  background: var(--grad-accent);
   border-radius: 4px 4px 0 0;
 }
 
 .daily-bar.peak {
-  background: #7dd3fc;
+  background: linear-gradient(150deg, #c4b5fd, #a855f7);
 }
 
 .daily-bar.zero {
@@ -759,8 +783,9 @@ h3 {
   color: var(--text-dim);
 }
 
+/* 土曜の水色は新配色から浮くので藤色にする。日曜の赤系はそのまま。 */
 .daily-tick.sat {
-  color: #7dd3fc;
+  color: #a5b4fc;
 }
 
 .daily-tick.sun {
@@ -793,4 +818,11 @@ h3 {
   font-weight: 400;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
+}
+
+/* キーボード操作時だけリングを出す。ポインタ操作では出さない。 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

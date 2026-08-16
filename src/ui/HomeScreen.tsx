@@ -99,7 +99,7 @@ export function HomeScreen({ trip }: { trip: Trip }) {
 
   return (
     <div className="home">
-      <div className="card">
+      <div className="card glass">
         <div className="card-total">
           <span className="card-label">{t.home.total}</span>
           <span className="card-home" data-testid="total-home">
