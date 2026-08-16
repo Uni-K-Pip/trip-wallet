@@ -121,4 +121,26 @@ describe('DailyChart', () => {
     expect(screen.getByTestId('daily-average')).toHaveTextContent('1日あたり平均 €617.28');
     expect(screen.getByTestId('daily-peak')).toHaveTextContent('最高 9/12(土) €1,234.56');
   });
+
+  it('平均が最大値に近いとラベルを平均線の下に出す', () => {
+    const flat: DailySeries = {
+      points: [
+        { date: '2026-09-12', home: 1000 },
+        { date: '2026-09-13', home: 990 },
+      ],
+      totalHome: 1990,
+      maxHome: 1000,
+      peakDate: '2026-09-12',
+      averageHome: 995,
+    };
+    const { container } = renderWithLang(<DailyChart series={flat} homeCurrency="JPY" />);
+
+    expect(container.querySelector('.daily-avg')).toHaveClass('daily-avg--below');
+  });
+
+  it('平均が最大値より十分低ければラベルは平均線の上のまま', () => {
+    const { container } = renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />);
+
+    expect(container.querySelector('.daily-avg')).not.toHaveClass('daily-avg--below');
+  });
 });

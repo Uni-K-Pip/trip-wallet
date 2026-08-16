@@ -4,6 +4,8 @@ import type { DailySeries } from '../domain/summary';
 import { useI18n } from '../i18n/LangContext';
 
 const BAR_HEIGHT = 110;
+/** 平均ラベル(.daily-avg span)の高さ。styles.css の top: -14px と揃える。 */
+const AVG_LABEL_HEIGHT = 14;
 
 /** 日付ラベルは 7 個くらいまでに間引く。長い旅行でも横スクロールさせないため。 */
 function labelStep(days: number): number {
@@ -33,11 +35,19 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
   const gap = points.length >= 15 ? 2 : 6;
   const scale = Math.max(1, maxHome);
 
+  const avgBottom = (averageHome / scale) * BAR_HEIGHT;
+  // 平均線がチャート上端に近いと、線の上に出すラベルがはみ出して見出しと重なる。
+  // 収まらないときだけ線の下に出す。線そのものの位置は変えない。
+  const avgLabelBelow = BAR_HEIGHT - avgBottom < AVG_LABEL_HEIGHT;
+
   return (
     <div className="daily">
       <div className="daily-bars" style={{ gap: `${gap}px`, height: `${BAR_HEIGHT}px` }}>
         {averageHome > 0 && (
-          <div className="daily-avg" style={{ bottom: `${(averageHome / scale) * BAR_HEIGHT}px` }}>
+          <div
+            className={avgLabelBelow ? 'daily-avg daily-avg--below' : 'daily-avg'}
+            style={{ bottom: `${avgBottom}px` }}
+          >
             <span>{t.summary.average(fmt(averageHome))}</span>
           </div>
         )}
