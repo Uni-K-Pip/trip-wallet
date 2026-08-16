@@ -1,39 +1,22 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
+import { stubMatchMedia } from '../test/matchMedia';
 import { useCountUp } from './useCountUp';
-
-/** setup.ts の既定(reduced-motion = true)を、このテストの中だけ上書きする。 */
-function setReducedMotion(reduced: boolean): void {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    configurable: true,
-    value: (query: string) => ({
-      matches: reduced && query.includes('prefers-reduced-motion'),
-      media: query,
-      onchange: null,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      addListener: () => {},
-      removeListener: () => {},
-      dispatchEvent: () => false,
-    }),
-  });
-}
 
 afterEach(() => {
   vi.useRealTimers();
-  setReducedMotion(true);
+  stubMatchMedia(true);
 });
 
 describe('useCountUp', () => {
   it('視差効果を減らす設定なら最初から最終値を返す', () => {
-    setReducedMotion(true);
+    stubMatchMedia(true);
     const { result } = renderHook(() => useCountUp(5116));
     expect(result.current).toBe(5116);
   });
 
   it('初回は 0 から始まり、500ms 後に最終値へ届く', () => {
-    setReducedMotion(false);
+    stubMatchMedia(false);
     vi.useFakeTimers();
     const { result } = renderHook(() => useCountUp(5116));
 
@@ -46,7 +29,7 @@ describe('useCountUp', () => {
   });
 
   it('値が変わると前回値から新しい値へ動く', () => {
-    setReducedMotion(false);
+    stubMatchMedia(false);
     vi.useFakeTimers();
     const { result, rerender } = renderHook(({ v }) => useCountUp(v), {
       initialProps: { v: 1000 },
