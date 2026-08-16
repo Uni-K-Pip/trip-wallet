@@ -991,6 +991,32 @@ h3 {
   transform: scale(0.96);
 }
 
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-backdrop {
+  animation: fade-in var(--dur-base) var(--ease-swift) both;
+}
+
+.sheet {
+  animation: sheet-up var(--dur-base) var(--ease-swift) both;
+}
+
+/* 閉じは出現より速く。Sheet.tsx の CLOSE_MS = 180 と揃える。 */
+.sheet-backdrop.closing {
+  animation: fade-in var(--dur-fast) var(--ease-swift) reverse both;
+}
+
+.sheet.closing {
+  animation: sheet-up var(--dur-fast) var(--ease-swift) reverse both;
+}
+
 /* OS の「視差効果を減らす」が有効なら、全てのアニメーションと遷移を無効化する。
    0 ではなく 0.01ms にするのは、animationend / transitionend を待つコードが
    止まらないようにするため(標準的な指定)。 */

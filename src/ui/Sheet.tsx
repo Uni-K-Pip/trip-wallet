@@ -1,5 +1,9 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useI18n } from '../i18n/LangContext';
+import { prefersReducedMotion } from './motion';
+
+/** 閉じアニメーションの長さ。styles.css の .sheet.closing と合わせる。 */
+const CLOSE_MS = 180;
 
 type Props = {
   title: string;
@@ -9,17 +13,42 @@ type Props = {
 
 export function Sheet({ title, onClose, children }: Props) {
   const { t } = useI18n();
+  const [closing, setClosing] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current !== null) clearTimeout(timer.current);
+    };
+  }, []);
+
+  // 閉じアニメーションを見せるためにアンマウントを 180ms 遅らせる。
+  // 「視差効果を減らす」設定なら待たずに即座に閉じる。
+  function requestClose() {
+    if (prefersReducedMotion()) {
+      onClose();
+      return;
+    }
+    if (closing) return;
+    setClosing(true);
+    timer.current = setTimeout(onClose, CLOSE_MS);
+  }
+
   return (
-    <div className="sheet-backdrop" role="presentation" onClick={onClose}>
+    <div
+      className={closing ? 'sheet-backdrop closing' : 'sheet-backdrop'}
+      role="presentation"
+      onClick={requestClose}
+    >
       <div
-        className="sheet"
+        className={closing ? 'sheet closing' : 'sheet'}
         role="dialog"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
       >
         <header className="sheet-header">
           <h2>{title}</h2>
-          <button type="button" onClick={onClose} aria-label={t.common.close}>
+          <button type="button" onClick={requestClose} aria-label={t.common.close}>
             ✕
           </button>
         </header>
