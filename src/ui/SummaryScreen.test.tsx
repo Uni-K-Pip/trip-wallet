@@ -123,6 +123,10 @@ describe('SummaryScreen', () => {
     await userEvent.click(screen.getByRole('button', { name: '個別' }));
 
     expect(screen.getByTestId('seg-indicator')).toHaveStyle({ transform: 'translateX(0%)' });
+
+    await userEvent.click(screen.getByRole('button', { name: '共有' }));
+
+    expect(screen.getByTestId('seg-indicator')).toHaveStyle({ transform: 'translateX(100%)' });
   });
 
   it('選んだスコープに支出が無ければその旨を出す', async () => {
