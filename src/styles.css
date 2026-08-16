@@ -322,6 +322,7 @@ h3 {
 }
 
 .segment {
+  position: relative;
   display: flex;
   background: var(--surface-2);
   border-radius: 12px;
@@ -329,16 +330,30 @@ h3 {
   margin-bottom: 12px;
 }
 
+.seg-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  border-radius: 9px;
+  background: var(--grad-accent);
+  transition: transform var(--dur-base) var(--ease-swift);
+  pointer-events: none;
+}
+
 .seg {
+  position: relative;
+  z-index: 1;
   flex: 1;
   padding: 10px;
   border-radius: 9px;
   font-size: 15px;
   color: var(--text-dim);
+  transition: color var(--dur-base) var(--ease-swift);
 }
 
 .seg.active {
-  background: var(--grad-accent);
   color: var(--on-accent);
   font-weight: 600;
 }
