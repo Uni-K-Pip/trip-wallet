@@ -58,7 +58,7 @@ describe('useCountUp', () => {
 
     rerender({ v: 2000 });
     act(() => {
-      vi.advanceTimersByTime(16);
+      vi.advanceTimersByTime(50);
     });
     // 途中経過は前回値と新しい値のあいだにいる(0 に戻らない)
     expect(result.current).toBeGreaterThan(1000);
