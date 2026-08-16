@@ -1,6 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#0f172a"/>
-  <rect x="124" y="120" width="240" height="96" rx="28" fill="#7dd3fc"/>
-  <rect x="104" y="168" width="304" height="216" rx="40" fill="#38bdf8"/>
-  <circle cx="344" cy="276" r="28" fill="#0f172a"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0c0a1d"/>
+      <stop offset="0.55" stop-color="#1e1b4a"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="flap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0e7ff"/>
+      <stop offset="1" stop-color="#a5b4fc"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.7" cy="0.25" r="0.8">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <g id="motif">
+    <rect x="124" y="120" width="240" height="96" rx="28" fill="url(#flap)"/>
+    <rect x="104" y="168" width="304" height="216" rx="40" fill="url(#body)"/>
+    <path d="M104 208 q0 -40 40 -40 h224 q40 0 40 40 l0 20 q-150 60 -304 0 z" fill="#ffffff" opacity="0.14"/>
+    <circle cx="344" cy="276" r="30" fill="#12102a"/>
+    <circle cx="344" cy="276" r="30" fill="none" stroke="#c7d2fe" stroke-width="4" opacity="0.55"/>
+  </g>
 </svg>
