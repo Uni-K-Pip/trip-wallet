@@ -785,11 +785,14 @@ body.sheet-open .fab {
   background: var(--surface-2);
 }
 
+/* 棒(.daily-bar)は transform アニメーションでスタッキングコンテキストを作るので、
+   z-index を指定しないと DOM 順だけが頼りになる。JSX 側の並びと二重に効かせる。 */
 .daily-avg {
   position: absolute;
   left: 0;
   right: 0;
   border-top: 1px dashed #f472b6;
+  z-index: 1;
 }
 
 .daily-avg span {
