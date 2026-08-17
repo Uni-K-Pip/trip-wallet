@@ -5,6 +5,22 @@ import { prefersReducedMotion } from './motion';
 /** 閉じアニメーションの長さ。styles.css の .sheet.closing と合わせる。 */
 const CLOSE_MS = 180;
 
+/** 開いているシートの枚数。0 になったときだけ body のクラスを外す。 */
+let openSheets = 0;
+
+function retainTabbarHidden() {
+  openSheets += 1;
+  document.body.classList.add('sheet-open');
+}
+
+function releaseTabbarHidden() {
+  openSheets -= 1;
+  if (openSheets <= 0) {
+    openSheets = 0;
+    document.body.classList.remove('sheet-open');
+  }
+}
+
 type Props = {
   title: string;
   onClose: () => void;
@@ -20,6 +36,14 @@ export function Sheet({ title, onClose, children }: Props) {
     return () => {
       if (timer.current !== null) clearTimeout(timer.current);
     };
+  }, []);
+
+  // シートは半透明ガラスなので、背後のタブバーと FAB が透けて保存ボタンに重なって見える。
+  // シートが 1 枚でも開いている間は両方消す。StrictMode の二重マウントでも増減が
+  // 対になるよう、枚数をカウンタで持つ。
+  useEffect(() => {
+    retainTabbarHidden();
+    return releaseTabbarHidden;
   }, []);
 
   // 閉じアニメーションを見せるためにアンマウントを 180ms 遅らせる。

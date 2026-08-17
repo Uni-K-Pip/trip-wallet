@@ -612,6 +612,14 @@ h3 {
   font-weight: 600;
 }
 
+/* シートは半透明ガラスなので、背後のタブバーと FAB が透けて保存ボタンに重なって見える。
+   シートを開いている間は両方消す。どちらも position: fixed なのでレイアウトは動かない。
+   クラスの付け外しは src/ui/Sheet.tsx が行う。 */
+body.sheet-open .tabbar,
+body.sheet-open .fab {
+  display: none;
+}
+
 .summary .card-home { display: block; }
 
 .banner {
