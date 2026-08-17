@@ -23,4 +23,16 @@ describe('extractGroup', () => {
   it('見つからなければ null を返す', () => {
     expect(extractGroup('<svg><g id="other"><rect/></g></svg>', 'motif')).toBeNull();
   });
+
+  it('深さ2の入れ子でも対応する </g> までで切る', () => {
+    const svg = '<svg><g id="motif"><g><g><rect/></g></g><circle/></g></svg>';
+
+    expect(extractGroup(svg, 'motif')).toBe('<g id="motif"><g><g><rect/></g></g><circle/></g>');
+  });
+
+  it('コメント内の </g> は読み飛ばす', () => {
+    const svg = '<svg><g id="motif"><!-- </g> --><rect/></g></svg>';
+
+    expect(extractGroup(svg, 'motif')).toBe('<g id="motif"><!-- </g> --><rect/></g>');
+  });
 });
