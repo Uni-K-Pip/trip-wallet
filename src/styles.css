@@ -350,7 +350,9 @@ h3 {
   border-radius: 9px;
   font-size: 15px;
   color: var(--text-dim);
-  transition: color var(--dur-base) var(--ease-swift);
+  transition:
+    color var(--dur-base) var(--ease-swift),
+    transform var(--dur-fast) var(--ease-swift);
 }
 
 .seg.active {
@@ -980,7 +982,6 @@ h3 {
 .btn-primary,
 .btn-ghost,
 .btn-danger,
-.seg,
 .tab,
 .ex-main {
   transition: transform var(--dur-fast) var(--ease-swift);
@@ -1013,13 +1014,35 @@ h3 {
   animation: sheet-up var(--dur-base) var(--ease-swift) both;
 }
 
-/* 閉じは出現より速く。Sheet.tsx の CLOSE_MS = 180 と揃える。 */
+/* 閉じは出現より速く。Sheet.tsx の CLOSE_MS = 180 と揃える。
+   開き用と同じ animation-name を reverse で使い回してはいけない。animation-name のリストが
+   変わらないとブラウザは新しいアニメーションを作らず既存のものを更新するだけになり、
+   経過時間が新しい active duration を超えていて即座に終端値へ飛ぶ(= 閉じが再生されない)。
+   閉じには必ず専用のキーフレーム名を与える。 */
+@keyframes sheet-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 .sheet-backdrop.closing {
-  animation: fade-in var(--dur-fast) var(--ease-swift) reverse both;
+  animation: fade-out var(--dur-fast) var(--ease-swift) both;
 }
 
 .sheet.closing {
-  animation: sheet-up var(--dur-fast) var(--ease-swift) reverse both;
+  animation: sheet-down var(--dur-fast) var(--ease-swift) both;
 }
 
 /* OS の「視差効果を減らす」が有効なら、全てのアニメーションと遷移を無効化する。
