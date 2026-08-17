@@ -143,4 +143,12 @@ describe('DailyChart', () => {
 
     expect(container.querySelector('.daily-avg')).not.toHaveClass('daily-avg--below');
   });
+
+  it('平均線は棒より後ろの DOM 順に置く(棒の裏に隠れないように)', () => {
+    const { container } = renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />);
+
+    // .daily-bar は transform アニメーションでスタッキングコンテキストを作るため、
+    // 同じ層では DOM 順が後のほうが前面に描かれる。
+    expect(container.querySelector('.daily-bars')?.lastElementChild).toHaveClass('daily-avg');
+  });
 });

@@ -43,14 +43,6 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
   return (
     <div className="daily">
       <div className="daily-bars" style={{ gap: `${gap}px`, height: `${BAR_HEIGHT}px` }}>
-        {averageHome > 0 && (
-          <div
-            className={avgLabelBelow ? 'daily-avg daily-avg--below' : 'daily-avg'}
-            style={{ bottom: `${avgBottom}px` }}
-          >
-            <span>{t.summary.average(fmt(averageHome))}</span>
-          </div>
-        )}
         {points.map((p) => (
           <div
             className="daily-col"
@@ -65,6 +57,16 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
             />
           </div>
         ))}
+        {/* 棒(transform アニメーションでスタッキングコンテキストを作る)より後に置く。
+            DOM 順が後のほうが前面に描かれるため、これで平均線が棒に隠れない。 */}
+        {averageHome > 0 && (
+          <div
+            className={avgLabelBelow ? 'daily-avg daily-avg--below' : 'daily-avg'}
+            style={{ bottom: `${avgBottom}px` }}
+          >
+            <span>{t.summary.average(fmt(averageHome))}</span>
+          </div>
+        )}
       </div>
 
       <div className="daily-axis" style={{ gap: `${gap}px` }}>
