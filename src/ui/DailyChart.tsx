@@ -1,10 +1,11 @@
+import type { CSSProperties } from 'react';
 import { dayOfMonth, formatDateLabel, weekdayIndex } from '../domain/date';
 import { formatWithCurrency } from '../domain/money';
 import type { DailySeries } from '../domain/summary';
 import { useI18n } from '../i18n/LangContext';
 
 const BAR_HEIGHT = 110;
-/** 平均ラベル(.daily-avg span)の高さ。styles.css の top: -14px と揃える。 */
+/** 平均ラベル(.daily-avg span)の高さ。--avg-label-h として CSS に渡す唯一の定義。 */
 const AVG_LABEL_HEIGHT = 14;
 
 /** 日付ラベルは 7 個くらいまでに間引く。長い旅行でも横スクロールさせないため。 */
@@ -62,7 +63,12 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
         {averageHome > 0 && (
           <div
             className={avgLabelBelow ? 'daily-avg daily-avg--below' : 'daily-avg'}
-            style={{ bottom: `${avgBottom}px` }}
+            style={
+              {
+                bottom: `${avgBottom}px`,
+                '--avg-label-h': `${AVG_LABEL_HEIGHT}px`,
+              } as CSSProperties
+            }
           >
             <span>{t.summary.average(fmt(averageHome))}</span>
           </div>

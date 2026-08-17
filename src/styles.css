@@ -798,7 +798,9 @@ body.sheet-open .fab {
 .daily-avg span {
   position: absolute;
   right: 0;
-  top: -14px;
+  /* 値は DailyChart.tsx の AVG_LABEL_HEIGHT からインラインで渡ってくる。
+     ここに数値を書き戻すと二重管理に逆戻りするので書かない。 */
+  top: calc(-1 * var(--avg-label-h));
   font-size: 10px;
   color: #f472b6;
   background: var(--bg);

@@ -151,4 +151,11 @@ describe('DailyChart', () => {
     // 同じ層では DOM 順が後のほうが前面に描かれる。
     expect(container.querySelector('.daily-bars')?.lastElementChild).toHaveClass('daily-avg');
   });
+
+  it('平均ラベルの高さを CSS 変数として渡す(JS 定数と CSS の二重管理を避ける)', () => {
+    const { container } = renderWithLang(<DailyChart series={threeDays} homeCurrency="JPY" />);
+
+    const avg = container.querySelector<HTMLElement>('.daily-avg');
+    expect(avg?.style.getPropertyValue('--avg-label-h')).toBe('14px');
+  });
 });
