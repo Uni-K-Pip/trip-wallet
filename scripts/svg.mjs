@@ -3,13 +3,14 @@
  * 正規表現の貪欲マッチだと最後の </g> まで飲み込み、非貪欲だと最初の </g> で切れる。
  * どちらも入れ子に耐えないので、開閉の深さを数える。
  * XML コメント(<!-- ... -->)の中身はタグとして数えず読み飛ばす。
+ * id の直前は `\b` ではなく `\s` にする。`\b` は `data-id` の `-` と `i` の間にも一致し、`data-id="motif"` を id 属性として拾ってしまうため。
  *
  * @param {string} svg SVG 全体の文字列
  * @param {string} id 探す <g> の id 属性値
  * @returns {string | null} 見つかった <g>...</g>。無ければ null
  */
 export function extractGroup(svg, id) {
-  const open = new RegExp(`<g\\b[^>]*\\bid="${id}"[^>]*>`);
+  const open = new RegExp(`<g\\b[^>]*\\sid="${id}"[^>]*>`);
   const found = open.exec(svg);
   if (found === null) return null;
 
