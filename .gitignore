@@ -7,3 +7,11 @@ coverage/
 .vite/
 .superpowers/
 .claude/
+
+# TWA(Bubblewrap)の生成物。設定ファイルだけ追跡し、Android プロジェクトと署名鍵は追跡しない
+twa/*
+!twa/twa-manifest.json
+
+# 署名鍵は絶対にコミットしない
+*.keystore
+*.jks
