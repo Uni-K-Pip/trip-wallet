@@ -28,20 +28,34 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  /* オーバースクロールで露出する面が白く光らないように、下地を敷いておく。 */
+  background: var(--bg);
+}
+
 body {
   margin: 0;
-  /* 紫のグローは radial-gradient の固定レイヤーで出す。blur フィルターは
-     常時合成が走ってモバイルで重くなるので使わない。 */
-  background:
-    radial-gradient(60% 40% at 85% 0%, rgba(168, 85, 247, 0.18), transparent 70%),
-    radial-gradient(50% 35% at 0% 20%, rgba(129, 140, 248, 0.14), transparent 70%),
-    linear-gradient(160deg, #0c0a1d, #12102a 55%, #1a1533);
-  background-attachment: fixed;
   color: var(--text);
   font-family: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   /* iOS のホーム画面起動時にセーフエリアへ潜り込まないようにする */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
+}
+
+/* 紫のグローは radial-gradient の固定レイヤーで出す。blur フィルターは
+   常時合成が走ってモバイルで重くなるので使わない。
+   iOS Safari は background-attachment: fixed を実質無視してスクロールに追従させて
+   しまうので、position: fixed の擬似要素に背景を移す。これならどのブラウザでも固定される。 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 40% at 85% 0%, rgba(168, 85, 247, 0.18), transparent 70%),
+    radial-gradient(50% 35% at 0% 20%, rgba(129, 140, 248, 0.14), transparent 70%),
+    linear-gradient(160deg, #0c0a1d, #12102a 55%, #1a1533);
 }
 
 button {
