@@ -35,4 +35,10 @@ describe('extractGroup', () => {
 
     expect(extractGroup(svg, 'motif')).toBe('<g id="motif"><!-- </g> --><rect/></g>');
   });
+
+  it('data-id を id と誤認しない', () => {
+    const svg = '<svg><g data-id="motif"><rect/></g><g id="motif"><circle/></g></svg>';
+
+    expect(extractGroup(svg, 'motif')).toBe('<g id="motif"><circle/></g>');
+  });
 });
