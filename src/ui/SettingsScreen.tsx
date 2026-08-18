@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type ChangeEvent } from 'react';
+import { DONATION_URL, shouldShowDonation } from '../app/donation';
 import { loadHomeCurrency, saveHomeCurrency } from '../app/settings';
 import {
   BackupError,
@@ -173,6 +174,23 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
         </div>
         <p className="hint">{t.settings.importHint}</p>
       </section>
+
+      {shouldShowDonation() && (
+        <section>
+          <h3>{t.settings.support}</h3>
+          <p className="hint">{t.settings.supportHint}</p>
+          <div className="form-actions">
+            <a
+              className="btn-ghost link-btn"
+              href={DONATION_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t.settings.supportLink}
+            </a>
+          </div>
+        </section>
+      )}
 
       <section>
         <h3>{t.settings.rateCache}</h3>
