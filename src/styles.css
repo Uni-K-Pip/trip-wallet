@@ -5,11 +5,9 @@
   --text: #ede9fe;
   --text-dim: #9e9ac0;
   --accent: #818cf8;
-  --accent-2: #a855f7;
   /* アクセント面(FAB / primary ボタン / バッジ)に乗せる文字色。背景色と同じ深い紫。 */
   --on-accent: #0c0a1d;
   --danger: #f87171;
-  --ok: #4ade80;
   --radius: 14px;
 
   --grad-accent: linear-gradient(150deg, #818cf8, #a855f7);
