@@ -801,7 +801,11 @@ body.sheet-open .fab {
   top: calc(-1 * var(--avg-label-h));
   font-size: 10px;
   color: #f472b6;
-  background: var(--bg);
+  /* 背景を塗ると、グラデーションの上では板に見える(このグラフは .card の中に無い)。
+     破線を文字の周りだけ隠せればよいので、文字の形に沿う影で代用する。 */
+  text-shadow:
+    0 0 3px var(--bg),
+    0 0 3px var(--bg);
   padding: 0 3px;
 }
 
