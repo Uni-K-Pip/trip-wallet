@@ -5,11 +5,9 @@
   --text: #ede9fe;
   --text-dim: #9e9ac0;
   --accent: #818cf8;
-  --accent-2: #a855f7;
   /* アクセント面(FAB / primary ボタン / バッジ)に乗せる文字色。背景色と同じ深い紫。 */
   --on-accent: #0c0a1d;
   --danger: #f87171;
-  --ok: #4ade80;
   --radius: 14px;
 
   --grad-accent: linear-gradient(150deg, #818cf8, #a855f7);
@@ -30,20 +28,34 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  /* オーバースクロールで露出する面が白く光らないように、下地を敷いておく。 */
+  background: var(--bg);
+}
+
 body {
   margin: 0;
-  /* 紫のグローは radial-gradient の固定レイヤーで出す。blur フィルターは
-     常時合成が走ってモバイルで重くなるので使わない。 */
-  background:
-    radial-gradient(60% 40% at 85% 0%, rgba(168, 85, 247, 0.18), transparent 70%),
-    radial-gradient(50% 35% at 0% 20%, rgba(129, 140, 248, 0.14), transparent 70%),
-    linear-gradient(160deg, #0c0a1d, #12102a 55%, #1a1533);
-  background-attachment: fixed;
   color: var(--text);
   font-family: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   /* iOS のホーム画面起動時にセーフエリアへ潜り込まないようにする */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
+}
+
+/* 紫のグローは radial-gradient の固定レイヤーで出す。blur フィルターは
+   常時合成が走ってモバイルで重くなるので使わない。
+   iOS Safari は background-attachment: fixed を実質無視してスクロールに追従させて
+   しまうので、position: fixed の擬似要素に背景を移す。これならどのブラウザでも固定される。 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 40% at 85% 0%, rgba(168, 85, 247, 0.18), transparent 70%),
+    radial-gradient(50% 35% at 0% 20%, rgba(129, 140, 248, 0.14), transparent 70%),
+    linear-gradient(160deg, #0c0a1d, #12102a 55%, #1a1533);
 }
 
 button {
@@ -612,6 +624,14 @@ h3 {
   font-weight: 600;
 }
 
+/* シートは半透明ガラスなので、背後のタブバーと FAB が透けて保存ボタンに重なって見える。
+   シートを開いている間は両方消す。どちらも position: fixed なのでレイアウトは動かない。
+   クラスの付け外しは src/ui/Sheet.tsx が行う。 */
+body.sheet-open .tabbar,
+body.sheet-open .fab {
+  display: none;
+}
+
 .summary .card-home { display: block; }
 
 .banner {
@@ -777,20 +797,29 @@ h3 {
   background: var(--surface-2);
 }
 
+/* 棒(.daily-bar)は transform アニメーションでスタッキングコンテキストを作るので、
+   z-index を指定しないと DOM 順だけが頼りになる。JSX 側の並びと二重に効かせる。 */
 .daily-avg {
   position: absolute;
   left: 0;
   right: 0;
   border-top: 1px dashed #f472b6;
+  z-index: 1;
 }
 
 .daily-avg span {
   position: absolute;
   right: 0;
-  top: -14px;
+  /* 値は DailyChart.tsx の AVG_LABEL_HEIGHT からインラインで渡ってくる。
+     ここに数値を書き戻すと二重管理に逆戻りするので書かない。 */
+  top: calc(-1 * var(--avg-label-h));
   font-size: 10px;
   color: #f472b6;
-  background: var(--bg);
+  /* 背景を塗ると、グラデーションの上では板に見える(このグラフは .card の中に無い)。
+     破線を文字の周りだけ隠せればよいので、文字の形に沿う影で代用する。 */
+  text-shadow:
+    0 0 3px var(--bg),
+    0 0 3px var(--bg);
   padding: 0 3px;
 }
 

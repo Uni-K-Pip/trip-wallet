@@ -1,10 +1,11 @@
+import type { CSSProperties } from 'react';
 import { dayOfMonth, formatDateLabel, weekdayIndex } from '../domain/date';
 import { formatWithCurrency } from '../domain/money';
 import type { DailySeries } from '../domain/summary';
 import { useI18n } from '../i18n/LangContext';
 
 const BAR_HEIGHT = 110;
-/** 平均ラベル(.daily-avg span)の高さ。styles.css の top: -14px と揃える。 */
+/** 平均ラベル(.daily-avg span)の高さ。--avg-label-h として CSS に渡す唯一の定義。 */
 const AVG_LABEL_HEIGHT = 14;
 
 /** 日付ラベルは 7 個くらいまでに間引く。長い旅行でも横スクロールさせないため。 */
@@ -43,14 +44,6 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
   return (
     <div className="daily">
       <div className="daily-bars" style={{ gap: `${gap}px`, height: `${BAR_HEIGHT}px` }}>
-        {averageHome > 0 && (
-          <div
-            className={avgLabelBelow ? 'daily-avg daily-avg--below' : 'daily-avg'}
-            style={{ bottom: `${avgBottom}px` }}
-          >
-            <span>{t.summary.average(fmt(averageHome))}</span>
-          </div>
-        )}
         {points.map((p) => (
           <div
             className="daily-col"
@@ -65,6 +58,21 @@ export function DailyChart({ series, homeCurrency }: { series: DailySeries; home
             />
           </div>
         ))}
+        {/* 棒(transform アニメーションでスタッキングコンテキストを作る)より後に置く。
+            DOM 順が後のほうが前面に描かれるため、これで平均線が棒に隠れない。 */}
+        {averageHome > 0 && (
+          <div
+            className={avgLabelBelow ? 'daily-avg daily-avg--below' : 'daily-avg'}
+            style={
+              {
+                bottom: `${avgBottom}px`,
+                '--avg-label-h': `${AVG_LABEL_HEIGHT}px`,
+              } as CSSProperties
+            }
+          >
+            <span>{t.summary.average(fmt(averageHome))}</span>
+          </div>
+        )}
       </div>
 
       <div className="daily-axis" style={{ gap: `${gap}px` }}>

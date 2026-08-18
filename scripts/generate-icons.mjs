@@ -1,6 +1,7 @@
 // public/icon.svg から PWA 用の PNG を作る。生成物は commit する。
 import { readFile, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
+import { extractGroup } from './svg.mjs';
 
 const base = await readFile(new URL('../public/icon.svg', import.meta.url), 'utf8');
 
@@ -8,7 +9,7 @@ const base = await readFile(new URL('../public/icon.svg', import.meta.url), 'utf
 // (中央 80%)の内側に収める必要がある。SVG を 2 枚手で管理すると片方の更新を
 // 忘れるため、ここでラッパーを組み立てて base の defs とモチーフを流用する。
 const defs = base.match(/<defs>[\s\S]*?<\/defs>/)?.[0];
-const motif = base.match(/<g id="motif">[\s\S]*<\/g>/)?.[0];
+const motif = extractGroup(base, 'motif');
 if (!defs || !motif) {
   throw new Error('public/icon.svg の構造が変わっています(<defs> と <g id="motif"> が必要)');
 }
@@ -29,7 +30,11 @@ const targets = [
 ];
 
 for (const [name, size, source] of targets) {
-  const png = await sharp(Buffer.from(source)).resize(size, size).png().toBuffer();
+  // compressionLevel の既定は 6。可逆なので 9 にしても見た目は変わらず、サイズだけ縮む。
+  const png = await sharp(Buffer.from(source))
+    .resize(size, size)
+    .png({ compressionLevel: 9 })
+    .toBuffer();
   await writeFile(new URL(`../public/${name}`, import.meta.url), png);
   console.log(`${name} (${size}px)`);
 }
