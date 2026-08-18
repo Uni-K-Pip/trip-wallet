@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { createTrip } from '../data/tripRepo';
 import { exportBackup } from '../data/backup';
+import { shouldShowDonation } from '../app/donation';
 import { renderWithLang } from '../test/renderWithLang';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -17,6 +18,11 @@ vi.mock('../data/backup', async (importOriginal) => {
   };
 });
 
+vi.mock('../app/donation', () => ({
+  DONATION_URL: 'https://ko-fi.com/example',
+  shouldShowDonation: vi.fn(),
+}));
+
 beforeEach(async () => {
   await db.delete();
   await db.open();
@@ -25,6 +31,7 @@ beforeEach(async () => {
   // jsdom は URL.createObjectURL / revokeObjectURL を実装していない
   window.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
   window.URL.revokeObjectURL = vi.fn();
+  vi.mocked(shouldShowDonation).mockReturnValue(false);
 });
 
 describe('SettingsScreen のエクスポート', () => {
@@ -138,5 +145,31 @@ describe('SettingsScreen の表示設定', () => {
     await user.upload(screen.getByLabelText('Import'), file);
 
     expect(await screen.findByText('Could not read the file as JSON')).toBeInTheDocument();
+  });
+});
+
+describe('サポートセクション', () => {
+  it('表示条件を満たさないときは出さない', () => {
+    vi.mocked(shouldShowDonation).mockReturnValue(false);
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+    expect(screen.queryByRole('heading', { name: 'サポート' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Ko-fi で支援する' })).toBeNull();
+  });
+
+  it('表示条件を満たすと Ko-fi への外部リンクを出す', () => {
+    vi.mocked(shouldShowDonation).mockReturnValue(true);
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+    expect(screen.getByRole('heading', { name: 'サポート' })).toBeInTheDocument();
+
+    const link = screen.getByRole('link', { name: 'Ko-fi で支援する' });
+    expect(link).toHaveAttribute('href', 'https://ko-fi.com/example');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('英語でも文言が切り替わる', () => {
+    vi.mocked(shouldShowDonation).mockReturnValue(true);
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />, 'en');
+    expect(screen.getByRole('link', { name: 'Support on Ko-fi' })).toBeInTheDocument();
   });
 });

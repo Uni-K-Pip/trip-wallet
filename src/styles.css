@@ -151,6 +151,14 @@ h3 {
   display: none;
 }
 
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+}
+
 .trip-list {
   list-style: none;
   margin: 0;
