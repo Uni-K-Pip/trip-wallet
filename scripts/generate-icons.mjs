@@ -30,7 +30,11 @@ const targets = [
 ];
 
 for (const [name, size, source] of targets) {
-  const png = await sharp(Buffer.from(source)).resize(size, size).png().toBuffer();
+  // compressionLevel の既定は 6。可逆なので 9 にしても見た目は変わらず、サイズだけ縮む。
+  const png = await sharp(Buffer.from(source))
+    .resize(size, size)
+    .png({ compressionLevel: 9 })
+    .toBuffer();
   await writeFile(new URL(`../public/${name}`, import.meta.url), png);
   console.log(`${name} (${size}px)`);
 }
