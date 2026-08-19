@@ -12,9 +12,12 @@ describe('サポートセクションの表示条件', () => {
     expect(shouldShowDonation(KOFI)).toBe(true);
   });
 
-  // DONATION_URL が空のあいだは、この行は既定引数が通っていることしか見ない。
-  // URL を入れた時点で、既定引数の配線を守るテストになる。
   it('既定では DONATION_URL を見る', () => {
     expect(shouldShowDonation()).toBe(DONATION_URL !== '');
+  });
+
+  // href に相対パスを入れると別タブで自サイトが開くだけになる。プロトコル込みかどうかを見張る。
+  it('DONATION_URL は絶対 URL である', () => {
+    if (DONATION_URL !== '') expect(DONATION_URL).toMatch(/^https:\/\//);
   });
 });
