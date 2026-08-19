@@ -2,15 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { ErrorBoundary } from './app/ErrorBoundary';
-import { markTwaLaunch } from './app/twa';
 import { listTrips } from './data/tripRepo';
 import { LangProvider } from './i18n/LangContext';
 import { prefetchTodayRate } from './rates/resolveRate';
 import './styles.css';
-
-// TWA(Play 版)から起動されたかは初回ナビゲーションの referrer にしか出ない。
-// 描画より先に記録しておく。
-markTwaLaunch();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
