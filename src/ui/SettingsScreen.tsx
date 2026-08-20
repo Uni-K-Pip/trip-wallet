@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type ChangeEvent } from 'react';
+import { countDonationClick } from '../app/analytics';
 import { DONATION_URL, shouldShowDonation } from '../app/donation';
 import { loadHomeCurrency, saveHomeCurrency } from '../app/settings';
 import {
@@ -185,6 +186,7 @@ export function SettingsScreen({ trips, activeTrip, onSelectTrip }: Props) {
               href={DONATION_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => countDonationClick()}
             >
               {t.settings.supportLink}
             </a>

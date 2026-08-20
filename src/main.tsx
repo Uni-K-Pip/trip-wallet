@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { countLaunch } from './app/analytics';
 import { App } from './app/App';
 import { ErrorBoundary } from './app/ErrorBoundary';
 import { listTrips } from './data/tripRepo';
@@ -28,3 +29,8 @@ void listTrips()
     }
   })
   .catch(() => {});
+
+// 起動回数を GoatCounter に 1 回だけ送る。サイトコードが空のあいだは何も起きない
+// React ツリーの外なので StrictMode の二重実行に巻き込まれない
+// countLaunch は Promise を返さない(内部で握りつぶす)ので void 演算子は付けない
+countLaunch();

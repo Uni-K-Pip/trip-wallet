@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { db } from '../data/db';
 import { createTrip } from '../data/tripRepo';
 import { exportBackup } from '../data/backup';
+import { countDonationClick } from '../app/analytics';
 import { shouldShowDonation } from '../app/donation';
 import { renderWithLang } from '../test/renderWithLang';
 import { SettingsScreen } from './SettingsScreen';
@@ -23,6 +24,10 @@ vi.mock('../app/donation', () => ({
   shouldShowDonation: vi.fn(),
 }));
 
+vi.mock('../app/analytics', () => ({
+  countDonationClick: vi.fn(),
+}));
+
 beforeEach(async () => {
   await db.delete();
   await db.open();
@@ -32,6 +37,7 @@ beforeEach(async () => {
   window.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
   window.URL.revokeObjectURL = vi.fn();
   vi.mocked(shouldShowDonation).mockReturnValue(false);
+  vi.mocked(countDonationClick).mockReset();
 });
 
 describe('SettingsScreen のエクスポート', () => {
@@ -171,5 +177,19 @@ describe('サポートセクション', () => {
     vi.mocked(shouldShowDonation).mockReturnValue(true);
     renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />, 'en');
     expect(screen.getByRole('link', { name: 'Support on Ko-fi' })).toBeInTheDocument();
+  });
+
+  it('寄付リンクをタップすると計測する', async () => {
+    vi.mocked(shouldShowDonation).mockReturnValue(true);
+    const user = userEvent.setup();
+    renderWithLang(<SettingsScreen trips={[]} activeTrip={null} onSelectTrip={() => {}} />);
+
+    // jsdom は別タブへの遷移を実装していないので、既定動作だけ止めてからクリックする。
+    // preventDefault は伝播を止めないので、React の onClick は通常どおり呼ばれる。
+    const link = screen.getByRole('link', { name: 'Ko-fi で支援する' });
+    link.addEventListener('click', (e) => e.preventDefault());
+    await user.click(link);
+
+    expect(vi.mocked(countDonationClick)).toHaveBeenCalledTimes(1);
   });
 });
