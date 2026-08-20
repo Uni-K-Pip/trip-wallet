@@ -12,7 +12,12 @@ function fetchSpy() {
 // 送信オプションは 2 種類とも同じ。テストの期待値もここから使う。
 // 型注釈は必須。無いと mode が string に推論され、toHaveBeenCalledWith が
 // fetch の引数型と突き合わせるときに RequestMode へ代入できず型エラーになる。
-const INIT: RequestInit = { mode: 'no-cors', cache: 'no-store', keepalive: true };
+const INIT: RequestInit = {
+  mode: 'no-cors',
+  cache: 'no-store',
+  keepalive: true,
+  referrerPolicy: 'no-referrer',
+};
 
 describe('計測ビーコン', () => {
   it('起動は p=/app&t=launch を送る', () => {
@@ -58,6 +63,15 @@ describe('計測ビーコン', () => {
   it('送信が失敗しても例外が外に出ない', () => {
     const f = vi.fn(async () => {
       throw new Error('オフライン');
+    });
+
+    expect(() => countLaunch(f as unknown as typeof fetch, CODE)).not.toThrow();
+    expect(() => countDonationClick(f as unknown as typeof fetch, CODE)).not.toThrow();
+  });
+
+  it('fetch が同期的に投げても例外が外に出ない', () => {
+    const f = vi.fn(() => {
+      throw new Error('拡張機能に差し替えられた fetch');
     });
 
     expect(() => countLaunch(f as unknown as typeof fetch, CODE)).not.toThrow();

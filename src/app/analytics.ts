@@ -7,7 +7,14 @@ export const ANALYTICS_CODE: string = '';
 // no-cors なので応答は読めないが、送るだけなので問題ない。
 // cache: 'no-store' でキャッシュされないため、キャッシュバスターの rnd パラメータは要らない。
 // keepalive は、寄付リンクが別タブを開くときにリクエストが打ち切られるのを防ぐ。
-const INIT: RequestInit = { mode: 'no-cors', cache: 'no-store', keepalive: true };
+// referrerPolicy は Referer ヘッダを落とすため。r パラメータを省くだけでは、既定の
+// strict-origin-when-cross-origin が自サイトのオリジンをヘッダで送ってしまう。
+const INIT: RequestInit = {
+  mode: 'no-cors',
+  cache: 'no-store',
+  keepalive: true,
+  referrerPolicy: 'no-referrer',
+};
 
 /**
  * GoatCounter に 1 発だけ送る。
@@ -16,7 +23,11 @@ const INIT: RequestInit = { mode: 'no-cors', cache: 'no-store', keepalive: true 
 function send(params: Record<string, string>, fetchImpl: typeof fetch, code: string): void {
   if (code === '') return;
   const query = new URLSearchParams(params).toString();
-  void fetchImpl(`https://${code}.goatcounter.com/count?${query}`, INIT).catch(() => {});
+  try {
+    void fetchImpl(`https://${code}.goatcounter.com/count?${query}`, INIT).catch(() => {});
+  } catch {
+    // 拡張機能に fetch を差し替えられて同期的に投げる環境でも、計測でアプリを止めない
+  }
 }
 
 /** 起動を 1 回数える。 */
