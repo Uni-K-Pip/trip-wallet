@@ -26,6 +26,8 @@ npm run preview
 
 アイコンを変えたら `public/icon.svg` を編集して `npm run icons` を実行し、生成された PNG も commit する。
 
+設計文書は `docs/design/`、完了済みの実装計画は `docs/archive/implementation-plans/` に置く。開発方法論や開発ワークフローに唯一の責任主体は置かない。コード、設計文書、テストを正本とし、外部の workflow Skill や subagent は、タスクごとに効果が見込める場合に選んで使う。
+
 ## 配布
 
 `main` に push すると GitHub Actions が GitHub Pages へデプロイする。リポジトリの Settings → Pages で Source を「GitHub Actions」にしておくこと。

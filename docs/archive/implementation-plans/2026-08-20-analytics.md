@@ -1,12 +1,14 @@
 # アクセス計測(GoatCounter)導入 実装プラン
 
+> **履歴資料:** この計画は完了済み実装の記録であり、現在の開発方法論や開発ワークフローを拘束しない。
+
 **Goal:** 起動回数と寄付リンクのタップ数の 2 つだけを GoatCounter へ送るクッキーレスな計測を入れ、収益化 Phase 2 の判断材料を作る。
 
 **Architecture:** 新規モジュール `src/app/analytics.ts` に閉じる。GoatCounter の公式スクリプトは読み込まず、`/count` エンドポイントの URL を自前で組み立てて `fetch` する。サイトコードは `DONATION_URL` と同じ形の定数 1 つに置き、空文字のあいだは一切送信しない。接続点は `src/main.tsx` の 1 行と `src/ui/SettingsScreen.tsx` の `onClick` 1 つだけ。
 
 **Tech Stack:** TypeScript 7.0 / React 19.2 / Vite 8.2 / Vitest 4.1 + jsdom 29。新規依存はゼロ。
 
-**Spec:** `docs/dev/specs/2026-08-20-analytics-design.md`
+**Spec:** `docs/design/2026-08-20-analytics-design.md`
 
 ## Global Constraints
 

@@ -1,5 +1,7 @@
 # 旅行支出管理 PWA(Trip Wallet)実装計画
 
+> **履歴資料:** この計画は完了済み実装の記録であり、現在の開発方法論や開発ワークフローを拘束しない。
+
 **Goal:** 外貨で使った金額をスマホから入力し、その日の為替レートで日本円に換算して旅行単位で記録・集計するオフライン対応 PWA を作る。
 
 **Architecture:** 計算ロジック(`src/domain`)を純粋関数として UI から完全に切り離し、ブラウザなしでテストする。永続化は Dexie(IndexedDB)で、リポジトリ層(`src/data`)が唯一の DB アクセス経路になる。為替レートは `src/rates` が「キャッシュ → Frankfurter → er-api → 直近キャッシュ → 手動」の順に解決し、解決した値は支出レコードに焼き付ける。UI(`src/ui`)は状態を持たず、`useLiveQuery` で DB を直接購読する。
@@ -8,7 +10,7 @@
 
 ## Global Constraints
 
-- 対象仕様は `docs/dev/specs/2026-08-09-trip-expense-pwa-design.md`。判断に迷ったら仕様書が優先。
+- 対象仕様は `docs/design/2026-08-09-trip-expense-pwa-design.md`。判断に迷ったら仕様書が優先。
 - リポジトリルートは `C:\Users\kohei\Downloads\trip-wallet`。この計画中のパスはすべてルートからの相対パス。
 - 作業ブランチは `feature/trip-wallet`。`main` には触らない(`main` はリリース版専用)。
 - UI 文言・コードコメント・コミットメッセージはすべて日本語で書く。
