@@ -2,7 +2,7 @@
 
 作成: 2026-08-20
 
-前提スペック: `docs/superpowers/specs/2026-08-12-v1.0.8-monetization-design.md`(Phase 1 = Ko-fi の寄付リンク。2026-08-19 に v1.0.8 としてリリース済み)
+前提スペック: `docs/dev/specs/2026-08-12-v1.0.8-monetization-design.md`(Phase 1 = Ko-fi の寄付リンク。2026-08-19 に v1.0.8 としてリリース済み)
 
 このスペックは、上記スペックが「今決めないこと(Phase 2 着手時に決める)」として残した論点に決着をつけ、その代わりに何を作るかを定める。
 
