@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ANALYTICS_CODE, countLaunch, countDonationClick } from './analytics';
 
-// 実際の ANALYTICS_CODE(空文字)と紛れないよう、テストでは別のコードを注入する
+// 実際の ANALYTICS_CODE と紛れないよう、テストでは別のコードを注入する
 const CODE = 'testcode';
 
 // frankfurter.test.ts と同じ流儀で、Response の実体は作らず必要な形だけ返す
