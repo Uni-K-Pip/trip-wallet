@@ -2,7 +2,7 @@
  * GoatCounter のサイトコード。差し替えるのはこの 1 行だけ。
  * 空文字のあいだは一切送信しない。型は string に固定しておく(リテラル型に潰れると空文字との比較が壊れる)。
  */
-export const ANALYTICS_CODE: string = '';
+export const ANALYTICS_CODE: string = 'unikpip';
 
 // no-cors なので応答は読めないが、送るだけなので問題ない。
 // cache: 'no-store' でキャッシュされないため、キャッシュバスターの rnd パラメータは要らない。
