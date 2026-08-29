@@ -116,7 +116,7 @@ export const ko: Dictionary = {
     tripEdit: '여행 편집',
     budgetPersonal: (v) => ` / 개별 ${v}`,
     budgetShared: (v) => ` / 공유 ${v}`,
-    confirmDelete: (name) => `「${name}」과 그 지출을 모두 삭제합니다. 계속할까요?`,
+    confirmDelete: (name) => `「${name}」과(와) 그 지출을 모두 삭제합니다. 계속할까요?`,
     deleted: (name) => `「${name}」을(를) 삭제했습니다`,
     data: '데이터',
     dataHint: '기기 안에만 저장됩니다. 브라우저 데이터를 지우면 사라지므로 여행 후에는 내보내 두세요.',
