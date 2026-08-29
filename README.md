@@ -24,7 +24,7 @@ npm run build
 npm run preview
 ```
 
-アイコンを変えたら `public/icon.svg` を編集して `npm run icons` を実行し、生成された PNG も commit する。
+アイコンを変えたら `public/icon.svg` を編集して `npm run icons` を実行し、生成された PNG も commit する。SNS 用の `public/og.png` も同じ SVG のモチーフから作っているので、あわせて `npm run og` も実行する。
 
 設計文書は `docs/design/`、完了済みの実装計画は `docs/archive/implementation-plans/` に置く。開発方法論や開発ワークフローに唯一の責任主体は置かない。コード、設計文書、テストを正本とし、外部の workflow Skill や subagent は、タスクごとに効果が見込める場合に選んで使う。
 
@@ -32,7 +32,19 @@ npm run preview
 
 `main` に push すると GitHub Actions が GitHub Pages へデプロイする。リポジトリの Settings → Pages で Source を「GitHub Actions」にしておくこと。
 
-公開先が `https://<user>.github.io/trip-wallet/` 以外になる場合は `vite.config.ts` の `BASE` を変更する。
+公開先は `https://uni-k-pip.github.io/trip-wallet/`。ここ以外に出す場合は `vite.config.ts` の `ORIGIN` と `BASE` を変更する。この 2 つから OGP の絶対 URL(`index.html` の `%SITE_URL%`)も組み立てている。
+
+## 検索と SNS での見え方
+
+`index.html` に `description` と OGP を置いてある。文言は日本語を先に、英語を後に並べた併記にした。告知は日本語圏から始まるが、アプリ自体は 4 言語・30 通貨に対応しているため。
+
+SNS のカードに出る画像は `public/og.png`(1200×630)。`public/icon.svg` の `<g id="motif">` を流用して `npm run og` で作る。アイコンと同じモチーフなので、SVG を直したら両方を再生成する。
+
+この画像はクローラだけが読むもので、アプリの動作には使わない。250KB を全利用者に前もって配らないよう、Service Worker の precache からは外してある(`vite.config.ts` の `globIgnores`)。
+
+`og:url` と `og:image` は絶対 URL でないと効かない。`vite.config.ts` の `ORIGIN` + `BASE` を `%SITE_URL%` として `index.html` に流し込んでいる(vite が既定で置き換える `%BASE_URL%` は相対パスのままなので使えない)。
+
+`<html lang>` の初期値は `ja`。JS が起動した時点で表示言語(ja / en / ko / zh)に差し替わる。
 
 ## アクセス計測
 
@@ -54,6 +66,8 @@ npm run preview
 日本語 / English / 한국어 / 中文 の 4 つ。文言は `src/i18n/<lang>.ts` の 1 ファイルに閉じてあるので後から差し替えやすい。
 
 韓国語(`ko.ts`)と中国語(`zh.ts`)はネイティブのレビューを受けていない。おかしな表現を見つけたら該当ファイルの 1 行を直すだけで済む。
+
+2026-08-29 に韓国語の助詞併記(`「旅行名」과(와)`)と中国語のコロン(全角 `：`)を直した。これは表記を言語の規則に揃えただけで、ネイティブレビューの代わりにはならない。
 
 ## 対応通貨
 
@@ -82,3 +96,4 @@ Frankfurter が使う ECB 参照レートの対象 30 通貨: AUD / BRL / CAD / 
 - [ ] 設定タブにサポートセクションが出て、タップで Ko-fi(https://ko-fi.com/unikpip)が別タブで開く
 - [ ] `ANALYTICS_CODE` を設定して起動すると、GoatCounter のダッシュボードに `/app` が 1 件増える
 - [ ] 支援リンクをタップすると `donate-click` が 1 件増える
+- [ ] X などに公開 URL を貼ると、og.png のカードとタイトル・説明文が出る
