@@ -90,6 +90,17 @@ describe('toHomeMinor', () => {
   });
 });
 
+describe('指数表記に落ちる大きさの丸め', () => {
+  // toFixed は 1e21 以上で "1e+21" のような指数表記を返す。ただし Number() が
+  // 同じ値に戻すので丸め結果は文字列を経由しない場合と一致する。旅行の金額域では
+  // 到達しないが、「指数表記になりうる」という指摘が再燃しないようここで固定する。
+  it('文字列を経由しても値が壊れない', () => {
+    expect(parseMajorToMinor('1e21', 2)).toBe(1e23);
+    expect(parseMajorToMinor('99999999999999999999', 2)).toBe(1e22);
+    expect(toHomeMinor(1e21, 0, 100, 0)).toBe(1e23);
+  });
+});
+
 describe('formatWithCurrency', () => {
   it('記号を前に置く通貨', () => {
     expect(formatWithCurrency(15000, 'KRW')).toBe('₩15,000');
