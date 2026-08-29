@@ -1,13 +1,29 @@
 import { defineConfig } from 'vitest/config';
+import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const ORIGIN = 'https://uni-k-pip.github.io';
 const BASE = '/trip-wallet/';
+const SITE_URL = `${ORIGIN}${BASE}`;
+
+/**
+ * index.html の %SITE_URL% を公開先の絶対 URL に置き換える。
+ * OGP の og:url と og:image は相対パスを受け付けないので、ここから 1 箇所で配る。
+ * vite が既定で置き換える %BASE_URL% は相対パスのままなので使えない。
+ */
+function siteUrl(): Plugin {
+  return {
+    name: 'trip-wallet-site-url',
+    transformIndexHtml: (html) => html.replaceAll('%SITE_URL%', SITE_URL),
+  };
+}
 
 export default defineConfig(({ mode }) => ({
   base: BASE,
   plugins: [
     react(),
+    siteUrl(),
     VitePWA({
       // テスト実行時は Service Worker を組み立てない(仮想モジュールは stub が入る)
       disable: mode === 'test',
@@ -37,6 +53,8 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // og.png は SNS のクローラだけが読む 250KB。利用者に前もって配る意味がない。
+        globIgnores: ['**/og.png'],
         navigateFallback: `${BASE}index.html`,
         runtimeCaching: [
           {
