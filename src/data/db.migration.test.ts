@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { describe, it, expect, afterEach } from 'vitest';
-import { TripWalletDb } from './db';
+import { db, TripWalletDb } from './db';
+import { listTrips } from './tripRepo';
 
 const DB_NAME = 'trip-wallet';
 
@@ -20,6 +21,10 @@ function openLegacy(version: 1 | 2): Dexie {
 }
 
 afterEach(async () => {
+  // db.ts のシングルトンが開いたままだと Dexie.delete がブロックされる。vitest の
+  // test.isolate 既定値に頼らず、このファイル自身で必ず閉じてから消す。
+  // disableAutoOpen: false にしておくと、次のテストで触ったときに開き直される。
+  db.close({ disableAutoOpen: false });
   await Dexie.delete(DB_NAME);
 });
 
@@ -97,5 +102,31 @@ describe('DB の移行', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].quote).toBe('JPY');
     expect(rows[0].rate).toBe(23.465);
+  });
+
+  // このテストが通ること自体が、afterEach で test.isolate の既定値に頼らなくなった
+  // 証拠になる。listTrips は db.ts のシングルトンを開くため、閉じ忘れると次の
+  // Dexie.delete がブロックされて後続が落ちる。
+  it('移行後の旅行をリポジトリ関数からも読める', async () => {
+    const legacy = openLegacy(2);
+    await legacy.table('trips').put({
+      id: 't4',
+      name: 'Seoul 2026-10',
+      currency: 'KRW',
+      currencyDecimals: 0,
+      startDate: '2026-10-03',
+      endDate: null,
+      personalBudgetJpy: 80000,
+      sharedBudgetJpy: null,
+      memberCount: 1,
+      createdAt: 0,
+    });
+    legacy.close();
+
+    const trips = await listTrips();
+
+    expect(trips).toHaveLength(1);
+    expect(trips[0].id).toBe('t4');
+    expect(trips[0].personalBudgetHome).toBe(80000);
   });
 });
