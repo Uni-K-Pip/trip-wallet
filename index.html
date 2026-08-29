@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -9,7 +9,34 @@
     <meta name="apple-mobile-web-app-title" content="Trip Wallet" />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%icon.svg" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
-    <title>Trip Wallet</title>
+
+    <title>Trip Wallet — 海外旅行の外貨支出を、その日のレートで記録する PWA</title>
+    <meta
+      name="description"
+      content="海外旅行で使った外貨を、その日の為替レートで自分の通貨に換算して記録する無料の PWA。データは端末内だけに保存し、オフラインでも使えます。Track travel expenses in foreign currencies, converted at the rate of the day — free, offline-capable, and your data never leaves your device."
+    />
+    <link rel="canonical" href="%SITE_URL%" />
+
+    <!-- html の lang は初期値。JS が起動した時点で表示言語(ja / en / ko / zh)に差し替わる。 -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Trip Wallet" />
+    <meta property="og:title" content="Trip Wallet — 海外旅行の外貨支出を、その日のレートで記録する PWA" />
+    <meta
+      property="og:description"
+      content="外貨の支出をその日の為替レートで自分の通貨に換算して記録。端末内保存・オフライン対応・無料。Travel expenses converted at the rate of the day — on-device, offline, free."
+    />
+    <meta property="og:url" content="%SITE_URL%" />
+    <meta property="og:image" content="%SITE_URL%og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Trip Wallet — 海外旅行の支出を、その日の為替レートで記録 / Travel expenses, converted at the rate of the day"
+    />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <!-- title / description / image は og:* がそのまま使われるので、card の種類だけ指定する。 -->
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>
