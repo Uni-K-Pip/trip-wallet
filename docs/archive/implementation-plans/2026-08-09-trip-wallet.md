@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - 対象仕様は `docs/design/2026-08-09-trip-expense-pwa-design.md`。判断に迷ったら仕様書が優先。
-- リポジトリルートは `C:\Users\user\Downloads\trip-wallet`。この計画中のパスはすべてルートからの相対パス。
+- この計画中のパスはすべてリポジトリルートからの相対パス。
 - 作業ブランチは `feature/trip-wallet`。`main` には触らない(`main` はリリース版専用)。
 - UI 文言・コードコメント・コミットメッセージはすべて日本語で書く。
 - **外貨金額は必ず最小単位の整数(`amountMinor`)で保持する。** 外貨を浮動小数で持つフィールドや変数を新設しない。
