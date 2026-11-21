@@ -1,4 +1,4 @@
-# wk_trip-wallet(Trip Wallet)
+# trip-wallet(Trip Wallet)
 
 海外旅行で使った外貨を、その日の為替レートで自分の通貨に換算して記録する PWA。データは端末内(IndexedDB)にだけ保存する。
 
